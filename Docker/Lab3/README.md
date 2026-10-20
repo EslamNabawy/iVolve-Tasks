@@ -265,7 +265,7 @@ cd ~/labs-workspace/CalculatorMavenApp && docker build -f Dockerfile.multistage 
 Commit the Dockerfiles you wrote, not the cloned app:
 
 ```bash
-cp ~/labs-workspace/CalculatorMavenApp/Dockerfile.app1 ~/labs-workspace/CalculatorMavenApp/Dockerfile.app2 ~/labs-workspace/CalculatorMavenApp/.dockerignore "/home/eslam/DevOps-Labs/Docker/Lab3/"
+cp ~/labs-workspace/CalculatorMavenApp/Dockerfile.app1 ~/labs-workspace/CalculatorMavenApp/Dockerfile.app2 ~/labs-workspace/CalculatorMavenApp/.dockerignore "/home/eslam/iVolve-Tasks/Docker/Lab3/"
 ```
 
 ## My output

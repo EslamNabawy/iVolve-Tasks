@@ -3,7 +3,7 @@
 Your working guide for the whole track. Read this once end-to-end, then work lab by lab.
 
 - **OS:** Ubuntu 24.04.4 LTS on WSL2
-- **Repo root:** `~/DevOps-Labs`
+- **Repo root:** `~/iVolve-Tasks`
 - **App used by Labs 1–3:** `CalculatorMavenApp` / `CalculatorGradleApp`
 
 ---
@@ -88,12 +88,12 @@ Then **close and reopen your WSL terminal** (group membership is read at login; 
 
 Keep **all** project files under the Linux filesystem (`/home/eslam/...`), never under `/mnt/c/...`.
 
-Builds on `/mnt/c` cross the Windows↔Linux filesystem bridge and run **5–20x slower**, and Linux file permissions (the executable bit, which matters for `mvnw`/`gradlew`) are not stored faithfully. Your repo at `~/DevOps-Labs` is correct. Your lab screenshots living on the Windows Desktop is fine — those are just images.
+Builds on `/mnt/c` cross the Windows↔Linux filesystem bridge and run **5–20x slower**, and Linux file permissions (the executable bit, which matters for `mvnw`/`gradlew`) are not stored faithfully. Your repo at `~/iVolve-Tasks` is correct. Your lab screenshots living on the Windows Desktop is fine — those are just images.
 
 To open the repo in VS Code from WSL:
 
 ```bash
-code ~/DevOps-Labs
+code ~/iVolve-Tasks
 ```
 
 ---
@@ -105,19 +105,19 @@ code ~/DevOps-Labs
 **Order matters here.** `git config` without `--global` writes into `.git/config`, so the repo must exist first — running it in a plain directory fails with `fatal: not in a git directory`.
 
 ```bash
-cd ~/DevOps-Labs && git init -b main
+cd ~/iVolve-Tasks && git init -b main
 ```
 
 Your global git identity is `Nabawy <eslam@nabawy.dev>`. For training work submitted to iVolve, set a per-repo identity matching your GitHub account so commits are attributed to you there:
 
 ```bash
-cd ~/DevOps-Labs && git config user.name "Eslam" && git config user.email "eslamlef.308@gmail.com"
+cd ~/iVolve-Tasks && git config user.name "Eslam" && git config user.email "eslamlef.308@gmail.com"
 ```
 
 Repo-level config (no `--global`) overrides global **only inside this repo** — your other projects keep the `nabawy.dev` identity. Verify:
 
 ```bash
-cd ~/DevOps-Labs && git config user.email
+cd ~/iVolve-Tasks && git config user.email
 ```
 
 The three scopes, in increasing precedence: `--system` (whole machine) → `--global` (`~/.gitconfig`, all your repos) → local (`.git/config`, this repo). `git config --list --show-origin` shows every value and which file it came from.
@@ -154,14 +154,14 @@ ssh -T git@github.com
 
 ### 2.3 First commit and push
 
-Create an **empty** repo named `DevOps-Labs` on GitHub (no README, no .gitignore — you already have them). Then commit what's here (the repo was initialised in §2.1):
+Create an **empty** repo named `iVolve-Tasks` on GitHub (no README, no .gitignore — you already have them). Then commit what's here (the repo was initialised in §2.1):
 
 ```bash
-cd ~/DevOps-Labs && git add . && git commit -m "chore: scaffold DevOps labs repo"
+cd ~/iVolve-Tasks && git add . && git commit -m "chore: scaffold DevOps labs repo"
 ```
 
 ```bash
-cd ~/DevOps-Labs && git remote add origin git@github.com:<your-username>/DevOps-Labs.git && git push -u origin main
+cd ~/iVolve-Tasks && git remote add origin git@github.com:<your-username>/iVolve-Tasks.git && git push -u origin main
 ```
 
 ### 2.4 Commit discipline

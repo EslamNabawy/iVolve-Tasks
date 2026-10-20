@@ -1,4 +1,4 @@
-# DevOps-Labs — iVolve Training
+# iVolve Tasks — DevOps Training
 
 Hands-on labs from the iVolve DevOps training track. Each lab folder contains the artifacts I authored plus a write-up of the steps, output and reasoning.
 
@@ -17,7 +17,7 @@ Mark a lab ✅ Done when its README is complete and committed.
 ## Structure
 
 ```
-DevOps-Labs
+iVolve-Tasks
 ├── Build Tools/   Lab1, Lab2
 ├── Docker/        Lab3
 ├── Kubernetes/    (upcoming)

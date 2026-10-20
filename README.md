@@ -4,6 +4,8 @@ Hands-on labs from the iVolve DevOps training track. Each lab folder contains th
 
 **Start here:** [GUIDE.md](GUIDE.md) — environment setup (WSL2 / Ubuntu 24.04), Git & GitHub configuration, lab workflow and core concepts.
 
+**Every command explained:** [RUNBOOK.md](RUNBOOK.md) — setup, the git/GitHub workflow, all three labs command by command, and CI/CD pipelines for GitHub Actions and Jenkins.
+
 **Full technical guide:** [LABS-COMPLETE-GUIDE.md](LABS-COMPLETE-GUIDE.md) — every lab explained step by step, every tool and flag, with comparison tables, troubleshooting and a glossary..
 
 ## Progress

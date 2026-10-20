@@ -1,0 +1,21 @@
+# Bonus — multi-stage: Part 1's reproducibility at Part 2's size.
+# Stage 1 builds; only stage 2 becomes the image.
+
+# ---- build stage ----
+FROM maven:3.9-eclipse-temurin-17 AS build
+WORKDIR /app
+COPY pom.xml .
+RUN mvn -B dependency:go-offline
+COPY src ./src
+RUN mvn -B clean package
+
+# ---- runtime stage ----
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+RUN adduser -D -h /home/appuser appuser
+# Reaches into the build stage and takes ONE file; the JDK, Maven and
+# the dependency cache are discarded entirely.
+COPY --from=build --chown=appuser:appuser /app/target/calculator.jar /app/calculator.jar
+USER appuser
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "/app/calculator.jar"]

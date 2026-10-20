@@ -2,297 +2,165 @@
 
 **Track:** Docker · **Source:** https://github.com/Ibrahim-Adel15/CalculatorMavenApp.git
 
-Build the same app two ways, compare the images, explain the gap.
+Build the same application two ways, compare the images, explain the difference.
 
-## Requirements (from the lab)
+## Requirements
 
 **Part 1 — Build inside Docker**
-- [ ] Dockerfile using a Maven image with Java 17
-- [ ] Create a working directory and a non-root user
-- [ ] Copy the source and build with `mvn package`
-- [ ] Run the generated JAR, expose port 8080
-- [ ] Build image `app1`, note its size
-- [ ] Run `container1`, verify the app, then delete container and image
+- [x] Dockerfile using a Maven image with Java 17 — [`Dockerfile.app1`](Dockerfile.app1)
+- [x] Working directory and a non-root user
+- [x] Copy source, build with `mvn package`
+- [x] Run the JAR, expose port 8080
+- [x] Image named `app1`, size noted — **861 MB**
+- [x] Ran `container1`, verified, deleted container and image
 
 **Part 2 — Build locally**
-- [ ] Build the app locally with Maven
-- [ ] Dockerfile using a Java 17 **runtime** image
-- [ ] Create a working directory and a non-root user
-- [ ] Copy the generated JAR in, expose port 8080
-- [ ] Build image `app2`, note its size
-- [ ] Run `container2`, verify the app, then delete container and image
+- [x] Built locally with Maven
+- [x] Dockerfile using a Java 17 **runtime** image — [`Dockerfile.app2`](Dockerfile.app2)
+- [x] Working directory and a non-root user
+- [x] Copy the JAR in, expose port 8080
+- [x] Image named `app2`, size noted — **265 MB**
+- [x] Ran `container2`, verified, deleted container and image
 
-**Bonus** — compare the sizes and explain the difference.
-
----
-
-## Read this before you start
-
-### The app has no web server
-
-`Main.java` reads from `System.in` with a `Scanner` and exits. Nothing binds a socket. So:
-
-- **`EXPOSE 8080` does nothing here.** `EXPOSE` is metadata — a label in the image saying "this is the port I'd use", read by humans and by tooling like `docker run -P`. It opens no port and starts no listener. You'll include it because the lab asks, and now you know what it actually is.
-- **Verifying is not `curl`.** It's running the container, typing numbers, and seeing correct math.
-- **You must run with `-i`.** Without `--interactive`, the container's stdin is closed, `scanner.nextDouble()` gets EOF immediately, and the app crashes with `NoSuchElementException`. Use `docker run -it`. When this happens to you — and it will — you'll know exactly why.
-
-### Setup
-
-```bash
-docker ps
-```
-
-If that errors with "cannot connect to the Docker daemon", start it: `sudo service docker start`.
-
-Work from a clone outside this repo:
-
-```bash
-mkdir -p ~/labs-workspace && git clone https://github.com/Ibrahim-Adel15/CalculatorMavenApp.git ~/labs-workspace/CalculatorMavenApp 2>/dev/null; ls ~/labs-workspace/CalculatorMavenApp
-```
+**Bonus**
+- [x] Sizes compared and explained
+- [x] Multi-stage build as `app3` — [`Dockerfile.multistage`](Dockerfile.multistage)
 
 ---
 
-## Part 1 — Build inside Docker
-
-The whole build happens in the container. The host needs nothing but Docker.
-
-### Write the Dockerfile
-
-Create `Dockerfile.app1` in `~/labs-workspace/CalculatorMavenApp/`. Write it yourself first — you learn nothing from pasting. Instructions you need, in order:
-
-| Instruction | Purpose |
-|---|---|
-| `FROM` | Base image. Use `maven:3.9-eclipse-temurin-17` — Maven with JDK 17 |
-| `WORKDIR` | Sets the working directory, creating it if absent |
-| `RUN useradd` | Create the non-root user |
-| `COPY` | Copy source from host build context into the image |
-| `RUN mvn package` | Build inside the image |
-| `USER` | Switch to the non-root user for everything after |
-| `EXPOSE` | Declare port 8080 (metadata) |
-| `ENTRYPOINT` | The command the container runs |
-
-Two things to think about while writing it:
-
-1. **Order matters for the build cache.** Docker caches each layer and invalidates everything after the first changed one. Copying `pom.xml` and running a dependency fetch *before* copying `src/` means source edits don't re-download dependencies. Try it the naive way first, then improve it.
-2. **When do you switch to the non-root user?** The build needs to write to `/app` and `~/.m2`. Switch too early and `mvn package` fails on permissions. Switch too late and the app runs as root. Decide where `USER` goes — and *why*.
-
-<details>
-<summary>Check your work (try first)</summary>
-
-```dockerfile
-FROM maven:3.9-eclipse-temurin-17
-
-WORKDIR /app
-
-# Create a non-root user up front; we switch to it after the build
-RUN useradd --create-home --shell /bin/bash appuser
-
-# Dependencies first: this layer is cached unless pom.xml changes
-COPY pom.xml .
-RUN mvn -B dependency:go-offline
-
-# Source changes invalidate only from here down
-COPY src ./src
-RUN mvn -B clean package
-
-# Hand the build output to the unprivileged user, then drop privileges
-RUN chown -R appuser:appuser /app
-USER appuser
-
-EXPOSE 8080
-
-ENTRYPOINT ["java", "-jar", "/app/target/calculator.jar"]
-```
-
-`USER` sits *after* the build because Maven must write to `/app/target` and the dependency cache. The `chown` hands ownership over before dropping privileges. `-B` is batch mode — no ANSI progress spam in build logs, standard for CI.
-</details>
-
-### Build and inspect
-
-```bash
-cd ~/labs-workspace/CalculatorMavenApp && docker build -f Dockerfile.app1 -t app1 .
-```
-
-```bash
-docker images app1
-```
-
-Record the size. Expect roughly **500–800 MB**.
-
-### Run and verify
-
-```bash
-docker run -it --name container1 app1
-```
-
-Type `10`, Enter, `5`, Enter. Confirm `Sum: 15.0`.
-
-Confirm it is genuinely not running as root:
-
-```bash
-docker run --rm --entrypoint whoami app1
-```
-
-Must print `appuser`, not `root`. `--entrypoint` overrides the image's entrypoint for a one-off command — a useful debugging trick.
-
-### Clean up
-
-```bash
-docker rm container1 && docker rmi app1
-```
-
----
-
-## Part 2 — Build locally
-
-Build on the host, ship only the artifact.
-
-### Build the jar on the host
-
-```bash
-cd ~/labs-workspace/CalculatorMavenApp && mvn clean package && ls -lh target/calculator.jar
-```
-
-### Write the Dockerfile
-
-Create `Dockerfile.app2`. Same structure, two changes: the base image is a **JRE** (`eclipse-temurin:17-jre-alpine` or `:17-jre`), and instead of building you `COPY` the finished jar.
-
-Here the `USER` placement question has a different answer — think about why before you look.
-
-<details>
-<summary>Check your work (try first)</summary>
-
-```dockerfile
-FROM eclipse-temurin:17-jre-alpine
-
-WORKDIR /app
-
-# Alpine uses BusyBox adduser, not useradd
-RUN adduser -D -h /home/appuser appuser
-
-COPY --chown=appuser:appuser target/calculator.jar /app/calculator.jar
-
-USER appuser
-
-EXPOSE 8080
-
-ENTRYPOINT ["java", "-jar", "/app/calculator.jar"]
-```
-
-`USER` can come before `ENTRYPOINT` with nothing privileged left to do, because `COPY --chown` sets ownership as it copies — no separate `RUN chown` layer. If you chose `eclipse-temurin:17-jre` (Ubuntu-based) instead of Alpine, use `useradd --create-home appuser`; `adduser -D` is BusyBox syntax and will fail there.
-</details>
-
-Add a `.dockerignore` so you don't ship `src/` and the whole `target/` directory into the build context:
-
-```bash
-printf 'src/\n.git/\ntarget/*\n!target/calculator.jar\nDockerfile*\n' > ~/labs-workspace/CalculatorMavenApp/.dockerignore
-```
-
-### Build, run, verify, clean up
-
-```bash
-cd ~/labs-workspace/CalculatorMavenApp && docker build -f Dockerfile.app2 -t app2 .
-```
-
-```bash
-docker images app2
-```
-
-```bash
-docker run -it --name container2 app2
-```
-
-```bash
-docker rm container2 && docker rmi app2
-```
-
----
-
-## Bonus — compare and explain
-
-Before deleting the images, capture both sizes side by side:
-
-```bash
-docker images --format 'table {{.Repository}}\t{{.Tag}}\t{{.Size}}' | grep -E 'app1|app2|REPOSITORY'
-```
+## Results
 
 | Image | Base | Contains | Size |
 |---|---|---|---|
-| `app1` | `maven:3.9-eclipse-temurin-17` | Full JDK + Maven + dependency cache + source + jar | _fill in_ |
-| `app2` | `eclipse-temurin:17-jre-alpine` | JRE + jar | _fill in_ |
+| `app1` | `maven:3.9-eclipse-temurin-17` | JDK + Maven + dependency cache + source + JAR | **861 MB** |
+| `app2` | `eclipse-temurin:17-jre-alpine` | JRE + JAR | **265 MB** |
+| `app3` | multi-stage → JRE Alpine | JRE + JAR | **265 MB** |
 
-**The explanation to write in your own words:** build-time dependencies are not run-time dependencies. Compiling needs a JDK (compiler, debugger, full toolchain), Maven, every downloaded dependency and the source tree. *Running* needs a JVM and one jar. `app1` ships the entire workshop along with the product; `app2` ships only the product.
-
-Beyond size, three real consequences:
-
-- **Attack surface.** Every binary in an image is a potential exploit target. A shipped compiler and package manager are gifts to an attacker who gets code execution.
-- **Deploy speed.** Image size is pull time, on every node, on every rollout.
-- **Cost.** Registry storage and egress scale with image size across every build you ever push.
-
-### Go further: multi-stage build
-
-This is how production actually resolves the tradeoff — Part 1's reproducibility at Part 2's size. One Dockerfile, two `FROM` lines; only the final stage becomes the image.
-
-```dockerfile
-# ---- build stage ----
-FROM maven:3.9-eclipse-temurin-17 AS build
-WORKDIR /app
-COPY pom.xml .
-RUN mvn -B dependency:go-offline
-COPY src ./src
-RUN mvn -B clean package
-
-# ---- runtime stage ----
-FROM eclipse-temurin:17-jre-alpine
-WORKDIR /app
-RUN adduser -D -h /home/appuser appuser
-COPY --from=build --chown=appuser:appuser /app/target/calculator.jar /app/calculator.jar
-USER appuser
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "/app/calculator.jar"]
 ```
+REPOSITORY   TAG       SIZE
+app1         latest    861MB
+app2         latest    265MB
+app3         latest    265MB
+```
+
+**`app1` is 3.25× the size of `app2`** — 596 MB of pure build tooling.
+
+### Verification — all three
+
+```
+$ printf '10\n5\n' | docker run -i --name container1 app1
+Enter first number: Enter second number: a = 10.0, b = 5.0
+Sum: 15.0
+Subtract: 5.0
+Multiply: 50.0
+Divide: 2.0
+
+$ docker run --rm --entrypoint whoami app1
+appuser
+```
+
+`app2` produced identical output. `app3` was checked with different inputs (7 and 3)
+to confirm it is genuinely computing, not echoing a cached result:
+
+```
+a = 7.0, b = 3.0
+Sum: 10.0   Subtract: 4.0   Multiply: 21.0   Divide: 2.3333333333333335
+```
+
+All three print `appuser`, not `root` — the non-root requirement is met and proven.
+
+### Cleanup
 
 ```bash
-cd ~/labs-workspace/CalculatorMavenApp && docker build -f Dockerfile.multistage -t app3 . && docker images app3
+docker rm -f container1 container2 && docker rmi app1 app2 app3
 ```
 
-`COPY --from=build` reaches into the first stage and takes one file. Everything else in that stage — JDK, Maven, caches, source — is discarded. `app3` should land within a few MB of `app2` while needing nothing on the host but Docker. **This is the real answer to the bonus question**, and demonstrating it with a working image is worth more than a paragraph about it.
+Both containers and all three images removed, as the lab requires.
 
 ---
 
-## Deliverables for this folder
+## The bonus answer
 
-Commit the Dockerfiles you wrote, not the cloned app:
+**What you need to BUILD is not what you need to RUN.**
 
-```bash
-cp ~/labs-workspace/CalculatorMavenApp/Dockerfile.app1 ~/labs-workspace/CalculatorMavenApp/Dockerfile.app2 ~/labs-workspace/CalculatorMavenApp/.dockerignore "/home/eslam/iVolve-Tasks/Docker/Lab3/"
+Compiling requires a JDK (compiler and full toolchain), Maven itself, every
+downloaded dependency, and the source tree. *Running* requires a JVM and one
+3.7 KB jar. `app1` ships the entire workshop alongside the product; `app2` ships
+only the product.
+
+Two changes produce the 596 MB saving:
+
+- **JRE instead of JDK** — no compiler, because nothing is compiled at runtime.
+- **Alpine instead of Ubuntu** — a ~5 MB base instead of ~75 MB.
+
+Size is the visible symptom. Three consequences matter more:
+
+1. **Security.** Every tool in an image is a potential exploit target. Shipping a
+   compiler, a build tool and a package manager hands an attacker who achieves
+   code execution a complete toolkit.
+2. **Deploy speed.** Image size is pull time — on every node, on every rollout.
+3. **Cost.** Registry storage and egress scale with size, on every build forever.
+
+### But `app2` has a real weakness
+
+`app2` is smaller, yet its build is **not reproducible**: it depends on the host
+having the right JDK and the right file already sitting in `target/`. `app1` is
+fully self-contained — anyone with Docker gets an identical result.
+
+So neither is simply better: **Part 1 buys reproducibility, Part 2 buys size.**
+
+### Multi-stage resolves the trade-off
+
+`Dockerfile.multistage` uses two `FROM` stages; only the last becomes the image.
+`COPY --from=build` reaches into the build stage and takes **one file** — the JDK,
+Maven, dependency cache and source are discarded entirely.
+
+**Result: `app3` is 265 MB — identical to `app2` — while needing nothing on the
+host but Docker.** That is Part 1's reproducibility at Part 2's size, and it is
+what production actually uses.
+
+---
+
+## Things worth knowing
+
+**`EXPOSE 8080` does nothing here.** This app reads from stdin and listens on no
+port. `EXPOSE` is metadata — a label in the image, read by humans and by
+`docker run -P`. It opens no socket. It is included because the lab asks for it.
+
+**`docker run` needs `-i`.** Without `--interactive` the container's stdin is
+closed, `scanner.nextDouble()` hits EOF immediately, and the app dies. Confirmed
+deliberately:
+
+```
+$ docker run --rm app1        # no -i
+    at java.base/java.util.Scanner.nextDouble(Scanner.java:2564)
+    at com.example.calculator.Main.main(Main.java:12)
 ```
 
-## My output
+**Where `USER` goes differs between the two Dockerfiles.** In `app1` it must come
+*after* `mvn package`, because Maven writes to `/app/target` and `~/.m2`; placing
+it earlier fails on permissions. In `app2` it can come earlier — there is no build,
+and `COPY --chown` already set ownership.
 
-> Paste `docker images` showing both sizes, and a verified app run from each container.
+**Alpine uses `adduser`, not `useradd`.** BusyBox provides different utilities;
+`useradd` gives "command not found" on Alpine. The base image dictates the
+available tooling.
 
-```
-```
+**Layer order is a design decision.** Both the Maven-based Dockerfiles copy
+`pom.xml` and resolve dependencies *before* copying `src/`. Docker invalidates
+every layer after the first changed one, so editing a `.java` file reuses the
+cached dependency layer instead of re-downloading.
 
-## What I learned
-
-> Answer the bonus in your own words. Did you hit the `-i` stdin problem? The `USER`-too-early permission failure?
+**A `.dockerignore` bug worth recording.** The first version excluded `src/`,
+which works for `app2` (it only copies the finished jar) but **breaks `app1` and
+the multi-stage build**, since both compile from source. One build context serves
+all three Dockerfiles, so [`.dockerignore`](.dockerignore) keeps `src/` and
+excludes only `.git/` and `target/*` (re-including the jar `app2` needs).
 
 ---
 
 ## Commit this lab
 
-The write-up above **is** the deliverable — git tracks file changes, so nothing is
-recorded until this README is filled in. Check what you're about to commit, then push:
-
-```bash
-cd ~/iVolve-Tasks && git status
-```
-
 ```bash
 cd ~/iVolve-Tasks && git add Docker/Lab3 && git commit -m "feat(lab3): add Dockerfiles for app1, app2 and multi-stage build" && git push
 ```
-
-One commit per lab, pushed as you go — your git history is part of what is graded.
-

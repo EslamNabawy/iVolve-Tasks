@@ -1,48 +1,150 @@
-# iVolve Tasks — DevOps Training
+<div align="center">
 
-Hands-on labs from the iVolve DevOps training track. Each lab folder contains the artifacts I authored plus a write-up of the steps, output and reasoning.
+# 🚀 DevOps Labs — iVolve Training
 
-**Start here:** [GUIDE.md](GUIDE.md) — environment setup (WSL2 / Ubuntu 24.04), Git & GitHub configuration, lab workflow and core concepts.
+**From source code to a running container**
 
-**Two PDFs** (built with [pdf-kit/](pdf-kit/), kept out of the repo — regenerate with `./build.sh`): a **study guide** that teaches the concepts, and a **runbook** you keep open while working.
+Hands-on labs from the iVolve DevOps track — building, testing, packaging
+and containerizing a Java application, one tool at a time.
 
-**Every command explained:** [RUNBOOK.md](RUNBOOK.md) — setup, the git/GitHub workflow, all three labs command by command, and CI/CD pipelines for GitHub Actions and Jenkins.
+<br>
 
-**Full technical guide:** [LABS-COMPLETE-GUIDE.md](LABS-COMPLETE-GUIDE.md) — every lab explained step by step, every tool and flag, with comparison tables, troubleshooting and a glossary..
+![Status](https://img.shields.io/badge/Labs_Complete-3%20%2F%203-brightgreen?style=for-the-badge)
+![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
+![Maven](https://img.shields.io/badge/Maven-3.8.7-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)
+![Gradle](https://img.shields.io/badge/Gradle-9.8.2-02303A?style=for-the-badge&logo=gradle&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-29.1.3-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![WSL](https://img.shields.io/badge/Ubuntu_24.04-WSL2-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
 
-## Progress
+</div>
 
-| # | Track | Lab | Status |
-|---|-------|-----|--------|
-| 1 | Build Tools | [Building and Packaging a Java App with Maven](Build%20Tools/Lab1/README.md) | ⬜ Not started |
-| 2 | Build Tools | [Building and Packaging a Java App with Gradle](Build%20Tools/Lab2/README.md) | ⬜ Not started |
-| 3 | Docker | [Creating a Docker Image for a Java Application](Docker/Lab3/README.md) | ⬜ Not started |
+---
 
-Mark a lab ✅ Done when its README is complete and committed.
+## 👤 About
 
-## Structure
+| | |
+|---|---|
+| **Name** | Eslam Nabawy |
+| **Program** | iVolve Technologies — DevOps Training |
+| **GitHub** | [@EslamNabawy](https://github.com/EslamNabawy) |
+| **Email** | eslamlef.308@gmail.com |
+| **Repository** | [iVolve-Tasks](https://github.com/EslamNabawy/iVolve-Tasks) |
+| **Environment** | Ubuntu 24.04 LTS on WSL2 · Java 17 · Maven · Gradle · Docker |
+
+---
+
+## 🎯 What this repository is
+
+Every lab in this training answers one question: **how does source code become
+something you can actually ship?**
 
 ```
-iVolve-Tasks
-├── Build Tools/   Lab1, Lab2
-├── Docker/        Lab3
-├── Kubernetes/    (upcoming)
-├── Jenkins/       (upcoming)
-├── ArgoCD/        (upcoming)
-├── Ansible/       (upcoming)
-├── GUIDE.md
-└── README.md
+📄 Source code  →  🔧 Build tool  →  📦 Artifact  →  🐳 Image  →  ☸️ Running
+   .java files      Maven/Gradle     calculator.jar   Docker      Kubernetes
+                     Labs 1 & 2                        Lab 3        (later)
 ```
 
-## Application under test
+Each stage consumes the previous one's output. **Labs 1 and 2 build the same
+application with two different tools** so the app is held constant and the
+*tooling* is the only variable. **Lab 3 takes Lab 1's jar** and packages it with
+its own Java runtime, so it runs anywhere Docker runs.
 
-Labs 1–3 all build the same program:
+Every lab folder holds the files I authored plus a write-up with the real
+terminal output and an explanation of *why*, not just *what*.
 
-- [CalculatorMavenApp](https://github.com/Ibrahim-Adel15/CalculatorMavenApp)
-- [CalculatorGradleApp](https://github.com/Ibrahim-Adel15/CalculatorGradleApp)
+> **The app:** an interactive command-line calculator (Java 17). It reads two
+> numbers from stdin and prints sum, difference, product and quotient. It is
+> **not** a web service — nothing listens on a port, which is why Lab 3's
+> `EXPOSE 8080` is inert and `docker run -i` is mandatory.
 
-An interactive CLI calculator (Java 17): it reads two numbers from stdin and prints sum, difference, product and quotient. It is **not** a web service — nothing listens on a port.
+---
 
-## Environment
+## 📋 Progress
 
-Ubuntu 24.04.4 LTS on WSL2 · Java 17 · Maven · Gradle · Docker 29.1.3 · kubectl + kind · Helm · Ansible
+| # | Track | Lab | Deliverable | Status |
+|:-:|---|---|---|:-:|
+| 1 | Build Tools | [Packaging with **Maven**](Build%20Tools/Lab1/README.md) | `target/calculator.jar` | ✅ |
+| 2 | Build Tools | [Packaging with **Gradle**](Build%20Tools/Lab2/README.md) | `build/libs/calculator.jar` | ✅ |
+| 3 | Docker | [**Containerizing** the app](Docker/Lab3/README.md) | `app1` · `app2` · `app3` | ✅ |
+
+### ✅ To-do
+
+**Done**
+- [x] **Lab 1 — Maven** · 5/5 tests pass · `target/calculator.jar` (3.7 KB) · verified
+- [x] **Lab 2 — Gradle** · 5/5 tests pass · `build/libs/calculator.jar` (2.3 KB) · verified
+- [x] **Lab 3 — Docker** · `app1` 861 MB vs `app2` 265 MB · non-root confirmed · cleaned up
+- [x] **Bonus** — multi-stage build (`app3`, 265 MB) explaining the size gap
+
+**Next**
+- [ ] ☸️ **Kubernetes** — deploy the Lab 3 image to a cluster
+- [ ] 🔧 **Jenkins** — automate Labs 1–3 as a pipeline
+- [ ] 🔄 **ArgoCD** — GitOps sync from this repository
+- [ ] ⚙️ **Ansible** — provision the machines everything runs on
+
+---
+
+## 📊 Headline results
+
+<div align="center">
+
+| | Lab 1 · Maven | Lab 2 · Gradle |
+|---|:-:|:-:|
+| Tests | **5 passed** | **5 passed** |
+| Artifact | `target/calculator.jar` | `build/libs/calculator.jar` |
+| Size | 3.7 KB | 2.3 KB |
+| Rebuild | redoes everything | **7 of 8 tasks `UP-TO-DATE`** |
+
+| Lab 3 · Image | Build location | Size | Reproducible |
+|---|:-:|:-:|:-:|
+| `app1` | inside Docker | **861 MB** | ✅ |
+| `app2` | on the host | **265 MB** | ❌ |
+| `app3` 🏆 | multi-stage | **265 MB** | ✅ |
+
+**`app1` is 3.25× larger — 596 MB of build tooling that runtime never needs.**
+
+</div>
+
+---
+
+## 📁 Structure
+
+```
+DevOps-Labs
+├── 📁 Build Tools
+│   ├── 📁 Lab1          commands.sh · README.md
+│   └── 📁 Lab2          commands.sh · README.md
+├── 📁 Docker
+│   └── 📁 Lab3          Dockerfile.app1 · Dockerfile.app2
+│                        Dockerfile.multistage · .dockerignore · README.md
+└── 📄 README.md
+```
+
+Upstream application source is cloned to `~/labs-workspace/` and **never
+committed** — this repository contains only work I authored.
+
+---
+
+## ⚡ Quick start
+
+> **These labs require Linux.** Docker needs a Linux kernel; Windows CMD or
+> PowerShell alone cannot run them. Use **WSL2** (`wsl --install`), a native
+> Linux install, or a VM. On WSL keep projects under `/home/<you>`, never
+> `/mnt/c` — builds there run 5–20× slower.
+
+```bash
+sudo apt update && sudo apt install -y openjdk-17-jdk maven
+```
+
+```bash
+git clone https://github.com/EslamNabawy/iVolve-Tasks.git && cd iVolve-Tasks
+```
+
+Then follow any lab's README, or run its `commands.sh` end to end.
+
+---
+
+<div align="center">
+
+**Eslam Nabawy** · iVolve DevOps Training · October 2026
+
+</div>

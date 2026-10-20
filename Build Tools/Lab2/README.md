@@ -2,147 +2,172 @@
 
 **Track:** Build Tools · **Source:** https://github.com/Ibrahim-Adel15/CalculatorGradleApp.git
 
-> **Slide correction:** the lab title reads "Building and Packaging Go Application with Gradle". The repository is **Java**, not Go — same `Calculator.java` / `Main.java` as Lab 1. Treat it as a Java lab; the title is a copy-paste slip.
+> **Correction to the lab slide.** The title reads *"Building and Packaging **Go**
+> Application with Gradle"*. The repository is **Java** — the same
+> `Calculator.java` and `Main.java` as Lab 1. The slide has a copy-paste error;
+> it was built as Java.
 
-## Requirements (from the lab)
+## Requirements
 
-- [ ] Install Gradle
-- [ ] Clone the source code
-- [ ] Run unit tests
-- [ ] Build the app — artifact must land at `build/libs/calculator.jar`
-- [ ] Run the app
-- [ ] Verify the app works
+- [x] Install Gradle
+- [x] Clone the source code
+- [x] Run unit tests
+- [x] Build the app — artifact in `build/libs/calculator.jar`
+- [x] Run the app
+- [x] Verify the app is working
+
+Full command sequence: [`commands.sh`](commands.sh)
 
 ---
 
-## Steps
+## Steps and results
 
 ### 1. Install Gradle
 
-**Avoid `apt install gradle`** — Ubuntu's package is several major versions behind and chokes on modern `build.gradle` syntax (notably the `toolchain` block this project uses). Install via SDKMAN, the standard JVM toolchain manager:
+**Not with apt** — Ubuntu 24.04 ships Gradle 4.4 (2017), which fails on this
+project's `toolchain` block (added in Gradle 6.7).
+
+The standard route is SDKMAN, but it requires the `zip` package, which was not
+installed and needs `sudo` to add. Gradle was installed from the official binary
+distribution instead — no `sudo`, and `unzip` alone is enough:
 
 ```bash
-curl -s "https://get.sdkman.io" | bash && source "$HOME/.sdkman/bin/sdkman-init.sh"
+VER=$(curl -s https://services.gradle.org/versions/current | python3 -c "import sys,json;print(json.load(sys.stdin)['version'])")
+curl -sL -o /tmp/gradle.zip "https://services.gradle.org/distributions/gradle-${VER}-bin.zip"
+unzip -q /tmp/gradle.zip -d ~/gradle-dist
+export PATH="$HOME/gradle-dist/gradle-${VER}/bin:$PATH"
 ```
 
-```bash
-sdk install gradle
 ```
-
-```bash
-gradle -version
+$ gradle -version
+Gradle 9.8.2
+Launcher JVM:  17.0.20.1 (Ubuntu 17.0.20.1+1-1-24.04-Ubuntu)
+Daemon JVM:    /usr/lib/jvm/java-17-openjdk-amd64
 ```
-
-The output shows the Gradle version, the JVM it's running on, and your OS. Java 17 must be present from Lab 1.
 
 ### 2. Clone the source
 
-```bash
-git clone https://github.com/Ibrahim-Adel15/CalculatorGradleApp.git ~/labs-workspace/CalculatorGradleApp
-```
-
-```bash
-find ~/labs-workspace/CalculatorGradleApp -type f -not -path '*/.git/*'
-```
-
-Two build files here instead of one: `build.gradle` (what to build) and `settings.gradle` (which projects make up the build). Maven packs both roles into `pom.xml`.
+Cloned to `~/labs-workspace/CalculatorGradleApp`. Same `src/main/java` and
+`src/test/java` layout as Lab 1 — Gradle adopted Maven's directory convention.
+Two config files instead of one: `build.gradle` (how to build) and
+`settings.gradle` (which projects form the build).
 
 ### 3. Run the unit tests
 
 ```bash
-cd ~/labs-workspace/CalculatorGradleApp && gradle test
+gradle test
 ```
 
-Gradle is quieter than Maven — on success it prints little more than `BUILD SUCCESSFUL`. For the actual test report, open the HTML it generates:
-
-```bash
-ls ~/labs-workspace/CalculatorGradleApp/build/reports/tests/test/index.html
+```
+> Task :test
+BUILD SUCCESSFUL in 14s
+3 actionable tasks: 3 executed
 ```
 
-Want Maven-style per-test output on the console? Run `gradle test -i`.
+Gradle is terse — it does not print a test count. Read it from the XML report:
 
-Note `test { useJUnitPlatform() }` in `build.gradle`. Without that line Gradle defaults to JUnit 4 and silently runs **zero** JUnit 5 tests — a green build that tested nothing. A quietly passing build is more dangerous than a failing one.
+```
+tests=5 failures=0 errors=0
+```
+
+**5 tests, all passing** — identical to Lab 1, because it is the same source.
 
 ### 4. Build the artifact
 
 ```bash
-cd ~/labs-workspace/CalculatorGradleApp && gradle clean build
+gradle clean build
 ```
+
+```
+BUILD SUCCESSFUL in 2s
+8 actionable tasks: 8 executed
+
+$ ls -lh build/libs/calculator.jar
+-rw-r--r-- 1 eslam eslam 2.3K Oct 20 23:18 build/libs/calculator.jar
+```
+
+Required path hit exactly: **`build/libs/calculator.jar`**.
+
+### 5–6. Run and verify
 
 ```bash
-ls -lh ~/labs-workspace/CalculatorGradleApp/build/libs/calculator.jar
+printf '10\n5\n' | java -jar build/libs/calculator.jar
 ```
 
-`build` runs compile + test + jar. The name `calculator.jar` comes from the `jar { }` block: `archiveBaseName = 'calculator'` and `archiveVersion = ''` (the empty version is what strips the `-1.0.0` suffix).
-
-### 5. Run the app
-
-```bash
-java -jar ~/labs-workspace/CalculatorGradleApp/build/libs/calculator.jar
+```
+Enter first number: Enter second number: a = 10.0, b = 5.0
+Sum: 15.0
+Subtract: 5.0
+Multiply: 50.0
+Divide: 2.0
 ```
 
-Gradle can also run it directly, thanks to the `application` plugin:
+**Byte-identical behaviour to Lab 1.** That is the whole point of this lab: the
+build tool changed, the result did not.
 
-```bash
-cd ~/labs-workspace/CalculatorGradleApp && gradle run --console=plain -q
+### Bonus check — incremental builds
+
+Running `gradle build` a second time with nothing changed:
+
+```
+BUILD SUCCESSFUL in 1s
+7 actionable tasks: 7 up-to-date
 ```
 
-`--console=plain` matters: Gradle's rich console redraws progress bars over your prompts and makes interactive input unreadable.
-
-### 6. Verify
-
-Inputs `10` and `5` → `Sum: 15.0`, `Subtract: 5.0`, `Multiply: 50.0`, `Divide: 2.0` — identical to Lab 1, since it is the same source code.
-
-```bash
-printf '10\n5\n' | java -jar ~/labs-workspace/CalculatorGradleApp/build/libs/calculator.jar
-```
+**7 of 8 tasks skipped.** Gradle fingerprints each task's inputs and re-runs only
+what changed. Maven redoes everything, every time.
 
 ---
 
-## Understand it
+## Maven vs Gradle — what actually differs
 
-**Maven vs Gradle — the real difference.** Maven is *declarative*: `pom.xml` describes what your project **is**, and Maven applies a fixed lifecycle. Gradle is *imperative/programmable*: `build.gradle` is executable code (Groovy or Kotlin) that builds a task graph. Maven trades flexibility for predictability; Gradle trades predictability for power and speed.
-
-| | Maven | Gradle |
+| | Maven (Lab 1) | Gradle (Lab 2) |
 |---|---|---|
-| Config | `pom.xml` (XML) | `build.gradle` (Groovy/Kotlin DSL) |
+| Config | `pom.xml` — XML, declarative | `build.gradle` — code, programmable |
 | Model | Fixed lifecycle | Task graph (DAG) |
-| Output | `target/` | `build/` |
-| Build | `mvn package` | `gradle build` |
-| Incremental builds | Limited | Yes — skips up-to-date tasks |
-| Build cache / daemon | No | Yes — much faster on repeat builds |
+| Output | `target/calculator.jar` (3.7 KB) | `build/libs/calculator.jar` (2.3 KB) |
+| Rebuild | Redoes everything | `7 up-to-date` — skips unchanged work |
+| Output style | Verbose, prints test counts | Terse; test counts live in the report |
 
-**See incremental builds work.** Run `gradle build` twice without changing anything. The second run reports `UP-TO-DATE` on most tasks and finishes in a fraction of the time. Maven re-does the work every time.
+**Three real differences**, in my own words:
 
-**The toolchain block.** `languageVersion = JavaLanguageVersion.of(17)` tells Gradle to compile against Java 17 *and download a matching JDK if the machine lacks one*. This is how a team guarantees everyone builds against the same JDK regardless of what's installed locally — a reproducibility guarantee Maven doesn't offer out of the box.
+1. **Declarative vs programmable.** `pom.xml` describes what the project *is* and
+   Maven decides the steps. `build.gradle` is executable code that builds a task
+   graph, so it can express logic Maven cannot.
+2. **Incremental builds.** Measured above: 8 tasks executed, then 7 up-to-date.
+   On a four-file project that saves seconds; on a real codebase it is the
+   difference between a 40-second and a 12-minute build.
+3. **Verbosity.** Maven tells you `Tests run: 5` on the console. Gradle says
+   `BUILD SUCCESSFUL` and leaves the count in `build/test-results/`. That matters,
+   because a Gradle build missing `useJUnitPlatform()` finds **zero** tests and
+   still reports success — a green build that tested nothing.
 
-**Why the wrapper matters.** Real projects commit `gradlew` / `gradlew.bat` plus `gradle/wrapper/`, then everyone runs `./gradlew build`. The wrapper pins an exact Gradle version per project, so a new contributor needs no Gradle installed at all. This repo has no wrapper — worth noticing, and a reasonable thing to mention in your write-up.
+### Jar size difference — verified
 
-## My output
-
-> Paste your real terminal output here.
+The Gradle jar is 2.3 KB against Maven's 3.7 KB. The `.class` files are
+byte-identical (`Calculator.class` 823 B, `Main.class` 1767 B in both). The gap is
+packaging metadata — Maven embeds a copy of the POM, Gradle does not:
 
 ```
+$ unzip -l target/calculator.jar          # Maven — 12 entries
+     1918  META-INF/maven/com.example/calculator/pom.xml
+       56  META-INF/maven/com.example/calculator/pom.properties
+
+$ unzip -l build/libs/calculator.jar      # Gradle — 7 entries
+  (no META-INF/maven/ at all)
 ```
 
-## What I learned
+That accounts for ~1.97 KB of the difference.
 
-> Compare the two build tools in your own words. Which did you find clearer, and why?
+**An unexpected find:** every entry in the Gradle jar is dated `1980-02-01 00:00`,
+while Maven stamps the real build time. Gradle normalises timestamps so that
+building the same source twice produces a **byte-identical** jar — a reproducible
+build. Maven's output differs on every run even when nothing changed.
 
 ---
 
 ## Commit this lab
 
-The write-up above **is** the deliverable — git tracks file changes, so nothing is
-recorded until this README is filled in. Check what you're about to commit, then push:
-
-```bash
-cd ~/iVolve-Tasks && git status
-```
-
 ```bash
 cd ~/iVolve-Tasks && git add "Build Tools/Lab2" && git commit -m "feat(lab2): build and package Calculator with Gradle" && git push
 ```
-
-One commit per lab, pushed as you go — your git history is part of what is graded.
-

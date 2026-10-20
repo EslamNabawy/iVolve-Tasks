@@ -1,0 +1,7 @@
+# One build context serves all three Dockerfiles, so src/ must stay IN:
+# app1 and the multi-stage build compile from it. Only exclude what no
+# build needs, plus target/ except the finished jar that app2 copies.
+.git/
+target/*
+!target/calculator.jar
+.dockerignore

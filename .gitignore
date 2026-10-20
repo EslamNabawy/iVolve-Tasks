@@ -1,36 +1,36 @@
-# Build output
+# ── Build output ───────────────────────────────────────────────
 target/
 build/
 *.jar
 *.war
 *.class
 
-# Build tool caches
+# ── Build-tool caches ──────────────────────────────────────────
 .gradle/
 .m2/
-.mvn/
 
-# Cloned upstream source — keep clones in ~/labs-workspace, not in this repo
+# ── Cloned upstream source ─────────────────────────────────────
+# App code is cloned to ~/labs-workspace, never committed here.
 CalculatorMavenApp/
 CalculatorGradleApp/
 
-# IDE
+# ── Local-only working files (kept on disk, out of the repo) ───
+GUIDE.md
+LABS-COMPLETE-GUIDE.md
+RUNBOOK.md
+pdf-kit/
+shots/
+*.pdf
+
+# ── IDE / OS ───────────────────────────────────────────────────
 .idea/
 .vscode/
 *.iml
-
-# OS
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# Secrets — never commit these
+# ── Secrets ────────────────────────────────────────────────────
 *.pem
 *.key
 .env
-
-# Study guide PDF — kept locally, not in the repo
-*.pdf
-
-# Screenshots produced by shot.sh — regenerate, do not commit
-shots/

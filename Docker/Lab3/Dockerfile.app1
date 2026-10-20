@@ -1,0 +1,25 @@
+# Lab 3 Part 1 — build INSIDE the container.
+# The host needs only Docker: no Java, no Maven.
+FROM maven:3.9-eclipse-temurin-17
+
+WORKDIR /app
+
+# Non-root user, created now; we switch to it after the build.
+RUN useradd --create-home --shell /bin/bash appuser
+
+# Dependencies first: this layer stays cached unless pom.xml changes.
+COPY pom.xml .
+RUN mvn -B dependency:go-offline
+
+# Source second: editing a .java file invalidates only from here down.
+COPY src ./src
+RUN mvn -B clean package
+
+# Hand the build output over, then drop privileges.
+RUN chown -R appuser:appuser /app
+USER appuser
+
+# Metadata only — this app reads stdin and listens on no port.
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "/app/target/calculator.jar"]

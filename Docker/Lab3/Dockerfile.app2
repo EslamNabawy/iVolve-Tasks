@@ -1,0 +1,17 @@
+# Lab 3 Part 2 — build on the HOST, ship only the finished JAR.
+# Requires: mvn clean package to have been run first.
+FROM eclipse-temurin:17-jre-alpine
+
+WORKDIR /app
+
+# Alpine uses BusyBox adduser, not useradd.
+RUN adduser -D -h /home/appuser appuser
+
+# --chown sets ownership during the copy, avoiding an extra layer.
+COPY --chown=appuser:appuser target/calculator.jar /app/calculator.jar
+
+USER appuser
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "/app/calculator.jar"]

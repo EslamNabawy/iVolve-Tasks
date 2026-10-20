@@ -91,7 +91,7 @@ cd ~/labs-workspace/CalculatorGradleApp && gradle run --console=plain -q
 
 ### 6. Verify
 
-Inputs `10` and `5` → `Sum: 15.0`, `Subtract: 5.0`, `Multiply: 2.0`, `Divide: 2.0` — identical to Lab 1, since it is the same source code.
+Inputs `10` and `5` → `Sum: 15.0`, `Subtract: 5.0`, `Multiply: 50.0`, `Divide: 2.0` — identical to Lab 1, since it is the same source code.
 
 ```bash
 printf '10\n5\n' | java -jar ~/labs-workspace/CalculatorGradleApp/build/libs/calculator.jar

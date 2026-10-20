@@ -4,12 +4,12 @@
 
 ## Requirements (from the lab)
 
-- [ ] Install Java and Maven
-- [ ] Clone the source code
-- [ ] Run unit tests
-- [ ] Build the app — artifact must land at `target/calculator.jar`
-- [ ] Run the app
-- [ ] Verify the app works
+- [x] Install Java and Maven
+- [x] Clone the source code
+- [x] Run unit tests
+- [x] Build the app — artifact must land at `target/calculator.jar`
+- [x] Run the app
+- [x] Verify the app works
 
 ---
 
@@ -83,7 +83,7 @@ With inputs `10` and `5`, expect:
 a = 10.0, b = 5.0
 Sum: 15.0
 Subtract: 5.0
-Multiply: 2.0
+Multiply: 50.0
 Divide: 2.0
 ```
 
@@ -111,9 +111,59 @@ Remove that plugin config and you get "no main manifest attribute".
 
 ## My output
 
-> Paste your real terminal output here — `mvn test` results, `ls -lh target/`, and the app run. Evidence of the work is the point of the write-up.
+**Toolchain**
 
 ```
+$ java -version
+openjdk version "17.0.20.1" 2026-08-18
+OpenJDK Runtime Environment (build 17.0.20.1+1-1-24.04-Ubuntu)
+OpenJDK 64-Bit Server VM (build 17.0.20.1+1-1-24.04-Ubuntu, mixed mode, sharing)
+
+$ mvn -version
+Apache Maven 3.8.7
+Maven home: /usr/share/maven
+Java version: 17.0.20.1, vendor: Ubuntu, runtime: /usr/lib/jvm/java-17-openjdk-amd64
+OS name: "linux", version: "6.18.33.2-microsoft-standard-wsl2", arch: "amd64", family: "unix"
+```
+
+**Build**
+
+```
+$ mvn clean package
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  16.509 s
+[INFO] Finished at: 2026-10-20T17:12:07+03:00
+[INFO] ------------------------------------------------------------------------
+
+$ ls -lh target/calculator.jar
+-rw-r--r-- 1 eslam eslam 3.7K Oct 20 17:12 target/calculator.jar
+```
+
+<!-- TODO: paste the `mvn test` summary line here — the "Tests run: N, Failures: 0, Errors: 0" line -->
+
+**Run and verify**
+
+```
+$ java -jar target/calculator.jar
+Enter first number: 10
+Enter second number: 5
+a = 10.0, b = 5.0
+Sum: 15.0
+Subtract: 5.0
+Multiply: 50.0
+Divide: 2.0
+```
+
+**Manifest — why `java -jar` works**
+
+```
+$ unzip -p target/calculator.jar META-INF/MANIFEST.MF
+Manifest-Version: 1.0
+Created-By: Maven JAR Plugin 3.4.1
+Build-Jdk-Spec: 17
+Main-Class: com.example.calculator.Main
 ```
 
 ## What I learned

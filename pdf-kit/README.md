@@ -11,11 +11,13 @@ it renders hand-authored HTML through Windows Chrome via WSL interop.
 | `build.sh` | `./build.sh input.html [output.pdf]` — renders the PDF. |
 | `measure.py` | `python3 -I measure.py input.html` — flags overfull pages. |
 | `shot.sh` | `./shot.sh input.html [pages...]` — renders pages to PNG for visual review. |
+| `checkcopy.py` | `python3 -I checkcopy.py input.html` — flags commands that wrap and paste broken. |
 
 ## Quick start
 
 ```bash
 python3 -I measure.py labs-1-3.html     # trim until "All pages fit."
+python3 -I checkcopy.py labs-1-3.html   # no command may soft-wrap
 ./shot.sh labs-1-3.html                 # then LOOK at every page
 ./build.sh labs-1-3.html "iVolve-Labs-1-3-StudyGuide.pdf"
 ```

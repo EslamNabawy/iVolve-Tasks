@@ -26,6 +26,39 @@ mkdir -p ~/labs-workspace
 
 ---
 
+## 0b. You need Linux — WSL2, a real install, or a VM
+
+Every command in this runbook is Linux, and **Docker requires a Linux kernel**.
+Windows CMD or PowerShell on their own cannot run any of it.
+
+| Option | Who it suits | Setup |
+|---|---|---|
+| **WSL2** on Windows | Recommended — what this repo uses | `wsl --install` in **PowerShell as Administrator**, then reboot |
+| **Native Linux** | A spare machine or dual boot | Any Ubuntu 22.04+ / Fedora / Debian |
+| **VM** (VirtualBox, VMware, Hyper-V) | Keeping it isolated from your host | Install Ubuntu Desktop/Server in the VM |
+
+Verify you are actually inside Linux before starting:
+
+```bash
+uname -a && cat /etc/os-release | head -2
+```
+
+Expect `Linux` and your distribution. On WSL the kernel string also contains
+`microsoft-standard-WSL2`.
+
+> **On WSL, keep every project under `/home/<you>`, never `/mnt/c`.** Files on the
+> Windows drive cross a filesystem bridge: builds run **5–20× slower**, and Linux
+> permissions (the executable bit that `mvnw`/`gradlew` need) are not stored
+> faithfully. Your repo at `~/iVolve-Tasks` is correct.
+
+Open the repo in VS Code from inside WSL:
+
+```bash
+code ~/iVolve-Tasks
+```
+
+---
+
 ## 1. Environment setup (one time)
 
 | Command | What it does |

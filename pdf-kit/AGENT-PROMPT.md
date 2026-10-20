@@ -25,6 +25,9 @@ matching the existing one exactly in design, tone and structure.
 - Fit: `python3 -I measure.py labs-<<N-M>>.html` — **iterate until it prints
   "All pages fit."** A page that overflows is silently clipped; content is lost with
   no error.
+- Commands must be copyable: `python3 -I checkcopy.py labs-<<N-M>>.html` must report
+  none wrapped. A wrapped line pastes as two broken halves. Sample output belongs in
+  `<pre class="out">`, never in a command block, and never prefix a command with `$`.
 - **Then look at EVERY page:** `./shot.sh labs-<<N-M>>.html`, and open each PNG with
   the Read tool. Measuring proves a page fits, not that it reads. This guide shipped
   twice with a layout bug on five pages because only three were spot-checked.

@@ -39,6 +39,7 @@ touches must be staged under `/mnt/c/...` and passed as a `file:///C:/...` URL.
 | `build.sh` | Renders HTML → PDF. `./build.sh input.html [output.pdf]` |
 | `measure.py` | Reports how full each page is. Catches clipping. |
 | `shot.sh` | Renders pages to PNG so you can **look** at them. Catches everything else. |
+| `checkcopy.py` | Flags code lines that soft-wrap — i.e. commands that paste broken. |
 | `AGENT-PROMPT.md` | Ready-to-paste prompt for a future agent. |
 
 ---
@@ -76,10 +77,13 @@ python3 -I measure.py labs-1-3.html
 
 # 2. trim any page marked OVER, then re-measure. repeat until "All pages fit."
 
-# 3. LOOK at every page
+# 3. commands must be copy-safe
+python3 -I checkcopy.py labs-1-3.html
+
+# 4. LOOK at every page
 ./shot.sh labs-1-3.html
 
-# 4. render
+# 5. render
 ./build.sh labs-1-3.html "iVolve-Labs-1-3-StudyGuide.pdf"
 ```
 
@@ -157,6 +161,31 @@ must not break:
 Reserve flex for genuine side-by-side **boxes** (`.goal`, `.grid`, `.flow`, `.anno`),
 never for a sentence.
 
+### Pitfall 5 — a wrapped command is a command nobody can copy
+
+`pre` uses `white-space:pre-wrap`, so an over-long line still *looks* fine — it
+just wraps. But selecting it in a PDF yields a **newline in the middle of the
+command**, and pasting it runs two broken halves.
+
+Run `python3 -I checkcopy.py <file>` — it compares each block's rendered height to
+its logical line count and names any that wrap. Fix by shortening the line or
+breaking it yourself with a trailing `\`:
+
+```
+git clone https://github.com/Ibrahim-Adel15/CalculatorMavenApp.git \
+  ~/labs-workspace/CalculatorMavenApp
+```
+
+Budget: about **95 characters** in a full-width `pre`, about **50** inside `.anno .ac`
+(which is 52% width).
+
+**Keep transcripts out of command blocks.** Sample output goes in `<pre class="out">`
+— amber rail, "OUTPUT" label — so nobody pastes a program's output into a shell.
+Never prefix a command with `$`: it is not copyable.
+
+Avoid decorative glyphs inside `pre` (`⏎`, `↵`). They cannot be typed and corrupt a
+paste. Write "press Enter".
+
 ### Pitfall 4 — `overflow:hidden` does not round a table
 
 This looks like it should work, and does not:
@@ -215,6 +244,7 @@ Defined once in `:root`. Do not introduce new colours.
 |---|---|
 | `.ph` | Page header — badge + title |
 | `.ctx` | Context strip: this lab's IN → OUT and which lab consumes it |
+| `pre.out` | A transcript, not a command — amber rail + "OUTPUT" label |
 | `.goal` | Two-pane panel: 🎯 Goal (blue) + ✅ Done when (green, `.chk` list) |
 | `.box .why` | Blue — why a thing exists |
 | `.box .key` | Green — the insight to remember |

@@ -157,6 +157,35 @@ must not break:
 Reserve flex for genuine side-by-side **boxes** (`.goal`, `.grid`, `.flow`, `.anno`),
 never for a sentence.
 
+### Pitfall 4 — `overflow:hidden` does not round a table
+
+This looks like it should work, and does not:
+
+```css
+table { border-radius:8px; overflow:hidden; }   /* corners stay SHARP */
+```
+
+`overflow` is not reliably honoured on `display:table` in print rendering. The
+table's own border curves, but the `<th>` background paints straight over the
+corners — so some tables looked rounded and others sharp, depending on whether the
+corner cell had a background.
+
+**Round the corner cells themselves:**
+
+```css
+table { border-collapse:separate; border-spacing:0; border-radius:var(--r); }
+thead tr:first-child th:first-child { border-top-left-radius:  calc(var(--r) - 1px); }
+thead tr:first-child th:last-child  { border-top-right-radius: calc(var(--r) - 1px); }
+tbody tr:last-child  td:first-child { border-bottom-left-radius: calc(var(--r) - 1px); }
+tbody tr:last-child  td:last-child  { border-bottom-right-radius:calc(var(--r) - 1px); }
+```
+
+`border-collapse:separate` is required — with `collapse`, cell radii are ignored.
+The `- 1px` accounts for the table's own 1px border so the curves sit flush.
+
+**Never hard-code a radius.** Use `var(--r)` / `var(--r-sm)`. The guide drifted to six
+different values (3, 4, 5, 6, 7, 8px) before this was caught.
+
 ### Pitfall 3 — do not describe output you have not seen
 
 The app prints four separate lines. The guide showed them compressed into two
@@ -177,6 +206,8 @@ Defined once in `:root`. Do not introduce new colours.
 | `--red` | `#BE123C` | Traps |
 | `--amber` | `#B45309` | Warnings, slide errors |
 | `--code` | `#16233A` | Code block background |
+| `--r` | `8px` | Corner radius for **every container**: tables, boxes, cards, `pre`, `.goal`, `.ctx`, `.fbox` |
+| `--r-sm` | `4px` | Corner radius for inline chips: `code`, `.pill`, `.tag`, `.ph .n` |
 
 ### Components
 

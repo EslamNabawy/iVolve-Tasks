@@ -169,3 +169,21 @@ Main-Class: com.example.calculator.Main
 ## What I learned
 
 > 2–4 sentences in your own words. What surprised you? What broke?
+
+---
+
+## Commit this lab
+
+The write-up above **is** the deliverable — git tracks file changes, so nothing is
+recorded until this README is filled in. Check what you're about to commit, then push:
+
+```bash
+cd ~/iVolve-Tasks && git status
+```
+
+```bash
+cd ~/iVolve-Tasks && git add "Build Tools/Lab1" && git commit -m "feat(lab1): build and package Calculator with Maven" && git push
+```
+
+One commit per lab, pushed as you go — your git history is part of what is graded.
+

@@ -128,3 +128,21 @@ printf '10\n5\n' | java -jar ~/labs-workspace/CalculatorGradleApp/build/libs/cal
 ## What I learned
 
 > Compare the two build tools in your own words. Which did you find clearer, and why?
+
+---
+
+## Commit this lab
+
+The write-up above **is** the deliverable — git tracks file changes, so nothing is
+recorded until this README is filled in. Check what you're about to commit, then push:
+
+```bash
+cd ~/iVolve-Tasks && git status
+```
+
+```bash
+cd ~/iVolve-Tasks && git add "Build Tools/Lab2" && git commit -m "feat(lab2): build and package Calculator with Gradle" && git push
+```
+
+One commit per lab, pushed as you go — your git history is part of what is graded.
+

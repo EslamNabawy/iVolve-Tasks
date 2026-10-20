@@ -278,3 +278,21 @@ cp ~/labs-workspace/CalculatorMavenApp/Dockerfile.app1 ~/labs-workspace/Calculat
 ## What I learned
 
 > Answer the bonus in your own words. Did you hit the `-i` stdin problem? The `USER`-too-early permission failure?
+
+---
+
+## Commit this lab
+
+The write-up above **is** the deliverable — git tracks file changes, so nothing is
+recorded until this README is filled in. Check what you're about to commit, then push:
+
+```bash
+cd ~/iVolve-Tasks && git status
+```
+
+```bash
+cd ~/iVolve-Tasks && git add Docker/Lab3 && git commit -m "feat(lab3): add Dockerfiles for app1, app2 and multi-stage build" && git push
+```
+
+One commit per lab, pushed as you go — your git history is part of what is graded.
+

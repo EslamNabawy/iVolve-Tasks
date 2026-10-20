@@ -4,7 +4,7 @@ Hands-on labs from the iVolve DevOps training track. Each lab folder contains th
 
 **Start here:** [GUIDE.md](GUIDE.md) — environment setup (WSL2 / Ubuntu 24.04), Git & GitHub configuration, lab workflow and core concepts.
 
-**Full technical guide:** [LABS-COMPLETE-GUIDE.md](LABS-COMPLETE-GUIDE.md) — every lab explained step by step, every tool and flag, with comparison tables, troubleshooting and a glossary. Also available as a 19-page PDF: [iVolve-Labs-1-3-Guide.pdf](iVolve-Labs-1-3-Guide.pdf).
+**Full technical guide:** [LABS-COMPLETE-GUIDE.md](LABS-COMPLETE-GUIDE.md) — every lab explained step by step, every tool and flag, with comparison tables, troubleshooting and a glossary..
 
 ## Progress
 

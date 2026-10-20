@@ -28,3 +28,6 @@ desktop.ini
 *.pem
 *.key
 .env
+
+# Study guide PDF — kept locally, not in the repo
+*.pdf

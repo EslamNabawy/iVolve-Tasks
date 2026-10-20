@@ -1,0 +1,30 @@
+# Build output
+target/
+build/
+*.jar
+*.war
+*.class
+
+# Build tool caches
+.gradle/
+.m2/
+.mvn/
+
+# Cloned upstream source — keep clones in ~/labs-workspace, not in this repo
+CalculatorMavenApp/
+CalculatorGradleApp/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Secrets — never commit these
+*.pem
+*.key
+.env

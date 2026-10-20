@@ -31,3 +31,6 @@ desktop.ini
 
 # Study guide PDF — kept locally, not in the repo
 *.pdf
+
+# Screenshots produced by shot.sh — regenerate, do not commit
+shots/

@@ -37,7 +37,8 @@ touches must be staged under `/mnt/c/...` and passed as a `file:///C:/...` URL.
 |---|---|
 | `labs-1-3.html` | The reference guide. **Copy its `<style>` block verbatim** for new guides. |
 | `build.sh` | Renders HTML → PDF. `./build.sh input.html [output.pdf]` |
-| `measure.py` | Reports how full each page is. **The critical tool.** |
+| `measure.py` | Reports how full each page is. Catches clipping. |
+| `shot.sh` | Renders pages to PNG so you can **look** at them. Catches everything else. |
 | `AGENT-PROMPT.md` | Ready-to-paste prompt for a future agent. |
 
 ---
@@ -70,12 +71,15 @@ pages overflowed.
 ## 4. The build loop
 
 ```bash
-# 1. measure (staging dir must be under /mnt/c)
-python3 -I measure.py labs-1-3.html "/mnt/c/Users/eslam/AppData/Local/Temp/pdfkit"
+# 1. measure — staging dir is auto-detected
+python3 -I measure.py labs-1-3.html
 
-# 2. trim any page marked OVER, then re-measure. repeat.
+# 2. trim any page marked OVER, then re-measure. repeat until "All pages fit."
 
-# 3. render
+# 3. LOOK at every page
+./shot.sh labs-1-3.html
+
+# 4. render
 ./build.sh labs-1-3.html "iVolve-Labs-1-3-StudyGuide.pdf"
 ```
 
@@ -87,23 +91,77 @@ python3 -I measure.py labs-1-3.html "/mnt/c/Users/eslam/AppData/Local/Temp/pdfki
 4. Last resort: tighten CSS (`.box` padding, `p` margins, `pre` line-height).
    Changing CSS affects **every** page, so re-measure all of them.
 
-### Verify visually before delivering
+### Verify visually before delivering — not optional
 
-Measuring proves it fits; it does not prove it looks right. Render single pages
-to PNG and actually look at them:
+Measuring proves a page **fits**. It does not prove it **reads**. A page can measure
+perfectly and still be unusable (see Pitfall 2 below). Render and look:
 
 ```bash
-python3 -I -c "
-s=open('labs-1-3.html',encoding='utf-8').read()
-css='<style>.page{display:none!important}.page:nth-of-type(4){display:block!important}</style>'
-open('/mnt/c/Users/eslam/AppData/Local/Temp/p4.html','w',encoding='utf-8').write(s.replace('</head>',css+'</head>'))"
-
-"/mnt/c/Program Files/Google/Chrome/Application/chrome.exe" --headless --disable-gpu \
-  --window-size=794,1123 --screenshot="C:\Users\eslam\AppData\Local\Temp\p4.png" \
-  "file:///C:/Users/eslam/AppData/Local/Temp/p4.html"
+./shot.sh labs-1-3.html          # every page
+./shot.sh labs-1-3.html 4 6 9    # just these
 ```
 
-Then open the PNG with the Read tool.
+PNGs land in `./shots/` (gitignored). Open each with the Read tool and actually read it.
+
+**Review every page, not a sample.** The Labs 1–3 guide shipped twice with a layout
+bug on five pages because only three pages were spot-checked.
+
+---
+
+## 4b. Known pitfalls — both of these actually happened
+
+### Pitfall 1 — never force `display` when isolating a page
+
+To screenshot one page you must hide the others. Do it like this:
+
+```css
+.page:not(:nth-of-type(4)) { display: none !important; }   /* correct */
+```
+
+**Not** like this:
+
+```css
+.page { display:none !important }
+.page:nth-of-type(4) { display:block !important }          /* WRONG */
+```
+
+The second form forces `display:block` onto the target, overriding any `display:flex`
+it declares. The cover page uses flex centering, so it rendered mis-aligned **only in
+the screenshot** — the PDF was always fine. Hours were spent "fixing" a bug that did
+not exist. `shot.sh` uses the correct form; use the script.
+
+### Pitfall 2 — flex containers shred inline text
+
+This looked reasonable and rendered as an unreadable grid:
+
+```css
+.ctx { display:flex; align-items:center; gap:7px; }
+```
+```html
+<div class="ctx"><span class="pill">LAB 3</span> IN: <code>x.jar</code> → OUT: image</div>
+```
+
+Flex turns **every bare text node into its own flex item**, and each one wraps
+independently. `IN:` became one column, `x.jar` another, each breaking mid-phrase.
+
+**Rule: a strip of running prose is a block, not a flex container.** Use
+`display:block` with `inline-block` pills and `white-space:nowrap` on anything that
+must not break:
+
+```css
+.ctx { display:block; line-height:1.75; }
+.ctx .pill { display:inline-block; white-space:nowrap; }
+.ctx code  { white-space:nowrap; }
+```
+
+Reserve flex for genuine side-by-side **boxes** (`.goal`, `.grid`, `.flow`, `.anno`),
+never for a sentence.
+
+### Pitfall 3 — do not describe output you have not seen
+
+The app prints four separate lines. The guide showed them compressed into two
+columns, which no real run produces. Read the source or the user's actual terminal
+output; if you have neither, write `TODO` rather than inventing a plausible shape.
 
 ---
 

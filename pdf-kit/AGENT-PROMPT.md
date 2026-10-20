@@ -22,10 +22,16 @@ matching the existing one exactly in design, tone and structure.
 **Then build it:**
 - Author `pdf-kit/labs-<<N-M>>.html` as `<div class="page">` blocks.
 - Every lab page opens with a `.ctx` strip and a `.goal` panel (Goal + Done when).
-- Render and fit: `./build.sh labs-<<N-M>>.html` and `python3 -I measure.py <file> <staging-dir>`.
-  **Iterate until every page measures ≤ 1050px.** A page that overflows is silently
-  clipped — content is lost without any error.
-- Verify visually: screenshot 2–3 pages and actually look at them before delivering.
+- Fit: `python3 -I measure.py labs-<<N-M>>.html` — **iterate until it prints
+  "All pages fit."** A page that overflows is silently clipped; content is lost with
+  no error.
+- **Then look at EVERY page:** `./shot.sh labs-<<N-M>>.html`, and open each PNG with
+  the Read tool. Measuring proves a page fits, not that it reads. This guide shipped
+  twice with a layout bug on five pages because only three were spot-checked.
+- Read `BUILD-GUIDE.md` §4b "Known pitfalls" before writing CSS. Two of the three
+  listed bugs were introduced by a previous agent doing exactly what seemed natural.
+- Render last: `./build.sh labs-<<N-M>>.html "<<name>>.pdf"`. It warns if the PDF page
+  count differs from the number of `class="page"` divs — that mismatch means clipping.
 
 **Hard rules:**
 - The PDF must **not** be committed. `*.pdf` is gitignored — keep it that way.

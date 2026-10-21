@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🚀 DevOps Labs — iVolve Training
+# DevOps Labs — iVolve Training
 
 **From source code to a running container**
 

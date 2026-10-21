@@ -27,7 +27,7 @@ and containerizing a Java application, one tool at a time.
 | **Name** | Eslam Nabawy |
 | **Program** | iVolve Technologies — DevOps Training |
 | **GitHub** | [@EslamNabawy](https://github.com/EslamNabawy) |
-| **Email** | eslamlef.308@gmail.com |
+| **Email** | eslamtarek.dev@gmail.com |
 | **Repository** | [iVolve-Tasks](https://github.com/EslamNabawy/iVolve-Tasks) |
 | **Environment** | Ubuntu 24.04 LTS on WSL2 · Java 17 · Maven · Gradle · Docker |
 

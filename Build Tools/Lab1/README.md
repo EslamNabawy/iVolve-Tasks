@@ -33,6 +33,8 @@ Apache Maven 3.8.7
 Java version: 17.0.20.1, vendor: Ubuntu, runtime: /usr/lib/jvm/java-17-openjdk-amd64
 ```
 
+![Java 17 and Maven installed](evidence/lab1-1-toolchain.png)
+
 The `Java version` line inside `mvn -version` is the one that matters — `pom.xml`
 sets `maven.compiler.source` to 17, so an older JDK fails the build.
 
@@ -61,6 +63,8 @@ mvn -B test
 [INFO] BUILD SUCCESS
 ```
 
+![mvn test — 5 tests, 0 failures](evidence/lab1-2-unit-tests.png)
+
 **5 tests, all passing.** One of them asserts that dividing by zero throws
 `ArithmeticException` — the suite covers the error path, not just the happy path.
 
@@ -80,6 +84,8 @@ $ ls -lh target/calculator.jar
 -rw-r--r-- 1 eslam eslam 3.7K Oct 20 23:16 target/calculator.jar
 ```
 
+![mvn clean package builds target/calculator.jar](evidence/lab1-3-build.png)
+
 Required path and name hit exactly: **`target/calculator.jar`**, 3.7 KB.
 
 ### 5–6. Run and verify
@@ -95,6 +101,8 @@ Subtract: 5.0
 Multiply: 50.0
 Divide: 2.0
 ```
+
+![Running the app and the jar manifest](evidence/lab1-4-run-verify.png)
 
 Correct for 10 and 5. Both prompts appear on one line because stdin was piped —
 nothing paused for a human. Interactively (`java -jar target/calculator.jar`) the
@@ -131,6 +139,19 @@ artifact. That behaviour is the foundation of CI.
 with `<scope>test</scope>`, so Maven fetched it from Maven Central and put it on
 the *test* classpath only — deliberately absent at runtime, because shipping a
 test framework to production is waste.
+
+---
+
+## Evidence
+
+Terminal output from real runs of these commands on this machine, rendered as terminal-style images. **These are not raw screen captures** — they were generated from [`evidence/lab1-terminal.log`](evidence/lab1-terminal.log), and the prompt lines and colours were added by the rendering script. The images come from a later run than the output blocks above, so timestamps and durations differ slightly; the results (tests, file sizes, program output) are identical.
+
+| # | What it proves | Screenshot |
+|:-:|---|---|
+| 1 | Java **17** and Maven installed | [lab1-1-toolchain.png](evidence/lab1-1-toolchain.png) |
+| 2 | `mvn test` — **5 tests, 0 failures, 0 errors** | [lab1-2-unit-tests.png](evidence/lab1-2-unit-tests.png) |
+| 3 | `mvn clean package` → **`target/calculator.jar`** built, `BUILD SUCCESS` | [lab1-3-build.png](evidence/lab1-3-build.png) |
+| 4 | App runs and prints correct maths; manifest names `Main-Class` | [lab1-4-run-verify.png](evidence/lab1-4-run-verify.png) |
 
 ---
 

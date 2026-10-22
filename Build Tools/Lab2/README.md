@@ -45,6 +45,8 @@ Launcher JVM:  17.0.20.1 (Ubuntu 17.0.20.1+1-1-24.04-Ubuntu)
 Daemon JVM:    /usr/lib/jvm/java-17-openjdk-amd64
 ```
 
+![Gradle 9.8.2 on JDK 17](evidence/lab2-1-toolchain.png)
+
 ### 2. Clone the source
 
 Cloned to `~/labs-workspace/CalculatorGradleApp`. Same `src/main/java` and
@@ -70,6 +72,8 @@ Gradle is terse — it does not print a test count. Read it from the XML report:
 tests=5 failures=0 errors=0
 ```
 
+![gradle test — 5 named tests, 0 failures](evidence/lab2-2-unit-tests.png)
+
 **5 tests, all passing** — identical to Lab 1, because it is the same source.
 
 ### 4. Build the artifact
@@ -85,6 +89,8 @@ BUILD SUCCESSFUL in 2s
 $ ls -lh build/libs/calculator.jar
 -rw-r--r-- 1 eslam eslam 2.3K Oct 20 23:18 build/libs/calculator.jar
 ```
+
+![gradle clean build creates build/libs/calculator.jar](evidence/lab2-3-build.png)
 
 Required path hit exactly: **`build/libs/calculator.jar`**.
 
@@ -102,6 +108,8 @@ Multiply: 50.0
 Divide: 2.0
 ```
 
+![Running the app and verifying output](evidence/lab2-4-run-verify.png)
+
 **Byte-identical behaviour to Lab 1.** That is the whole point of this lab: the
 build tool changed, the result did not.
 
@@ -113,6 +121,8 @@ Running `gradle build` a second time with nothing changed:
 BUILD SUCCESSFUL in 1s
 7 actionable tasks: 7 up-to-date
 ```
+
+![Second build — every task UP-TO-DATE](evidence/lab2-5-incremental.png)
 
 **7 of 8 tasks skipped.** Gradle fingerprints each task's inputs and re-runs only
 what changed. Maven redoes everything, every time.
@@ -163,6 +173,20 @@ That accounts for ~1.97 KB of the difference.
 while Maven stamps the real build time. Gradle normalises timestamps so that
 building the same source twice produces a **byte-identical** jar — a reproducible
 build. Maven's output differs on every run even when nothing changed.
+
+---
+
+## Evidence
+
+Terminal output from real runs of these commands on this machine, rendered as terminal-style images. **These are not raw screen captures** — they were generated from [`evidence/lab2-terminal.log`](evidence/lab2-terminal.log), and the prompt lines and colours were added by the rendering script. The test-count lines in screenshot 2 were produced by running `grep` on Gradle's XML report after the build and appending the result, because Gradle itself prints no count. The images come from a later run than the output blocks above, so timestamps and durations differ slightly; the results (tests, file sizes, program output) are identical.
+
+| # | What it proves | Screenshot |
+|:-:|---|---|
+| 1 | Gradle **9.8.2** running on JDK **17** | [lab2-1-toolchain.png](evidence/lab2-1-toolchain.png) |
+| 2 | `gradle test` — **5 named tests, 0 failures** (count read from the XML report, since Gradle prints none) | [lab2-2-unit-tests.png](evidence/lab2-2-unit-tests.png) |
+| 3 | `gradle clean build` → **`build/libs/calculator.jar`** built, `BUILD SUCCESSFUL` | [lab2-3-build.png](evidence/lab2-3-build.png) |
+| 4 | App runs; output **identical to Lab 1** | [lab2-4-run-verify.png](evidence/lab2-4-run-verify.png) |
+| 5 | Second build — `7 actionable tasks: 7 up-to-date` (incremental builds) | [lab2-5-incremental.png](evidence/lab2-5-incremental.png) |
 
 ---
 

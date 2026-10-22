@@ -13,6 +13,9 @@ build/
 # App code is cloned to ~/labs-workspace, never committed here.
 CalculatorMavenApp/
 CalculatorGradleApp/
+ImageOptimization-/
+TrivyImage/
+PythonApp/
 
 # ── Local-only working files (kept on disk, out of the repo) ───
 GUIDE.md
@@ -21,6 +24,7 @@ RUNBOOK.md
 pdf-kit/
 shots/
 *.pdf
+*.tar
 
 # ── IDE / OS ───────────────────────────────────────────────────
 .idea/

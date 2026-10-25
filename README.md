@@ -10,7 +10,7 @@ at a time.
 
 <br>
 
-![Status](https://img.shields.io/badge/Labs_Complete-6%20%2F%206-brightgreen?style=for-the-badge)
+![Status](https://img.shields.io/badge/Labs_Complete-7%20%2F%207-brightgreen?style=for-the-badge)
 ![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![Maven](https://img.shields.io/badge/Maven-3.8.7-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)
 ![Gradle](https://img.shields.io/badge/Gradle-9.8.2-02303A?style=for-the-badge&logo=gradle&logoColor=white)
@@ -31,7 +31,7 @@ at a time.
 | **GitHub** | [@EslamNabawy](https://github.com/EslamNabawy) |
 | **Email** | eslamtarek.dev@gmail.com |
 | **Repository** | [iVolve-Tasks](https://github.com/EslamNabawy/iVolve-Tasks) |
-| **Environment** | Ubuntu 24.04 LTS on WSL2 · Java 17 · Maven · Gradle · Docker · Trivy |
+| **Environment** | Ubuntu 24.04 LTS on WSL2 · Java 17 · Maven · Gradle · Docker · Trivy · kind · kubectl |
 
 ---
 
@@ -43,7 +43,7 @@ something you can actually ship — and trust?**
 ```
 📄 Source code  →  🔧 Build tool  →  📦 Artifact  →  🐳 Image  →  🔍 Scan  →  ☸️ Running
    .java files      Maven/Gradle     calculator.jar   Docker      Trivy      Kubernetes
-                     Labs 1 & 2                        Labs 3–6                (later)
+                     Labs 1 & 2                        Labs 3–6                Lab 7
 ```
 
 Each stage consumes the previous one's output. **Labs 1 and 2 build the same
@@ -73,6 +73,7 @@ terminal output and an explanation of *why*, not just *what*.
 | 4 | Docker | [**Image optimization** + export/load](Docker/Lab4/README.md) | `image1` 671 MB → `image2` 294 MB | ✅ |
 | 5 | Docker | [**Vulnerability scanning** with Trivy](Docker/Lab5/README.md) | 2,343 HIGH/CRITICAL → **0** | ✅ |
 | 6 | Docker | [**Env vars** + resource limits](Docker/Lab6/README.md) | 3 runs · 1 CPU / 256 MB | ✅ |
+| 7 | Kubernetes | [**Deploying to a cluster** with kind](Kubernetes/Lab7/README.md) | cluster `ivolve` · `app3` 1/1 Running | ✅ |
 
 ### ✅ To-do
 
@@ -83,10 +84,10 @@ terminal output and an explanation of *why*, not just *what*.
 - [x] **Lab 4 — Optimization** · 671 MB → 294 MB · non-root `appuser` · `save`/`load` round trip
 - [x] **Lab 5 — Trivy** · 2,343 HIGH/CRITICAL found, all remediated · `ivolve-app:v2` clean
 - [x] **Lab 6 — Env & limits** · three config sources · 1 CPU / 256 MB enforced
+- [x] **Lab 7 — Kubernetes** · kind cluster · `app3` loaded, Running as uid 1000 · calculator computed in-cluster
 - [x] **Bonus** — multi-stage builds in Labs 3 & 4, remediation in Lab 5
 
 **Next**
-- [ ] ☸️ **Kubernetes** — deploy the Lab 3 image to a cluster
 - [ ] 🔧 **Jenkins** — automate Labs 1–6 as a pipeline
 - [ ] 🔄 **ArgoCD** — GitOps sync from this repository
 - [ ] ⚙️ **Ansible** — provision the machines everything runs on
@@ -143,6 +144,9 @@ iVolve-Tasks
 │   │                    package-lock.json · commands.sh · README.md
 │   │                    reports/trivy-v1.html · reports/trivy-v2.html
 │   └── 📁 Lab6          Dockerfile · Dockerfile.env · env.txt
+│                        commands.sh · README.md
+├── 📁 Kubernetes
+│   └── 📁 Lab7          deployment.yaml · service.yaml
 │                        commands.sh · README.md
 └── 📄 README.md
 ```

@@ -1,0 +1,48 @@
+# Lab 7 — the Lab 3 calculator, deployed the way a stdin CLI must be:
+# the pod's main process stays alive, and the calculator itself runs
+# through `kubectl exec -i` — the Kubernetes equivalent of `docker run -i`.
+#
+# Why override `command:`: without stdin the app dies with
+# NoSuchElementException inside the first second and the pod CrashLoops
+# (demonstrated in the README). This is a CLI, not a server: there is no
+# port to serve and no health endpoint to probe.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calculator
+  labels:
+    app: calculator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: calculator
+  template:
+    metadata:
+      labels:
+        app: calculator
+    spec:
+      securityContext:
+        # The image runs as appuser, but the Dockerfile says `USER appuser`
+        # by name. Kubernetes must see a numeric user to enforce non-root,
+        # so both are spelled out here.
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+      containers:
+        - name: calculator
+          image: app3
+          # The image was loaded with `kind load docker-image`, never pushed
+          # to a registry — a pull would fail, and for `:latest` the default
+          # policy is exactly that.
+          imagePullPolicy: Never
+          # K8s `command:` overrides the image ENTRYPOINT (the same field
+          # `docker run --entrypoint` overrides).
+          command: ["sleep", "infinity"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi

@@ -1,0 +1,18 @@
+# The image declares EXPOSE 8080 (Lab 3), but the calculator is a stdin
+# CLI — nothing binds that port. The Service is deployed to prove the
+# point: endpoints resolve, the connection is still refused. `EXPOSE` is
+# documentation; a Service routes to a socket that must actually exist.
+apiVersion: v1
+kind: Service
+metadata:
+  name: calculator
+  labels:
+    app: calculator
+spec:
+  type: ClusterIP
+  selector:
+    app: calculator
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080

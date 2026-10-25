@@ -38,3 +38,7 @@ desktop.ini
 *.pem
 *.key
 .env
+
+# ── Local agent notes (never committed) ────────────────────────
+AGENTS.md
+CONTEXT.md

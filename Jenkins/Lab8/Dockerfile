@@ -17,6 +17,7 @@ USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates \
       curl \
+      docker-buildx \
       docker-cli \
       docker.io \
       git \
@@ -40,6 +41,7 @@ RUN unzip -q /tmp/gradle.zip -d /opt && rm -f /tmp/gradle.zip
 ADD https://github.com/aquasecurity/trivy/releases/download/v0.76.1/trivy_0.76.1_Linux-64bit.deb /tmp/trivy.deb
 RUN apt-get update && apt-get install -y /tmp/trivy.deb && rm -f /tmp/trivy.deb
 
+ENV DOCKER_BUILDKIT=1
 ENV GRADLE_HOME=/opt/gradle-9.8.2
 ENV PATH="/opt/gradle-9.8.2/bin:${PATH}"
 

@@ -17,10 +17,11 @@ jenkins:
     local:
       allowsSignup: false
       users:
-        - id: "admin"
+        - id: "${JENKINS_ADMIN_ID}"
           # Read from the environment, never written in this file. The
-          # container is started with JENKINS_ADMIN_PASSWORD set; a literal
-          # password here would be committed to git in clear text.
+          # container is started with JENKINS_ADMIN_ID and
+          # JENKINS_ADMIN_PASSWORD set; a literal password here
+          # would be committed to git in clear text.
           password: "${JENKINS_ADMIN_PASSWORD}"
 
   authorizationStrategy:

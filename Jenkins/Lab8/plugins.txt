@@ -1,0 +1,20 @@
+# Resolved at image build time by jenkins-plugin-cli, which pulls each
+# plugin's transitive dependencies too. Deliberately short: this is what the
+# Lab 8 pipeline actually uses, not the "install suggested plugins" set.
+# Comments must be on their own line here — the CLI does not strip a
+# trailing # from a plugin line, it fails to resolve the whole string.
+
+# Declarative Pipeline — the `pipeline { }` syntax itself
+workflow-aggregator
+# jenkins.yaml: admin user and the job, instead of the web setup wizard
+configuration-as-code
+# lets that YAML define the pipeline job (JCasC calls into Job DSL)
+job-dsl
+# checkout from GitHub
+git
+# parses surefire / Gradle test XML into the test-result trend
+junit
+# publishes the Trivy HTML report, the same artifact Lab 5 produced
+htmlpublisher
+# a timestamp on every console line
+timestamper

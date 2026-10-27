@@ -1,0 +1,147 @@
+// Lab 8 — the whole Docker track (Labs 1-6) as one Jenkins pipeline.
+//
+// The job `ivolve-labs-1-6` is defined by jenkins.yaml (Configuration as
+// Code + Job DSL) and checks this file out of the repository itself via
+// file:///repo — so what Jenkins runs is always what `main` holds, the
+// same contract a remote GitHub checkout would give.
+//
+// Runs on the built-in node (numExecutors: 1 in jenkins.yaml, matched by
+// disableConcurrentBuilds below). The workspace lives under JENKINS_HOME,
+// which commands.sh bind-mounts from the host at the SAME path, and the
+// repository is also mounted at its host path — because `docker` here
+// talks to the HOST daemon through the socket, and the daemon must be
+// able to resolve every build-context path itself.
+//
+// Groovy note: inside '''...''' strings backslash escapes are processed,
+// so shell "\n" must be written "\\n".
+pipeline {
+    agent any
+
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+        timeout(time: 30, unit: 'MINUTES')
+    }
+
+    environment {
+        REPO        = '/home/eslam/iVolve-Tasks'
+        JAVA17      = '/opt/jdk17'
+        TRIVY_CACHE = '/home/eslam/jenkins-home/.cache/trivy'
+    }
+
+    stages {
+        stage('Lab 1 - Maven') {
+            steps {
+                sh '''
+                    git clone -q https://github.com/Ibrahim-Adel15/CalculatorMavenApp.git
+                    cd CalculatorMavenApp
+                    JAVA_HOME=$JAVA17 mvn -B test
+                    JAVA_HOME=$JAVA17 mvn -B clean package
+                    ls -lh target/calculator.jar
+                '''
+            }
+        }
+
+        stage('Lab 2 - Gradle') {
+            steps {
+                sh '''
+                    git clone -q https://github.com/Ibrahim-Adel15/CalculatorGradleApp.git
+                    cd CalculatorGradleApp
+                    JAVA_HOME=$JAVA17 gradle test
+                    JAVA_HOME=$JAVA17 gradle clean build
+                    ls -lh build/libs/calculator.jar
+                '''
+            }
+        }
+
+        stage('Lab 3 - Containerize') {
+            steps {
+                sh '''
+                    docker build -f "$REPO/Docker/Lab3/Dockerfile.multistage" -t ivolve-ci:lab3 CalculatorMavenApp
+                    docker run --rm --entrypoint whoami ivolve-ci:lab3
+                    printf "10\\n5\\n" | docker run -i --rm ivolve-ci:lab3
+                '''
+            }
+        }
+
+        stage('Lab 4 - Optimize') {
+            steps {
+                sh '''
+                    git clone -q https://github.com/Ibrahim-Adel15/ImageOptimization-.git
+                    cd ImageOptimization-
+                    docker build -t image1 .
+                    docker build --network=host -f "$REPO/Docker/Lab4/Dockerfile.multistage" -t image2 .
+                    docker images --format "{{.Repository}}:{{.Tag}}  {{.Size}}" | grep -E "^image[12]:"
+                    docker run -d --name ci-lab4 -p 8081:8080 image2
+                    sleep 10
+                    curl -s -w "\\nHTTP %{http_code}\\n" http://host.docker.internal:8081
+                    docker exec ci-lab4 whoami
+                    docker exec ci-lab4 id
+                    docker rm -f ci-lab4
+                '''
+            }
+        }
+
+        stage('Lab 5 - Scan and gate') {
+            steps {
+                sh '''
+                    git clone -q https://github.com/Ibrahim-Adel15/TrivyImage.git
+                    cd TrivyImage
+                    trivy --version
+                    docker build -t trivy-lab:v1 .
+                    trivy image --scanners vuln --severity HIGH,CRITICAL trivy-lab:v1 | tail
+                    trivy image --scanners vuln --severity HIGH,CRITICAL --format html -o trivy-report.html trivy-lab:v1
+                    cp "$REPO/Docker/Lab5/package-lock.json" .
+                    docker build -f "$REPO/Docker/Lab5/Dockerfile.v2" -t ivolve-app:v2 .
+                    trivy image --exit-code 1 --severity HIGH,CRITICAL ivolve-app:v2
+                '''
+            }
+        }
+
+        stage('Lab 6 - Env and limits') {
+            steps {
+                sh '''
+                    git clone -q https://github.com/Ibrahim-Adel15/PythonApp.git
+                    cd PythonApp
+                    cp "$REPO/Docker/Lab6/Dockerfile" .
+                    docker build -t ivolve1 .
+                    docker run -d --name ci-lab6 -p 5000:5000 --cpus=1 --memory=256m -e APP_NAME=iVolveApp1 -e APP_ENV=stg ivolve1
+                    sleep 3
+                    curl -s http://host.docker.internal:5000
+                    curl -s http://host.docker.internal:5000/health
+                    docker exec ci-lab6 env | grep "^APP_"
+                    docker stats --no-stream ci-lab6
+                    docker rm -f ci-lab6
+                '''
+            }
+        }
+
+        stage('Cleanup pipeline images') {
+            steps {
+                // The six images the pipeline built — and nothing else.
+                // `docker system prune` stays forbidden: aiops-* belongs to
+                // another project.
+                sh 'docker rmi ivolve-ci:lab3 image1 image2 trivy-lab:v1 ivolve-app:v2 ivolve1'
+            }
+        }
+    }
+
+    post {
+        always {
+            // Safety net: lab containers removed even if a stage died first.
+            sh 'docker rm -f ci-lab4 ci-lab6 2>/dev/null || true'
+            // Test results from Maven surefire and Gradle test XML.
+            junit allowEmptyResults: true,
+                  testResults: '**/target/surefire-reports/*.xml,**/build/test-results/test/*.xml'
+            // The Trivy HTML report Lab 5 produced by hand, now per build.
+            publishHTML(target: [
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'TrivyImage',
+                reportFiles: 'trivy-report.html',
+                reportName: 'Trivy v1 report'
+            ])
+        }
+    }
+}

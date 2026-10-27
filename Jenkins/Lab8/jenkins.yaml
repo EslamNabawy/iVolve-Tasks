@@ -1,0 +1,61 @@
+# Lab 8 — Jenkins configured as code (JCasC).
+#
+# Everything a browser wizard would ask for is declared here instead: the
+# admin user, the executor count, and the pipeline job itself. The point is
+# that this controller is reproducible — delete the volume, start again,
+# and the same Jenkins comes back with the same job already defined.
+jenkins:
+  systemMessage: |
+    iVolve Lab 8 — Labs 1-6 as a Jenkins pipeline. Configured by JCasC.
+  # The controller runs the builds in this lab: one machine, one job at a
+  # time. disableConcurrentBuilds() in the Jenkinsfile matches this.
+  numExecutors: 1
+  # No agents to authenticate, so the inbound agent port stays shut.
+  slaveAgentPort: -1
+
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          # Read from the environment, never written in this file. The
+          # container is started with JENKINS_ADMIN_PASSWORD set; a literal
+          # password here would be committed to git in clear text.
+          password: "${JENKINS_ADMIN_PASSWORD}"
+
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+unclassified:
+  location:
+    url: "http://localhost:8080/"
+    adminAddress: "eslamtarek.dev@gmail.com"
+
+jobs:
+  - script: >
+      pipelineJob('ivolve-labs-1-6') {
+          description('''Labs 1-6 end to end: Maven and Gradle builds,
+                         then the jar asserted through stdin, the Lab 3
+                         multi-stage image built, non-root verified, and
+                         Trivy gating on HIGH/CRITICAL.''')
+          definition {
+              cpsScm {
+                  scm {
+                      git {
+                          remote {
+                              // The repository is mounted into the container
+                              // read-only at /repo. A local path is a valid
+                              // git remote, so the lab needs no network and
+                              // no GitHub credentials to run.
+                              url('file:///repo')
+                          }
+                          branch('main')
+                          extensions { }
+                      }
+                  }
+                  scriptPath('Jenkins/Lab8/Jenkinsfile')
+                  lightweight(false)
+              }
+          }
+      }

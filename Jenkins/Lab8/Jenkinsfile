@@ -90,7 +90,7 @@ pipeline {
                     trivy --version
                     docker build -t trivy-lab:v1 .
                     trivy image --scanners vuln --severity HIGH,CRITICAL trivy-lab:v1 | tail
-                    trivy image --scanners vuln --severity HIGH,CRITICAL --format html -o trivy-report.html trivy-lab:v1
+                    trivy image --scanners vuln --severity HIGH,CRITICAL --format template --template "@$REPO/Jenkins/Lab8/html.tpl" -o trivy-report.html trivy-lab:v1
                     cp "$REPO/Docker/Lab5/package-lock.json" .
                     docker build -f "$REPO/Docker/Lab5/Dockerfile.v2" -t ivolve-app:v2 .
                     trivy image --exit-code 1 --severity HIGH,CRITICAL ivolve-app:v2

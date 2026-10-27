@@ -36,6 +36,7 @@ docker run -d --name jenkins-lab8 \
   -e JENKINS_ADMIN_ID="$USER" \
   -e JENKINS_ADMIN_PASSWORD="$PASS" \
   -e TRIVY_CACHE_DIR="$JHOME/.cache/trivy" \
+  -e JAVA_OPTS="-Dhudson.plugins.git.GitSCM.ALLOW_LOCAL_CHECKOUT=true" \
   ivolve-jenkins:lab8
 
 # 3. Wait for the endpoint (JCasC applied, security on: -u needed)

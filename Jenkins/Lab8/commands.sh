@@ -43,8 +43,10 @@ for i in $(seq 1 60); do curl -sf -u "$USER:$PASS" "$URL/api/json" >/dev/null &&
 curl -s -u "$USER:$PASS" "$URL/api/json?tree=mode"
 
 # 4. The job already exists (JCasC + Job DSL). Trigger it.
-CRUMB=$(curl -s -u "$USER:$PASS" "$URL/crumbIssuer/api/json" | python3 -c "import sys,json;d=json.load(sys.stdin);print(d['crumbRequestField']+":"+d['crumb'])")
-CODE=$(curl -s -o /dev/null -w '%{http_code}' -u "$USER:$PASS" -H "$CRUMB" -X POST "$URL/job/ivolve-labs-1-6/build")
+JAR=/tmp/jenkins-crumb.jar
+rm -f "$JAR"
+CRUMB=$(curl -s -c "$JAR" -u "$USER:$PASS" "$URL/crumbIssuer/api/json" | python3 -c 'import sys,json;d=json.load(sys.stdin);print(d["crumbRequestField"]+":"+d["crumb"])')
+CODE=$(curl -s -o /dev/null -w "%{http_code}" -b "$JAR" -c "$JAR" -u "$USER:$PASS" -H "$CRUMB" -X POST "$URL/job/ivolve-labs-1-6/build")
 echo "trigger HTTP $CODE (want 201)"
 
 # 5. Wait for the verdict

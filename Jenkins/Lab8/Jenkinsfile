@@ -84,6 +84,11 @@ pipeline {
 
         stage('Lab 5 - Scan and gate') {
             steps {
+                // Upstream pins express@4.18.2 while Lab 5's remediation moves
+                // to express@latest with a regenerated lockfile — running the
+                // same npm command Lab 5's commands.sh runs, because a fresh
+                // clone's package.json and the lab's committed lockfile do not
+                // agree and `npm ci` refuses to install.
                 sh '''
                     git clone -q https://github.com/Ibrahim-Adel15/TrivyImage.git
                     cd TrivyImage
@@ -91,7 +96,7 @@ pipeline {
                     docker build -t trivy-lab:v1 .
                     trivy image --scanners vuln --severity HIGH,CRITICAL trivy-lab:v1 | tail
                     trivy image --scanners vuln --severity HIGH,CRITICAL --format template --template "@$REPO/Jenkins/Lab8/html.tpl" -o trivy-report.html trivy-lab:v1
-                    cp "$REPO/Docker/Lab5/package-lock.json" .
+                    docker run --rm -v "$PWD":/app -w /app node:24-alpine sh -c 'npm install express@latest --package-lock-only --no-audit --no-fund'
                     docker build -f "$REPO/Docker/Lab5/Dockerfile.v2" -t ivolve-app:v2 .
                     trivy image --exit-code 1 --severity HIGH,CRITICAL ivolve-app:v2
                 '''

@@ -40,7 +40,11 @@ pipeline {
                 // and $REPO is the read-only mount at the repo's host path.
                 deleteDir()
                 sh '''
-                    git clone -q https://github.com/Ibrahim-Adel15/CalculatorMavenApp.git
+                    # github.com drops intermittently here (~130s connect timeouts).
+                    # Clone through a retry loop that clears any partial checkout
+                    # first, so a blip is retried instead of failing the whole run.
+                    for a in 1 2 3 4 5; do rm -rf CalculatorMavenApp && git clone -q https://github.com/Ibrahim-Adel15/CalculatorMavenApp.git && break || { echo "clone CalculatorMavenApp failed (attempt $a), retrying in 20s"; rm -rf CalculatorMavenApp; sleep 20; }; done
+                    test -d CalculatorMavenApp/.git || { echo "could not clone CalculatorMavenApp"; exit 1; }
                     cd CalculatorMavenApp
                     JAVA_HOME=$JAVA17 mvn -B test
                     JAVA_HOME=$JAVA17 mvn -B clean package
@@ -52,7 +56,11 @@ pipeline {
         stage('Lab 2 - Gradle') {
             steps {
                 sh '''
-                    git clone -q https://github.com/Ibrahim-Adel15/CalculatorGradleApp.git
+                    # github.com drops intermittently here (~130s connect timeouts).
+                    # Clone through a retry loop that clears any partial checkout
+                    # first, so a blip is retried instead of failing the whole run.
+                    for a in 1 2 3 4 5; do rm -rf CalculatorGradleApp && git clone -q https://github.com/Ibrahim-Adel15/CalculatorGradleApp.git && break || { echo "clone CalculatorGradleApp failed (attempt $a), retrying in 20s"; rm -rf CalculatorGradleApp; sleep 20; }; done
+                    test -d CalculatorGradleApp/.git || { echo "could not clone CalculatorGradleApp"; exit 1; }
                     cd CalculatorGradleApp
                     JAVA_HOME=$JAVA17 gradle test
                     JAVA_HOME=$JAVA17 gradle clean build
@@ -74,7 +82,11 @@ pipeline {
         stage('Lab 4 - Optimize') {
             steps {
                 sh '''
-                    git clone -q https://github.com/Ibrahim-Adel15/ImageOptimization-.git
+                    # github.com drops intermittently here (~130s connect timeouts).
+                    # Clone through a retry loop that clears any partial checkout
+                    # first, so a blip is retried instead of failing the whole run.
+                    for a in 1 2 3 4 5; do rm -rf ImageOptimization- && git clone -q https://github.com/Ibrahim-Adel15/ImageOptimization-.git && break || { echo "clone ImageOptimization- failed (attempt $a), retrying in 20s"; rm -rf ImageOptimization-; sleep 20; }; done
+                    test -d ImageOptimization-/.git || { echo "could not clone ImageOptimization-"; exit 1; }
                     cd ImageOptimization-
                     docker build -t image1 .
                     docker build --network=host -f "$REPO/Docker/Lab4/Dockerfile.multistage" -t image2 .
@@ -97,7 +109,11 @@ pipeline {
                 // clone's package.json and the lab's committed lockfile do not
                 // agree and `npm ci` refuses to install.
                 sh '''
-                    git clone -q https://github.com/Ibrahim-Adel15/TrivyImage.git
+                    # github.com drops intermittently here (~130s connect timeouts).
+                    # Clone through a retry loop that clears any partial checkout
+                    # first, so a blip is retried instead of failing the whole run.
+                    for a in 1 2 3 4 5; do rm -rf TrivyImage && git clone -q https://github.com/Ibrahim-Adel15/TrivyImage.git && break || { echo "clone TrivyImage failed (attempt $a), retrying in 20s"; rm -rf TrivyImage; sleep 20; }; done
+                    test -d TrivyImage/.git || { echo "could not clone TrivyImage"; exit 1; }
                     cd TrivyImage
                     trivy --version
                     docker build -t trivy-lab:v1 .
@@ -113,7 +129,11 @@ pipeline {
         stage('Lab 6 - Env and limits') {
             steps {
                 sh '''
-                    git clone -q https://github.com/Ibrahim-Adel15/PythonApp.git
+                    # github.com drops intermittently here (~130s connect timeouts).
+                    # Clone through a retry loop that clears any partial checkout
+                    # first, so a blip is retried instead of failing the whole run.
+                    for a in 1 2 3 4 5; do rm -rf PythonApp && git clone -q https://github.com/Ibrahim-Adel15/PythonApp.git && break || { echo "clone PythonApp failed (attempt $a), retrying in 20s"; rm -rf PythonApp; sleep 20; }; done
+                    test -d PythonApp/.git || { echo "could not clone PythonApp"; exit 1; }
                     cd PythonApp
                     cp "$REPO/Docker/Lab6/Dockerfile" .
                     docker build -t ivolve1 .

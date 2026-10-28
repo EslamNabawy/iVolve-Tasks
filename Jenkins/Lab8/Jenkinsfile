@@ -32,6 +32,13 @@ pipeline {
     stages {
         stage('Lab 1 - Maven') {
             steps {
+                // A re-run reuses this workspace. The previous build's clones
+                // are still sitting in it, and `git clone` refuses to write
+                // into a non-empty directory (exit 128) — so wipe it first and
+                // every build starts from clean. Nothing below reads the
+                // checked-out repo out of the workspace: the labs clone fresh,
+                // and $REPO is the read-only mount at the repo's host path.
+                deleteDir()
                 sh '''
                     git clone -q https://github.com/Ibrahim-Adel15/CalculatorMavenApp.git
                     cd CalculatorMavenApp

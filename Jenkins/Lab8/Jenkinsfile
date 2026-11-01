@@ -78,7 +78,10 @@ pipeline {
         stage('Lab 3 - Containerize') {
             steps {
                 sh '''
-                    docker build -f "$REPO/Docker/Lab3/Dockerfile.multistage" -t ivolve-ci:lab3 CalculatorMavenApp
+                    # This build runs Maven inside the image, so it is exposed
+                    # to the same flaky network as the clones — same treatment.
+                    for a in 1 2 3 4 5; do docker build -f "$REPO/Docker/Lab3/Dockerfile.multistage" -t ivolve-ci:lab3 CalculatorMavenApp && break || { echo "ivolve-ci:lab3 build failed (attempt $a), retrying in 20s"; sleep 20; }; done
+                    docker image inspect ivolve-ci:lab3 >/dev/null || { echo "ivolve-ci:lab3 was never built"; exit 1; }
                     docker run --rm --entrypoint whoami ivolve-ci:lab3
                     printf "10\\n5\\n" | docker run -i --rm ivolve-ci:lab3
                 '''
@@ -94,8 +97,13 @@ pipeline {
                     for a in 1 2 3 4 5; do rm -rf ImageOptimization- && git clone -q https://github.com/Ibrahim-Adel15/ImageOptimization-.git && break || { echo "clone ImageOptimization- failed (attempt $a), retrying in 20s"; rm -rf ImageOptimization-; sleep 20; }; done
                     test -d ImageOptimization-/.git || { echo "could not clone ImageOptimization-"; exit 1; }
                     cd ImageOptimization-
-                    docker build -t image1 .
-                    docker build --network=host -f "$REPO/Docker/Lab4/Dockerfile.multistage" -t image2 .
+                    # image1 runs a full Maven build inside Docker — exactly
+                    # where build 6 burned 1777 s and then died on a Maven
+                    # Central read timeout. Retry both builds, then prove the
+                    # images exist before the size table prints anything.
+                    for a in 1 2 3 4 5; do docker build -t image1 . && break || { echo "image1 build failed (attempt $a), retrying in 20s"; sleep 20; }; done
+                    for a in 1 2 3 4 5; do docker build --network=host -f "$REPO/Docker/Lab4/Dockerfile.multistage" -t image2 . && break || { echo "image2 build failed (attempt $a), retrying in 20s"; sleep 20; }; done
+                    docker image inspect image1 image2 >/dev/null || { echo "image1/image2 were never built"; exit 1; }
                     docker images --format "{{.Repository}}:{{.Tag}}  {{.Size}}" | grep -E "^image[12]:"
                     docker run -d --name ci-lab4 -p 8081:8080 image2
                     sleep 10
@@ -134,8 +142,14 @@ pipeline {
                     docker build -t trivy-lab:v1 .
                     trivy image --scanners vuln --severity HIGH,CRITICAL trivy-lab:v1 | tail
                     trivy image --scanners vuln --severity HIGH,CRITICAL --format template --template "@$REPO/Jenkins/Lab8/html.tpl" -o trivy-report.html trivy-lab:v1
-                    docker run --rm -v "$PWD":/app -w /app node:24-alpine sh -c 'npm install express@latest --package-lock-only --no-audit --no-fund'
-                    docker build -f "$REPO/Docker/Lab5/Dockerfile.v2" -t ivolve-app:v2 .
+                    # npm's registry is flaky here as well — build 9 died
+                    # inside `npm ci` (Dockerfile.v2 line 11) with an npm
+                    # network error. Same retry shape as the clones: a blip
+                    # is retried instead of failing the run. The final
+                    # inspect makes sure five failures can't slip through.
+                    for a in 1 2 3 4 5; do docker run --rm -v "$PWD":/app -w /app node:24-alpine sh -c 'npm install express@latest --package-lock-only --no-audit --no-fund' && break || { echo "lockfile regeneration failed (attempt $a), retrying in 20s"; sleep 20; }; done
+                    for a in 1 2 3 4 5; do docker build -f "$REPO/Docker/Lab5/Dockerfile.v2" -t ivolve-app:v2 . && break || { echo "ivolve-app:v2 build failed (attempt $a), retrying in 20s"; sleep 20; }; done
+                    docker image inspect ivolve-app:v2 >/dev/null || { echo "ivolve-app:v2 was never built"; exit 1; }
                     trivy image --exit-code 1 --severity HIGH,CRITICAL ivolve-app:v2
                 '''
             }
@@ -151,7 +165,11 @@ pipeline {
                     test -d PythonApp/.git || { echo "could not clone PythonApp"; exit 1; }
                     cd PythonApp
                     cp "$REPO/Docker/Lab6/Dockerfile" .
-                    docker build -t ivolve1 .
+                    # pip pulls from PyPI over the same flaky network, so the
+                    # build gets the retry treatment too — and the same
+                    # "did it ever actually get built?" check afterwards.
+                    for a in 1 2 3 4 5; do docker build -t ivolve1 . && break || { echo "ivolve1 build failed (attempt $a), retrying in 20s"; sleep 20; }; done
+                    docker image inspect ivolve1 >/dev/null || { echo "ivolve1 was never built"; exit 1; }
                     docker run -d --name ci-lab6 -p 5000:5000 --cpus=1 --memory=256m -e APP_NAME=iVolveApp1 -e APP_ENV=stg ivolve1
                     sleep 3
                     curl -s http://host.docker.internal:5000

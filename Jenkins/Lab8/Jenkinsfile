@@ -27,6 +27,12 @@ pipeline {
         REPO        = '/home/eslam/iVolve-Tasks'
         JAVA17      = '/opt/jdk17'
         TRIVY_CACHE = '/home/eslam/jenkins-home/.cache/trivy'
+        // Trivy's default DB source list leads with mirror.gcr.io, which
+        // resets the connection mid-transfer on this network (~54% into the
+        // 131 MiB blob) — and Trivy fails hard there instead of falling back
+        // to the list's second source. ghcr.io completes here; both were
+        // tested from this machine before this line was written.
+        TRIVY_DB_REPOSITORY = 'ghcr.io/aquasecurity/trivy-db:2'
     }
 
     stages {
@@ -116,6 +122,15 @@ pipeline {
                     test -d TrivyImage/.git || { echo "could not clone TrivyImage"; exit 1; }
                     cd TrivyImage
                     trivy --version
+                    # Warm the vulnerability DB once, with retries. The scan
+                    # below would otherwise trigger the download itself, and
+                    # a reset mid-transfer fails the stage. Any partial DB is
+                    # cleared first (a previous run was killed with a 486 MB
+                    # half-written trivy.db and no metadata.json, which is
+                    # never a valid cache). Every later trivy call in this
+                    # stage then reads the cache under TRIVY_CACHE_DIR.
+                    for a in 1 2 3 4 5; do trivy image --download-db-only && break || { echo "trivy DB download failed (attempt $a), retrying in 15s"; rm -rf "$TRIVY_CACHE_DIR/db"; sleep 15; }; done
+                    test -f "$TRIVY_CACHE_DIR/db/metadata.json" || { echo "trivy vulnerability DB never downloaded"; exit 1; }
                     docker build -t trivy-lab:v1 .
                     trivy image --scanners vuln --severity HIGH,CRITICAL trivy-lab:v1 | tail
                     trivy image --scanners vuln --severity HIGH,CRITICAL --format template --template "@$REPO/Jenkins/Lab8/html.tpl" -o trivy-report.html trivy-lab:v1

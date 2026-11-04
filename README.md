@@ -10,7 +10,7 @@ one tool at a time.
 
 <br>
 
-![Status](https://img.shields.io/badge/Labs_Complete-11-brightgreen?style=for-the-badge)
+![Status](https://img.shields.io/badge/Labs_Complete-12-brightgreen?style=for-the-badge)
 ![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![Maven](https://img.shields.io/badge/Maven-3.8.7-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)
 ![Gradle](https://img.shields.io/badge/Gradle-9.8.2-02303A?style=for-the-badge&logo=gradle&logoColor=white)
@@ -54,8 +54,9 @@ app to cover image size, non-root users, vulnerability scanning, environment
 variables and resource limits. **Lab 7** ships that image to a kind cluster, and
 **Lab 8** replays Labs 1–6 as one Jenkins pipeline that builds, tests, scans and
 gates the result. **Lab 9** builds a three-node cluster whose pod network is
-provided by Calico, **Lab 10** isolates one worker with a taint and a label, and
-**Lab 11** caps a namespace at three pods with a ResourceQuota.
+provided by Calico, **Lab 10** isolates one worker with a taint and a label,
+**Lab 11** caps a namespace at three pods with a ResourceQuota, and **Lab 12**
+stores MySQL settings in a ConfigMap and Secret.
 
 Every lab folder holds the files I authored plus a write-up with the real
 terminal output and an explanation of *why*, not just *what*.
@@ -82,6 +83,7 @@ terminal output and an explanation of *why*, not just *what*.
 | 9 | Kubernetes | [**Three-node cluster + Calico**](Kubernetes/Lab9/README.md) | 3 nodes `Ready` · 3/3 calico-node · pod net across workers | ✅ |
 | 10 | Kubernetes | [**Node isolation** with taints and labels](Kubernetes/Lab10/README.md) | `workload=ivolveApp:NoSchedule` · `project=ivolve` · Pending vs Running | ✅ |
 | 11 | Kubernetes | [**Namespace + ResourceQuota**](Kubernetes/Lab11/README.md) | `ivolve` ns · 3 pods max · 4th refused at admission | ✅ |
+| 12 | Kubernetes | [**ConfigMap + Secret**](Kubernetes/Lab12/README.md) | MySQL config + base64 Secret · injected into a pod | ✅ |
 
 ### ✅ To-do
 
@@ -97,11 +99,12 @@ terminal output and an explanation of *why*, not just *what*.
 - [x] **Lab 9 — Kubernetes cluster** · 3 nodes (1 control plane + 2 workers) · Calico 3/3 · cross-node pod ping 0% loss
 - [x] **Lab 10 — Taints & labels** · worker tainted and labelled · untolerated pod Pending, tolerated pod Running on it
 - [x] **Lab 11 — Namespace & quota** · `ivolve` ns · 3 pods max · 4th refused at admission, counter is live
+- [x] **Lab 12 — ConfigMap & Secret** · `DB_HOST`/`DB_USER` + base64 secret · proven inside a pod, quota restored
 - [x] **Bonus** — multi-stage builds in Labs 3 & 4, remediation in Lab 5
 
 **Next**
 - [ ] 🐳 **Docker Labs 7–8** — multi-network microservices, Compose stack (deck)
-- [ ] ☸️ **Kubernetes Labs 12–17** — configs, storage, policies (deck)
+- [ ] ☸️ **Kubernetes Labs 13–17** — storage, StatefulSet, services, limits, policies (deck)
 - [ ] 🔄 **ArgoCD** — GitOps sync from this repository (deck Lab 23)
 - [ ] ⚙️ **Ansible** — provision the machines everything runs on (deck Labs 24–28)
 
@@ -166,8 +169,10 @@ iVolve-Tasks
 │   │                    commands.sh · README.md
 │   ├── 📁 Lab10         pod-blocked.yaml · pod-allowed.yaml
 │   │                    commands.sh · README.md
-│   └── 📁 Lab11         namespace.yaml · quota.yaml · demo-pods.yaml
-│                        extra-pod.yaml · commands.sh · README.md
+│   ├── 📁 Lab11         namespace.yaml · quota.yaml · demo-pods.yaml
+│   │                    extra-pod.yaml · commands.sh · README.md
+│   └── 📁 Lab12         configmap.yaml · secret.yaml · demo-pod.yaml
+│                        commands.sh · README.md
 ├── 📁 Jenkins
 │   └── 📁 Lab8          Dockerfile · Jenkinsfile · jenkins.yaml
 │                        plugins.txt · html.tpl · commands.sh · README.md

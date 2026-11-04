@@ -1,0 +1,34 @@
+# Lab 11 — three pods fill the quota exactly. A fourth must be refused by
+# the quota admission controller, not merely left Pending.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: quota-demo-1
+  namespace: ivolve
+spec:
+  containers:
+    - name: demo
+      image: busybox:1.36
+      command: ["sleep", "3600"]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: quota-demo-2
+  namespace: ivolve
+spec:
+  containers:
+    - name: demo
+      image: busybox:1.36
+      command: ["sleep", "3600"]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: quota-demo-3
+  namespace: ivolve
+spec:
+  containers:
+    - name: demo
+      image: busybox:1.36
+      command: ["sleep", "3600"]

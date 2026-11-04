@@ -1,0 +1,11 @@
+# Lab 11 — the deck calls this quota "ivolveQuota", but Kubernetes object
+# names are lowercase RFC 1123 subdomains, so the manifest uses
+# "ivolvequota". Same quota, legal name.
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: ivolvequota
+  namespace: ivolve
+spec:
+  hard:
+    pods: "3"

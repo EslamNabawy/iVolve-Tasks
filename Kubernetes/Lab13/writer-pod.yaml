@@ -1,0 +1,31 @@
+# Lab 13 — one-shot writer: mounts the claim, writes a line, exits. Pinned to
+# the labelled worker (and tolerating Lab 10's taint) because a hostPath PV
+# lives on one node's filesystem.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: log-writer
+  namespace: ivolve
+spec:
+  restartPolicy: Never
+  nodeSelector:
+    project: ivolve
+  tolerations:
+    - key: workload
+      operator: Equal
+      value: ivolveApp
+      effect: NoSchedule
+  containers:
+    - name: writer
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - 'echo "lab13 was here: $(date -u +%FT%TZ)" > /logs/lab13.txt && cat /logs/lab13.txt'
+      volumeMounts:
+        - name: app-logs
+          mountPath: /logs
+  volumes:
+    - name: app-logs
+      persistentVolumeClaim:
+        claimName: ivolvepvc

@@ -1,0 +1,14 @@
+# Lab 13 — the claim. It names no StorageClass and asks for the same 1Gi/RWX
+# as the PV, so the two bind statically.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ivolvepvc
+  namespace: ivolve
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: ""

@@ -1,0 +1,18 @@
+# Lab 13 — a static hostPath volume for application logs.
+# The deck names it ivolvePV; Kubernetes names are lowercase, so ivolvepv.
+# storageClassName: "" is what keeps the default kind StorageClass out of the
+# binding: a PVC with no class would otherwise be provisioned dynamically.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ivolvepv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  hostPath:
+    path: /mnt/app-logs
+    type: DirectoryOrCreate

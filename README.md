@@ -5,12 +5,12 @@
 **From source code to a running container**
 
 Hands-on labs from the iVolve DevOps track — building, testing, packaging,
-containerizing, optimizing and scanning a set of small applications, one tool
-at a time.
+containerizing, optimizing, scanning and automating a set of small applications,
+one tool at a time.
 
 <br>
 
-![Status](https://img.shields.io/badge/Labs_Complete-7%20%2F%207-brightgreen?style=for-the-badge)
+![Status](https://img.shields.io/badge/Labs_Complete-8%20%2F%208-brightgreen?style=for-the-badge)
 ![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![Maven](https://img.shields.io/badge/Maven-3.8.7-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)
 ![Gradle](https://img.shields.io/badge/Gradle-9.8.2-02303A?style=for-the-badge&logo=gradle&logoColor=white)
@@ -31,7 +31,7 @@ at a time.
 | **GitHub** | [@EslamNabawy](https://github.com/EslamNabawy) |
 | **Email** | eslamtarek.dev@gmail.com |
 | **Repository** | [iVolve-Tasks](https://github.com/EslamNabawy/iVolve-Tasks) |
-| **Environment** | Ubuntu 24.04 LTS on WSL2 · Java 17 · Maven · Gradle · Docker · Trivy · kind · kubectl |
+| **Environment** | Ubuntu 24.04 LTS on WSL2 · Java 17 · Maven · Gradle · Docker · Trivy · kind · kubectl · Jenkins |
 
 ---
 
@@ -41,9 +41,9 @@ Every lab in this training answers one question: **how does source code become
 something you can actually ship — and trust?**
 
 ```
-📄 Source code  →  🔧 Build tool  →  📦 Artifact  →  🐳 Image  →  🔍 Scan  →  ☸️ Running
-   .java files      Maven/Gradle     calculator.jar   Docker      Trivy      Kubernetes
-                     Labs 1 & 2                        Labs 3–6                Lab 7
+📄 Source code  →  🔧 Build tool  →  📦 Artifact  →  🐳 Image  →  🔍 Scan  →  ☸️ Running  →  🤖 Automated
+   .java files      Maven/Gradle     calculator.jar   Docker      Trivy      Kubernetes     Jenkins
+                     Labs 1 & 2                        Labs 3–6                Lab 7          Lab 8
 ```
 
 Each stage consumes the previous one's output. **Labs 1 and 2 build the same
@@ -51,7 +51,9 @@ application with two different tools** so the app is held constant and the
 *tooling* is the only variable. **Lab 3 takes Lab 1's jar** and packages it with
 its own Java runtime. **Labs 4–6** work on a Spring Boot, an Express and a Flask
 app to cover image size, non-root users, vulnerability scanning, environment
-variables and resource limits.
+variables and resource limits. **Lab 7** ships that image to a kind cluster, and
+**Lab 8** replays Labs 1–6 as one Jenkins pipeline that builds, tests, scans and
+gates the result.
 
 Every lab folder holds the files I authored plus a write-up with the real
 terminal output and an explanation of *why*, not just *what*.
@@ -74,6 +76,7 @@ terminal output and an explanation of *why*, not just *what*.
 | 5 | Docker | [**Vulnerability scanning** with Trivy](Docker/Lab5/README.md) | 2,343 HIGH/CRITICAL → **0** | ✅ |
 | 6 | Docker | [**Env vars** + resource limits](Docker/Lab6/README.md) | 3 runs · 1 CPU / 256 MB | ✅ |
 | 7 | Kubernetes | [**Deploying to a cluster** with kind](Kubernetes/Lab7/README.md) | cluster `ivolve` · `app3` 1/1 Running | ✅ |
+| 8 | CI/CD | [**Jenkins pipeline** replaying Labs 1–6](Jenkins/Lab8/README.md) | `ivolve-labs-1-6` — build 11 `SUCCESS` | ✅ |
 
 ### ✅ To-do
 
@@ -85,10 +88,10 @@ terminal output and an explanation of *why*, not just *what*.
 - [x] **Lab 5 — Trivy** · 2,343 HIGH/CRITICAL found, all remediated · `ivolve-app:v2` clean
 - [x] **Lab 6 — Env & limits** · three config sources · 1 CPU / 256 MB enforced
 - [x] **Lab 7 — Kubernetes** · kind cluster · `app3` loaded, Running as uid 1000 · calculator computed in-cluster
+- [x] **Lab 8 — Jenkins** · pipeline `ivolve-labs-1-6` green in 194.8 s · 10 tests recorded · six images built, scanned, gated, cleaned
 - [x] **Bonus** — multi-stage builds in Labs 3 & 4, remediation in Lab 5
 
 **Next**
-- [ ] 🔧 **Jenkins** — automate Labs 1–6 as a pipeline
 - [ ] 🔄 **ArgoCD** — GitOps sync from this repository
 - [ ] ⚙️ **Ansible** — provision the machines everything runs on
 
@@ -121,8 +124,9 @@ terminal output and an explanation of *why*, not just *what*.
 | `trivy-lab:v1` | 1.46 GB | **2,122** | **221** |
 | `ivolve-app:v2` 🏆 | 252 MB | **0** | **0** |
 
-**Multi-stage cut Lab 4's image by 2.28× and Lab 5's remediation removed all
-2,343 HIGH/CRITICAL findings.**
+**Multi-stage cut Lab 4's image by 2.28×, Lab 5's remediation removed all
+2,343 HIGH/CRITICAL findings, and Lab 8 replays the whole Docker track — build 11
+went green in 194.8 s.**
 
 </div>
 
@@ -148,6 +152,9 @@ iVolve-Tasks
 ├── 📁 Kubernetes
 │   └── 📁 Lab7          deployment.yaml · service.yaml
 │                        commands.sh · README.md
+├── 📁 Jenkins
+│   └── 📁 Lab8          Dockerfile · Jenkinsfile · jenkins.yaml
+│                        plugins.txt · html.tpl · commands.sh · README.md
 └── 📄 README.md
 ```
 

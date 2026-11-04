@@ -1,0 +1,10 @@
+# Lab 12 — non-sensitive MySQL settings. DB_HOST is the headless Service that
+# Lab 14 creates ("ivolveDBSvc" on the slide, lowercased to "ivolvedbsvc").
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ivolvecm
+  namespace: ivolve
+data:
+  DB_HOST: ivolvedbsvc
+  DB_USER: ivolveapp

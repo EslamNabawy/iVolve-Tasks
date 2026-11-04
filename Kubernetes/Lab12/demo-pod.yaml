@@ -1,0 +1,22 @@
+# Lab 12 — a one-shot consumer that proves both objects reach a container:
+# DB_HOST/DB_USER from the ConfigMap, DB_PASSWORD from the Secret. It prints
+# only the password's length, never the value.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: config-demo
+  namespace: ivolve
+spec:
+  restartPolicy: Never
+  containers:
+    - name: demo
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - 'echo "DB_HOST=$DB_HOST"; echo "DB_USER=$DB_USER"; echo "DB_PASSWORD_length=${#DB_PASSWORD}"'
+      envFrom:
+        - configMapRef:
+            name: ivolvecm
+        - secretRef:
+            name: ivolvesecret

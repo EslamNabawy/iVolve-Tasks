@@ -10,7 +10,7 @@ one tool at a time.
 
 <br>
 
-![Status](https://img.shields.io/badge/Labs_Complete-8%20%2F%208-brightgreen?style=for-the-badge)
+![Status](https://img.shields.io/badge/Labs_Complete-9-brightgreen?style=for-the-badge)
 ![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![Maven](https://img.shields.io/badge/Maven-3.8.7-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)
 ![Gradle](https://img.shields.io/badge/Gradle-9.8.2-02303A?style=for-the-badge&logo=gradle&logoColor=white)
@@ -53,7 +53,8 @@ its own Java runtime. **Labs 4–6** work on a Spring Boot, an Express and a Fla
 app to cover image size, non-root users, vulnerability scanning, environment
 variables and resource limits. **Lab 7** ships that image to a kind cluster, and
 **Lab 8** replays Labs 1–6 as one Jenkins pipeline that builds, tests, scans and
-gates the result.
+gates the result. **Lab 9** builds a three-node cluster whose pod network is
+provided by Calico.
 
 Every lab folder holds the files I authored plus a write-up with the real
 terminal output and an explanation of *why*, not just *what*.
@@ -77,6 +78,7 @@ terminal output and an explanation of *why*, not just *what*.
 | 6 | Docker | [**Env vars** + resource limits](Docker/Lab6/README.md) | 3 runs · 1 CPU / 256 MB | ✅ |
 | 7 | Kubernetes | [**Deploying to a cluster** with kind](Kubernetes/Lab7/README.md) | cluster `ivolve` · `app3` 1/1 Running | ✅ |
 | 8 | CI/CD | [**Jenkins pipeline** replaying Labs 1–6](Jenkins/Lab8/README.md) | `ivolve-labs-1-6` — build 11 `SUCCESS` | ✅ |
+| 9 | Kubernetes | [**Three-node cluster + Calico**](Kubernetes/Lab9/README.md) | 3 nodes `Ready` · 3/3 calico-node · pod net across workers | ✅ |
 
 ### ✅ To-do
 
@@ -89,11 +91,14 @@ terminal output and an explanation of *why*, not just *what*.
 - [x] **Lab 6 — Env & limits** · three config sources · 1 CPU / 256 MB enforced
 - [x] **Lab 7 — Kubernetes** · kind cluster · `app3` loaded, Running as uid 1000 · calculator computed in-cluster
 - [x] **Lab 8 — Jenkins** · pipeline `ivolve-labs-1-6` green in 194.8 s · 10 tests recorded · six images built, scanned, gated, cleaned
+- [x] **Lab 9 — Kubernetes cluster** · 3 nodes (1 control plane + 2 workers) · Calico 3/3 · cross-node pod ping 0% loss
 - [x] **Bonus** — multi-stage builds in Labs 3 & 4, remediation in Lab 5
 
 **Next**
-- [ ] 🔄 **ArgoCD** — GitOps sync from this repository
-- [ ] ⚙️ **Ansible** — provision the machines everything runs on
+- [ ] 🐳 **Docker Labs 7–8** — multi-network microservices, Compose stack (deck)
+- [ ] ☸️ **Kubernetes Labs 10–17** — taints, quotas, configs, storage, policies (deck)
+- [ ] 🔄 **ArgoCD** — GitOps sync from this repository (deck Lab 23)
+- [ ] ⚙️ **Ansible** — provision the machines everything runs on (deck Labs 24–28)
 
 ---
 
@@ -150,7 +155,9 @@ iVolve-Tasks
 │   └── 📁 Lab6          Dockerfile · Dockerfile.env · env.txt
 │                        commands.sh · README.md
 ├── 📁 Kubernetes
-│   └── 📁 Lab7          deployment.yaml · service.yaml
+│   ├── 📁 Lab7          deployment.yaml · service.yaml
+│   │                    commands.sh · README.md
+│   └── 📁 Lab9          kind-config.yaml · nettest.yaml · nettest2.yaml
 │                        commands.sh · README.md
 ├── 📁 Jenkins
 │   └── 📁 Lab8          Dockerfile · Jenkinsfile · jenkins.yaml

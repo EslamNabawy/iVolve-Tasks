@@ -1,0 +1,19 @@
+# Lab 9 — a real three-node cluster: one control plane and two workers.
+#
+# The slide bootstraps these with kubeadm on VMs. This machine has no second
+# host and no passwordless sudo, so kind is used instead: every "node" is a
+# container that kind itself bootstraps with kubeadm (kubelet + containerd
+# inside), which keeps the control-plane/worker split real.
+#
+# kind's default CNI is switched off on purpose so Calico is what actually
+# provides pod networking, exactly as the lab asks.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  disableDefaultCNI: true
+  podSubnet: "192.168.0.0/16"
+  apiServerAddress: "127.0.0.1"
+nodes:
+  - role: control-plane
+  - role: worker
+  - role: worker

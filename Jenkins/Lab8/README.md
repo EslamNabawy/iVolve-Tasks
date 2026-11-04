@@ -60,7 +60,8 @@ $ docker build -t ivolve-jenkins:lab8 Jenkins/Lab8
 `commands.sh` starts `jenkins-lab8` with same-path mounts
 (`~/iVolve-Tasks` and `~/jenkins-home` at identical host paths), the Docker
 socket with the docker group id `1001`, the JCasC file, and admin
-credentials from environment — never written into the repo:
+credentials passed as environment variables (a local lab account, bound to
+127.0.0.1 — not a secret meant for reuse):
 
 ```console
 $ docker run -d --name jenkins-lab8 -p 127.0.0.1:8080:8080 \

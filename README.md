@@ -10,7 +10,7 @@ one tool at a time.
 
 <br>
 
-![Status](https://img.shields.io/badge/Labs_Complete-13-brightgreen?style=for-the-badge)
+![Status](https://img.shields.io/badge/Labs_Complete-14-brightgreen?style=for-the-badge)
 ![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![Maven](https://img.shields.io/badge/Maven-3.8.7-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)
 ![Gradle](https://img.shields.io/badge/Gradle-9.8.2-02303A?style=for-the-badge&logo=gradle&logoColor=white)
@@ -56,8 +56,9 @@ variables and resource limits. **Lab 7** ships that image to a kind cluster, and
 gates the result. **Lab 9** builds a three-node cluster whose pod network is
 provided by Calico, **Lab 10** isolates one worker with a taint and a label,
 **Lab 11** caps a namespace at three pods with a ResourceQuota, **Lab 12**
-stores MySQL settings in a ConfigMap and Secret, and **Lab 13** gives the app a
-1 Gi persistent hostPath volume.
+stores MySQL settings in a ConfigMap and Secret, **Lab 13** gives the app a
+1 Gi persistent hostPath volume, and **Lab 14** runs MySQL as a StatefulSet
+behind a headless Service.
 
 Every lab folder holds the files I authored plus a write-up with the real
 terminal output and an explanation of *why*, not just *what*.
@@ -86,6 +87,7 @@ terminal output and an explanation of *why*, not just *what*.
 | 11 | Kubernetes | [**Namespace + ResourceQuota**](Kubernetes/Lab11/README.md) | `ivolve` ns · 3 pods max · 4th refused at admission | ✅ |
 | 12 | Kubernetes | [**ConfigMap + Secret**](Kubernetes/Lab12/README.md) | MySQL config + base64 Secret · injected into a pod | ✅ |
 | 13 | Kubernetes | [**Persistent storage** with hostPath PV/PVC](Kubernetes/Lab13/README.md) | 1Gi `RWX` `Retain` · PVC Bound · data read back from the node | ✅ |
+| 14 | Kubernetes | [**MySQL StatefulSet** + headless Service](Kubernetes/Lab14/README.md) | `ivolvedb-0` · `ivolvedbsvc` DNS · data survives pod recreation | ✅ |
 
 ### ✅ To-do
 
@@ -103,11 +105,12 @@ terminal output and an explanation of *why*, not just *what*.
 - [x] **Lab 11 — Namespace & quota** · `ivolve` ns · 3 pods max · 4th refused at admission, counter is live
 - [x] **Lab 12 — ConfigMap & Secret** · `DB_HOST`/`DB_USER` + base64 secret · proven inside a pod, quota restored
 - [x] **Lab 13 — PV & PVC** · 1Gi hostPath `/mnt/app-logs` · RWX, Retain, no StorageClass · data read back from the node
+- [x] **Lab 14 — StatefulSet** · MySQL 8.4.13 on `ivolve-worker` · headless DNS · marker row survived a pod delete
 - [x] **Bonus** — multi-stage builds in Labs 3 & 4, remediation in Lab 5
 
 **Next**
 - [ ] 🐳 **Docker Labs 7–8** — multi-network microservices, Compose stack (deck)
-- [ ] ☸️ **Kubernetes Labs 14–17** — StatefulSet, services, limits, policies (deck)
+- [ ] ☸️ **Kubernetes Labs 15–17** — Node app + ClusterIP, limits, policies (deck)
 - [ ] 🔄 **ArgoCD** — GitOps sync from this repository (deck Lab 23)
 - [ ] ⚙️ **Ansible** — provision the machines everything runs on (deck Labs 24–28)
 
@@ -176,7 +179,9 @@ iVolve-Tasks
 │   │                    extra-pod.yaml · commands.sh · README.md
 │   ├── 📁 Lab12         configmap.yaml · secret.yaml · demo-pod.yaml
 │   │                    commands.sh · README.md
-│   └── 📁 Lab13         pv.yaml · pvc.yaml · writer-pod.yaml
+│   ├── 📁 Lab13         pv.yaml · pvc.yaml · writer-pod.yaml
+│   │                    commands.sh · README.md
+│   └── 📁 Lab14         service.yaml · statefulset.yaml
 │                        commands.sh · README.md
 ├── 📁 Jenkins
 │   └── 📁 Lab8          Dockerfile · Jenkinsfile · jenkins.yaml

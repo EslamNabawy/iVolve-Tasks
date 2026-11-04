@@ -1,0 +1,16 @@
+# Lab 14 — headless Service for the StatefulSet. clusterIP: None means DNS
+# returns the pod IPs directly (ivolvedb-0.ivolvedbsvc...), which is what a
+# StatefulSet needs.
+apiVersion: v1
+kind: Service
+metadata:
+  name: ivolvedbsvc
+  namespace: ivolve
+spec:
+  clusterIP: None
+  selector:
+    app: ivolvedb
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306

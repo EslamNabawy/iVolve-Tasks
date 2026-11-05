@@ -1,0 +1,10 @@
+# Lab 19 — create/update Deployments, nothing else, only in this namespace.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ivolvdeployrole
+  namespace: ivolve
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["create", "update"]

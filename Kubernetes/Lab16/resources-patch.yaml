@@ -1,0 +1,14 @@
+# Lab 16 — strategic merge patch for the existing ivolveApp Deployment.
+# Requests 1 CPU / 1Gi, limits 2 CPU / 2Gi, exactly as the deck specifies.
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          resources:
+            requests:
+              cpu: "1"
+              memory: 1Gi
+            limits:
+              cpu: "2"
+              memory: 2Gi

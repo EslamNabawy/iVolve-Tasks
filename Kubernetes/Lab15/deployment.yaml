@@ -1,0 +1,86 @@
+# Lab 15 — the Node application: two replicas, DB settings from the Lab 12
+# ConfigMap/Secret, logs on the Lab 13 volume, MySQL prepared by an init
+# container, scheduled onto the labelled worker.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ivolveapp
+  namespace: ivolve
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ivolveapp
+  template:
+    metadata:
+      labels:
+        app: ivolveapp
+    spec:
+      nodeSelector:
+        project: ivolve
+      tolerations:
+        - key: workload
+          operator: Equal
+          value: ivolveApp
+          effect: NoSchedule
+      initContainers:
+        - name: init-db
+          image: mysql:8.4
+          command:
+            - sh
+            - -c
+            - |
+              until mysqladmin ping -h "$DB_HOST" -uroot -p"$MYSQL_ROOT_PASSWORD" --silent; do
+                echo "waiting for mysql at $DB_HOST"; sleep 3
+              done
+              mysql -h "$DB_HOST" -uroot -p"$MYSQL_ROOT_PASSWORD" -e \
+                "CREATE DATABASE IF NOT EXISTS ivolve; GRANT ALL PRIVILEGES ON ivolve.* TO '$DB_USER'@'%'; FLUSH PRIVILEGES;"
+              echo "ivolve database and grants ready"
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: ivolvecm
+                  key: DB_HOST
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: ivolvecm
+                  key: DB_USER
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ivolvesecret
+                  key: MYSQL_ROOT_PASSWORD
+      containers:
+        - name: app
+          image: ivolveapp:lab15
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3000
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: ivolvecm
+                  key: DB_HOST
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: ivolvecm
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ivolvesecret
+                  key: DB_PASSWORD
+            - name: DB_NAME
+              value: ivolve
+          volumeMounts:
+            - name: app-logs
+              mountPath: /app/logs
+      volumes:
+        - name: app-logs
+          persistentVolumeClaim:
+            claimName: ivolvepvc

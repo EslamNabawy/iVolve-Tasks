@@ -1,0 +1,15 @@
+# Lab 15 — ClusterIP Service in front of the two app replicas.
+# The deck spells it "ivolvaAppSvc" (sic); lowercased for RFC 1123.
+apiVersion: v1
+kind: Service
+metadata:
+  name: ivolvaappsvc
+  namespace: ivolve
+spec:
+  type: ClusterIP
+  selector:
+    app: ivolveapp
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000

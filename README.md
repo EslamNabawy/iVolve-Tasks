@@ -10,7 +10,7 @@ set of applications, one tool at a time.
 
 <br>
 
-![Status](https://img.shields.io/badge/Labs_Complete-18-brightgreen?style=for-the-badge)
+![Status](https://img.shields.io/badge/Labs_Complete-20-brightgreen?style=for-the-badge)
 ![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![Maven](https://img.shields.io/badge/Maven-3.8.7-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)
 ![Gradle](https://img.shields.io/badge/Gradle-9.8.2-02303A?style=for-the-badge&logo=gradle&logoColor=white)
@@ -63,6 +63,10 @@ secrets, static storage, a MySQL StatefulSet, the Node application with its
 ClusterIP Service, CPU/memory limits, a NetworkPolicy, and a full Prometheus /
 Alertmanager / Grafana monitoring stack.
 
+**Lab 19** adds the security layer — a ServiceAccount and Role that may only
+create/update Deployments in `ivolve`. **Lab 20** moves to Jenkins and gives
+`user1` admin rights and `user2` read-only access.
+
 ### A note on numbering
 
 This repository numbers labs **in the order they were delivered**. The deck's
@@ -98,6 +102,8 @@ terminal output** and an explanation of *why*, not just *what*.
 | 16 | Kubernetes | [**CPU/memory requests & limits**](Kubernetes/Lab16/README.md) | 1 CPU / 1Gi · 2 CPU / 2Gi · `kubectl top` | ✅ |
 | 17 | Kubernetes | [**NetworkPolicy** for MySQL](Kubernetes/Lab17/README.md) | only app pods → 3306 | ✅ |
 | 18 | Kubernetes | [**Monitoring stack**](Kubernetes/Lab18/README.md) | Prometheus · Alertmanager · Grafana · node-exporter | ✅ |
+| 19 | Security | [**RBAC + service account**](Kubernetes/Lab19/README.md) | `jenkinssa` · create/update Deployments only | ✅ |
+| 20 | CI/CD | [**Role-based authorization**](Jenkins/Lab20/README.md) | `user1` admin · `user2` read-only · build 403 | ✅ |
 
 ### ✅ Done
 
@@ -111,13 +117,16 @@ terminal output** and an explanation of *why*, not just *what*.
 - [x] **Configuration** — env vars, precedence and 1 CPU / 256 MB limits enforced.
 - [x] **Kubernetes** — a real three-node cluster, scheduling controls, storage,
       MySQL, the app, policy and monitoring, all verified.
+- [x] **Security** — a ServiceAccount that can create/update Deployments and
+      nothing else, proven with a real token.
+- [x] **Jenkins access control** — two users, admin vs read-only, verified by
+      HTTP status codes (201 vs 403).
 - [x] **CI/CD** — one Jenkins pipeline that rebuilds Labs 1–6 end to end.
 
 ### 🔭 Next
 
 - [ ] 🐳 **Docker Labs 7–8** — multi-network microservices, Compose stack (deck)
-- [ ] 🔐 **RBAC + service accounts** (deck Lab 19)
-- [ ] 🤖 **Jenkins CI/CD** — deployment pipeline, agents, shared libraries (deck 20–22)
+- [ ] 🤖 **Jenkins CI/CD** — deployment pipeline, agents, shared libraries (deck 21–22)
 - [ ] 🔄 **ArgoCD** — GitOps sync from this repository (deck Lab 23)
 - [ ] ⚙️ **Ansible** — provision the machines everything runs on (deck 24–28)
 
@@ -159,6 +168,8 @@ terminal output** and an explanation of *why*, not just *what*.
 | Lab 16 · limits | requests 1 CPU/1Gi · limits 2 CPU/2Gi · `kubectl top` live |
 | Lab 17 · policy | unrelated pods **blocked** on 3306 · app traffic untouched |
 | Lab 18 · monitoring | node-exporter **3/3** · all targets `up` · Grafana 11.2.0 with a provisioned dashboard |
+| Lab 19 · RBAC | `jenkinssa` create/update **yes**, patch/list/delete **no**, other namespaces **no** |
+| Lab 20 · Jenkins | `user1` build **201**, `user2` build **403**, anonymous **403** |
 
 ---
 
@@ -191,11 +202,15 @@ iVolve-Tasks
 │   ├── 📁 Lab15         deployment.yaml · service.yaml · commands.sh · README
 │   ├── 📁 Lab16         resources-patch.yaml · commands.sh · README
 │   ├── 📁 Lab17         networkpolicy.yaml · commands.sh · README
-│   └── 📁 Lab18         namespace.yaml · node-exporter.yaml · prometheus.yaml
-│                        alertmanager.yaml · grafana.yaml · commands.sh · README
+│   ├── 📁 Lab18         namespace.yaml · node-exporter.yaml · prometheus.yaml
+│   │                    alertmanager.yaml · grafana.yaml · commands.sh · README
+│   └── 📁 Lab19         serviceaccount.yaml · role.yaml · rolebinding.yaml
+│                        commands.sh · README
 ├── 📁 Jenkins
-│   └── 📁 Lab8          Dockerfile · Jenkinsfile · jenkins.yaml · plugins.txt
-│                        html.tpl · commands.sh · README
+│   ├── 📁 Lab8          Dockerfile · Jenkinsfile · jenkins.yaml · plugins.txt
+│   │                    html.tpl · commands.sh · README
+│   └── 📁 Lab20         Dockerfile · plugins.txt · jenkins.yaml · job.xml
+│                        commands.sh · README
 └── 📄 README.md
 ```
 

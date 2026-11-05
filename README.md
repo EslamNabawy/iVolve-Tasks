@@ -2,11 +2,11 @@
 
 # DevOps Labs — iVolve Training
 
-**From source code to a running container**
+**From source code to a scanned, running, monitored workload**
 
 Hands-on labs from the iVolve DevOps track — building, testing, packaging,
-containerizing, optimizing, scanning and automating a set of small applications,
-one tool at a time.
+containerizing, optimizing, scanning, deploying, securing and monitoring a small
+set of applications, one tool at a time.
 
 <br>
 
@@ -16,7 +16,8 @@ one tool at a time.
 ![Gradle](https://img.shields.io/badge/Gradle-9.8.2-02303A?style=for-the-badge&logo=gradle&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-29.1.3-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![Trivy](https://img.shields.io/badge/Trivy-0.76.1-1904DA?style=for-the-badge&logo=aquasec&logoColor=white)
-![WSL](https://img.shields.io/badge/Ubuntu_24.04-WSL2-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/kind_1.37.0-Calico_3.33-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)
+![Jenkins](https://img.shields.io/badge/Jenkins-LTS-D24939?style=for-the-badge&logo=jenkins&logoColor=white)
 
 </div>
 
@@ -31,45 +32,47 @@ one tool at a time.
 | **GitHub** | [@EslamNabawy](https://github.com/EslamNabawy) |
 | **Email** | eslamtarek.dev@gmail.com |
 | **Repository** | [iVolve-Tasks](https://github.com/EslamNabawy/iVolve-Tasks) |
-| **Environment** | Ubuntu 24.04 LTS on WSL2 · Java 17 · Maven · Gradle · Docker · Trivy · kind · kubectl · Jenkins |
+| **Environment** | Ubuntu 24.04 LTS on WSL2 · Java 17 · Maven · Gradle · Docker · Trivy · kind · kubectl · Jenkins · Prometheus · Grafana |
 
 ---
 
 ## 🎯 What this repository is
 
-Every lab in this training answers one question: **how does source code become
-something you can actually ship — and trust?**
+Every lab answers one question: **how does source code become something you can
+actually ship — and trust?**
 
 ```
-📄 Source code  →  🔧 Build tool  →  📦 Artifact  →  🐳 Image  →  🔍 Scan  →  ☸️ Running  →  🤖 Automated
-   .java files      Maven/Gradle     calculator.jar   Docker      Trivy      Kubernetes     Jenkins
-                     Labs 1 & 2                        Labs 3–6                Lab 7          Lab 8
+📄 Source      →  🔧 Build      →  📦 Artifact    →  🐳 Image     →  🔍 Scan     →  ☸️ Cluster     →  🤖 CI/CD     →  📊 Monitor
+.java files       Maven/Gradle     calculator.jar    Docker          Trivy          kind + Calico     Jenkins        Prometheus
+Labs 1–2          Labs 1–2         Labs 1–3          Labs 3–6        Lab 5          Labs 9–14         Lab 8          Lab 18
 ```
 
-Each stage consumes the previous one's output. **Labs 1 and 2 build the same
-application with two different tools** so the app is held constant and the
-*tooling* is the only variable. **Lab 3 takes Lab 1's jar** and packages it with
-its own Java runtime. **Labs 4–6** work on a Spring Boot, an Express and a Flask
-app to cover image size, non-root users, vulnerability scanning, environment
-variables and resource limits. **Lab 7** ships that image to a kind cluster, and
-**Lab 8** replays Labs 1–6 as one Jenkins pipeline that builds, tests, scans and
-gates the result. **Lab 9** builds a three-node cluster whose pod network is
-provided by Calico, **Lab 10** isolates one worker with a taint and a label,
-**Lab 11** caps a namespace at three pods with a ResourceQuota, **Lab 12**
-stores MySQL settings in a ConfigMap and Secret, **Lab 13** gives the app a
-1 Gi persistent hostPath volume, **Lab 14** runs MySQL as a StatefulSet behind
-a headless Service, **Lab 15** deploys the Node app with a ClusterIP Service,
-**Lab 16** sets CPU/memory requests and limits, **Lab 17** restricts MySQL with
-a NetworkPolicy, and **Lab 18** adds a full monitoring stack with a
-node-exporter DaemonSet.
+**Labs 1 and 2 build the same application with two different tools** so the app
+is held constant and the *tooling* is the only variable. **Lab 3** packages
+Lab 1's jar with its own Java runtime. **Labs 4–6** work on a Spring Boot, an
+Express and a Flask app to cover image size, non-root users, vulnerability
+scanning, environment variables and resource limits.
 
-Every lab folder holds the files I authored plus a write-up with the real
-terminal output and an explanation of *why*, not just *what*.
+**Lab 7** deploys the app to a kind cluster, and **Lab 8** replays Labs 1–6 as
+one Jenkins pipeline. Those two are additional tracks beyond the graded
+reports.
 
-> **Lab 3's app:** an interactive command-line calculator (Java 17). It reads two
-> numbers from stdin and prints sum, difference, product and quotient. It is
-> **not** a web service — nothing listens on a port, which is why Lab 3's
-> `EXPOSE 8080` is inert and `docker run -i` is mandatory.
+**Labs 9–18** are the deck's Kubernetes block, end to end: a three-node cluster
+built by kubeadm (via kind) with Calico, node isolation, quotas, config and
+secrets, static storage, a MySQL StatefulSet, the Node application with its
+ClusterIP Service, CPU/memory limits, a NetworkPolicy, and a full Prometheus /
+Alertmanager / Grafana monitoring stack.
+
+### A note on numbering
+
+This repository numbers labs **in the order they were delivered**. The deck's
+Docker labs 7–8 (multi-network microservices and a Compose stack) are **not**
+in this repository and remain on the Next list; the repo's Lab 7 (Kubernetes)
+and Lab 8 (Jenkins) are the additional tracks, and the deck's Kubernetes block
+maps to Labs 9–18.
+
+Every lab folder holds the files I authored plus a write-up with the **real
+terminal output** and an explanation of *why*, not just *what*.
 
 ---
 
@@ -85,44 +88,38 @@ terminal output and an explanation of *why*, not just *what*.
 | 6 | Docker | [**Env vars** + resource limits](Docker/Lab6/README.md) | 3 runs · 1 CPU / 256 MB | ✅ |
 | 7 | Kubernetes | [**Deploying to a cluster** with kind](Kubernetes/Lab7/README.md) | cluster `ivolve` · `app3` 1/1 Running | ✅ |
 | 8 | CI/CD | [**Jenkins pipeline** replaying Labs 1–6](Jenkins/Lab8/README.md) | `ivolve-labs-1-6` — build 11 `SUCCESS` | ✅ |
-| 9 | Kubernetes | [**Three-node cluster + Calico**](Kubernetes/Lab9/README.md) | 3 nodes `Ready` · 3/3 calico-node · pod net across workers | ✅ |
-| 10 | Kubernetes | [**Node isolation** with taints and labels](Kubernetes/Lab10/README.md) | `workload=ivolveApp:NoSchedule` · `project=ivolve` · Pending vs Running | ✅ |
-| 11 | Kubernetes | [**Namespace + ResourceQuota**](Kubernetes/Lab11/README.md) | `ivolve` ns · 3 pods max · 4th refused at admission | ✅ |
-| 12 | Kubernetes | [**ConfigMap + Secret**](Kubernetes/Lab12/README.md) | MySQL config + base64 Secret · injected into a pod | ✅ |
-| 13 | Kubernetes | [**Persistent storage** with hostPath PV/PVC](Kubernetes/Lab13/README.md) | 1Gi `RWX` `Retain` · PVC Bound · data read back from the node | ✅ |
-| 14 | Kubernetes | [**MySQL StatefulSet** + headless Service](Kubernetes/Lab14/README.md) | `ivolvedb-0` · `ivolvedbsvc` DNS · data survives pod recreation | ✅ |
-| 15 | Kubernetes | [**Node app + ClusterIP Service**](Kubernetes/Lab15/README.md) | 2 replicas · init DB · `/health` via `ivolvaappsvc` · logs on the PV | ✅ |
-| 16 | Kubernetes | [**CPU/memory requests & limits**](Kubernetes/Lab16/README.md) | 1 CPU / 1Gi requests · 2 CPU / 2Gi limits · `kubectl top` live | ✅ |
-| 17 | Kubernetes | [**NetworkPolicy** for MySQL](Kubernetes/Lab17/README.md) | only `app=ivolveapp` → 3306 · everything else blocked | ✅ |
-| 18 | Kubernetes | [**Monitoring stack**](Kubernetes/Lab18/README.md) | Prometheus · Alertmanager · Grafana · node-exporter 3/3 | ✅ |
+| 9 | Kubernetes | [**Three-node cluster + Calico**](Kubernetes/Lab9/README.md) | 3 nodes `Ready` · cross-node pod network | ✅ |
+| 10 | Kubernetes | [**Node isolation** with taints and labels](Kubernetes/Lab10/README.md) | taint + label · Pending vs Running | ✅ |
+| 11 | Kubernetes | [**Namespace + ResourceQuota**](Kubernetes/Lab11/README.md) | `ivolve` ns · 3 pods max · 4th refused | ✅ |
+| 12 | Kubernetes | [**ConfigMap + Secret**](Kubernetes/Lab12/README.md) | MySQL config + base64 Secret | ✅ |
+| 13 | Kubernetes | [**Persistent storage** with hostPath PV/PVC](Kubernetes/Lab13/README.md) | 1Gi `RWX` `Retain` · PVC Bound | ✅ |
+| 14 | Kubernetes | [**MySQL StatefulSet** + headless Service](Kubernetes/Lab14/README.md) | `ivolvedb-0` · headless DNS · data persists | ✅ |
+| 15 | Kubernetes | [**Node app + ClusterIP Service**](Kubernetes/Lab15/README.md) | 2 replicas · init DB · `/health` 200 | ✅ |
+| 16 | Kubernetes | [**CPU/memory requests & limits**](Kubernetes/Lab16/README.md) | 1 CPU / 1Gi · 2 CPU / 2Gi · `kubectl top` | ✅ |
+| 17 | Kubernetes | [**NetworkPolicy** for MySQL](Kubernetes/Lab17/README.md) | only app pods → 3306 | ✅ |
+| 18 | Kubernetes | [**Monitoring stack**](Kubernetes/Lab18/README.md) | Prometheus · Alertmanager · Grafana · node-exporter | ✅ |
 
-### ✅ To-do
+### ✅ Done
 
-**Done**
-- [x] **Lab 1 — Maven** · 5/5 tests pass · `target/calculator.jar` (3.7 KB) · verified
-- [x] **Lab 2 — Gradle** · 5/5 tests pass · `build/libs/calculator.jar` (2.3 KB) · verified
-- [x] **Lab 3 — Docker** · `app1` 861 MB vs `app2` 265 MB · non-root confirmed · cleaned up
-- [x] **Lab 4 — Optimization** · 671 MB → 294 MB · non-root `appuser` · `save`/`load` round trip
-- [x] **Lab 5 — Trivy** · 2,343 HIGH/CRITICAL found, all remediated · `ivolve-app:v2` clean
-- [x] **Lab 6 — Env & limits** · three config sources · 1 CPU / 256 MB enforced
-- [x] **Lab 7 — Kubernetes** · kind cluster · `app3` loaded, Running as uid 1000 · calculator computed in-cluster
-- [x] **Lab 8 — Jenkins** · pipeline `ivolve-labs-1-6` green in 194.8 s · 10 tests recorded · six images built, scanned, gated, cleaned
-- [x] **Lab 9 — Kubernetes cluster** · 3 nodes (1 control plane + 2 workers) · Calico 3/3 · cross-node pod ping 0% loss
-- [x] **Lab 10 — Taints & labels** · worker tainted and labelled · untolerated pod Pending, tolerated pod Running on it
-- [x] **Lab 11 — Namespace & quota** · `ivolve` ns · 3 pods max · 4th refused at admission, counter is live
-- [x] **Lab 12 — ConfigMap & Secret** · `DB_HOST`/`DB_USER` + base64 secret · proven inside a pod, quota restored
-- [x] **Lab 13 — PV & PVC** · 1Gi hostPath `/mnt/app-logs` · RWX, Retain, no StorageClass · data read back from the node
-- [x] **Lab 14 — StatefulSet** · MySQL 8.4.13 on `ivolve-worker` · headless DNS · marker row survived a pod delete
-- [x] **Lab 15 — Node app** · 2 replicas · init container prepares DB/grants · `/health` 200 through the Service
-- [x] **Lab 16 — Resources** · requests 1 CPU / 1Gi · limits 2 CPU / 2Gi · metrics-server + `kubectl top`
-- [x] **Lab 17 — NetworkPolicy** · MySQL reachable only from `app=ivolveapp` on 3306 · others blocked
-- [x] **Lab 18 — Monitoring** · Prometheus, Alertmanager, Grafana · one node-exporter pod per node, all targets up
-- [x] **Bonus** — multi-stage builds in Labs 3 & 4, remediation in Lab 5
+- [x] **Build tools** — the same calculator with Maven and Gradle, both test
+      suites green, jars compared honestly.
+- [x] **Containerization** — three Dockerfile strategies, sizes measured, the
+      stdin CLI proven with `docker run -i`.
+- [x] **Optimization** — 671 MB → 294 MB, non-root user, `save`/`load` round trip.
+- [x] **Scanning** — Trivy's 2,343 HIGH/CRITICAL findings remediated to **0**,
+      with the ignored-count caveat stated.
+- [x] **Configuration** — env vars, precedence and 1 CPU / 256 MB limits enforced.
+- [x] **Kubernetes** — a real three-node cluster, scheduling controls, storage,
+      MySQL, the app, policy and monitoring, all verified.
+- [x] **CI/CD** — one Jenkins pipeline that rebuilds Labs 1–6 end to end.
 
-**Next**
+### 🔭 Next
+
 - [ ] 🐳 **Docker Labs 7–8** — multi-network microservices, Compose stack (deck)
+- [ ] 🔐 **RBAC + service accounts** (deck Lab 19)
+- [ ] 🤖 **Jenkins CI/CD** — deployment pipeline, agents, shared libraries (deck 20–22)
 - [ ] 🔄 **ArgoCD** — GitOps sync from this repository (deck Lab 23)
-- [ ] ⚙️ **Ansible** — provision the machines everything runs on (deck Labs 24–28)
+- [ ] ⚙️ **Ansible** — provision the machines everything runs on (deck 24–28)
 
 ---
 
@@ -137,71 +134,68 @@ terminal output and an explanation of *why*, not just *what*.
 | Size | 3.7 KB | 2.3 KB |
 | Rebuild | redoes everything | **7 of 8 tasks `UP-TO-DATE`** |
 
-| Lab 3 · Image | Build location | Size | Reproducible |
-|---|:-:|:-:|:-:|
-| `app1` | inside Docker | **861 MB** | ✅ |
-| `app2` | on the host | **265 MB** | ❌ |
-| `app3` 🏆 | multi-stage | **265 MB** | ✅ |
-
-| Lab 4 · Image | Stages | Size |
-|---|:-:|:-:|
-| `image1` | single | **671 MB** |
-| `image2` 🏆 | multi-stage, JRE, non-root | **294 MB** |
-
-| Lab 5 · Scan | Size | HIGH | CRITICAL |
-|---|:-:|:-:|:-:|
-| `trivy-lab:v1` | 1.46 GB | **2,122** | **221** |
-| `ivolve-app:v2` 🏆 | 252 MB | **0** | **0** |
-
-**Multi-stage cut Lab 4's image by 2.28×, Lab 5's remediation removed all
-2,343 HIGH/CRITICAL findings, and Lab 8 replays the whole Docker track — build 11
-went green in 194.8 s.**
+| Lab 3–6 · Image | Size | Note |
+|---|:-:|---|
+| `app1` | **861 MB** | Maven builds inside the image |
+| `app2` | **265 MB** | jar built on the host |
+| `app3` 🏆 | **265 MB** | multi-stage, JRE, non-root |
+| `image1` | **671 MB** | single stage |
+| `image2` 🏆 | **294 MB** | multi-stage (2.28× smaller) |
+| `trivy-lab:v1` | **1.46 GB** | 2,122 HIGH · 221 CRITICAL |
+| `ivolve-app:v2` 🏆 | **252 MB** | **0** HIGH/CRITICAL |
 
 </div>
 
+| Area | Verified result |
+|---|---|
+| Lab 6 · limits | `NanoCpus=1000000000`, `Memory=268435456`, 24.67 MiB / 256 MiB used |
+| Lab 7 · cluster | `app3` 256 MB loaded, never pulled · 1/1 Running as uid 1000 · CLI via `kubectl exec -i` |
+| Lab 8 · Jenkins | build 11 **`SUCCESS`** in 194.8 s · junit 10 tests, 0 failures · six images built, scanned, gated, cleaned |
+| Lab 9 · network | 3 nodes + Calico 3/3 · cross-node ping **0% loss** both directions |
+| Lab 10 · isolation | untolerated pod **Pending** · tolerated pod running on the tainted node |
+| Lab 11 · quota | 3/3 pods · fourth **refused at admission** · live counter proven |
+| Lab 14 · MySQL | 8.4.13 · headless `ivolvedbsvc` resolves · data survived pod recreation |
+| Lab 15 · app | 2/2 replicas · init container created DB + grants · `/health` 200 through the Service |
+| Lab 16 · limits | requests 1 CPU/1Gi · limits 2 CPU/2Gi · `kubectl top` live |
+| Lab 17 · policy | unrelated pods **blocked** on 3306 · app traffic untouched |
+| Lab 18 · monitoring | node-exporter **3/3** · all targets `up` · Grafana 11.2.0 with a provisioned dashboard |
+
 ---
 
-## 📁 Structure
+## 📁 Repository layout
 
 ```
 iVolve-Tasks
 ├── 📁 Build Tools
-│   ├── 📁 Lab1          commands.sh · README.md
-│   └── 📁 Lab2          commands.sh · README.md
+│   ├── 📁 Lab1          README · commands.sh · evidence/
+│   └── 📁 Lab2          README · commands.sh · evidence/
 ├── 📁 Docker
-│   ├── 📁 Lab3          Dockerfile.app1 · Dockerfile.app2
-│   │                    Dockerfile.multistage · .dockerignore · README.md
+│   ├── 📁 Lab3          Dockerfile.app1 · Dockerfile.app2 · Dockerfile.multistage
+│   │                    .dockerignore · README
 │   ├── 📁 Lab4          Dockerfile · Dockerfile.multistage · .dockerignore
-│   │                    commands.sh · README.md
-│   ├── 📁 Lab5          Dockerfile · Dockerfile.v2 · .dockerignore
-│   │                    package-lock.json · commands.sh · README.md
-│   │                    reports/trivy-v1.html · reports/trivy-v2.html
-│   └── 📁 Lab6          Dockerfile · Dockerfile.env · env.txt
-│                        commands.sh · README.md
+│   │                    commands.sh · README
+│   ├── 📁 Lab5          Dockerfile · Dockerfile.v2 · .dockerignore · package-lock.json
+│   │                    commands.sh · README · reports/
+│   └── 📁 Lab6          Dockerfile · Dockerfile.env · env.txt · commands.sh · README
 ├── 📁 Kubernetes
-│   ├── 📁 Lab7          deployment.yaml · service.yaml
-│   │                    commands.sh · README.md
+│   ├── 📁 Lab7          deployment.yaml · service.yaml · commands.sh · README
 │   ├── 📁 Lab9          kind-config.yaml · nettest.yaml · nettest2.yaml
-│   │                    commands.sh · README.md
-│   ├── 📁 Lab10         pod-blocked.yaml · pod-allowed.yaml
-│   │                    commands.sh · README.md
+│   │                    commands.sh · README
+│   ├── 📁 Lab10         pod-blocked.yaml · pod-allowed.yaml · commands.sh · README
 │   ├── 📁 Lab11         namespace.yaml · quota.yaml · demo-pods.yaml
-│   │                    extra-pod.yaml · commands.sh · README.md
+│   │                    extra-pod.yaml · commands.sh · README
 │   ├── 📁 Lab12         configmap.yaml · secret.yaml · demo-pod.yaml
-│   │                    commands.sh · README.md
-│   ├── 📁 Lab13         pv.yaml · pvc.yaml · writer-pod.yaml
-│   │                    commands.sh · README.md
-│   ├── 📁 Lab14         service.yaml · statefulset.yaml
-│   │                    commands.sh · README.md
-│   ├── 📁 Lab15         deployment.yaml · service.yaml
-│   │                    commands.sh · README.md
-│   ├── 📁 Lab16         resources-patch.yaml · commands.sh · README.md
-│   ├── 📁 Lab17         networkpolicy.yaml · commands.sh · README.md
+│   │                    commands.sh · README
+│   ├── 📁 Lab13         pv.yaml · pvc.yaml · writer-pod.yaml · commands.sh · README
+│   ├── 📁 Lab14         service.yaml · statefulset.yaml · commands.sh · README
+│   ├── 📁 Lab15         deployment.yaml · service.yaml · commands.sh · README
+│   ├── 📁 Lab16         resources-patch.yaml · commands.sh · README
+│   ├── 📁 Lab17         networkpolicy.yaml · commands.sh · README
 │   └── 📁 Lab18         namespace.yaml · node-exporter.yaml · prometheus.yaml
-│                        alertmanager.yaml · grafana.yaml · commands.sh · README.md
+│                        alertmanager.yaml · grafana.yaml · commands.sh · README
 ├── 📁 Jenkins
-│   └── 📁 Lab8          Dockerfile · Jenkinsfile · jenkins.yaml
-│                        plugins.txt · html.tpl · commands.sh · README.md
+│   └── 📁 Lab8          Dockerfile · Jenkinsfile · jenkins.yaml · plugins.txt
+│                        html.tpl · commands.sh · README
 └── 📄 README.md
 ```
 
@@ -210,12 +204,49 @@ committed** — this repository contains only work I authored.
 
 ---
 
-## ⚡ Quick start
+## ⚙️ How the labs run
 
-> **These labs require Linux.** Docker needs a Linux kernel; Windows CMD or
-> PowerShell alone cannot run them. Use **WSL2** (`wsl --install`), a native
-> Linux install, or a VM. On WSL keep projects under `/home/<you>`, never
-> `/mnt/c` — builds there run 5–20× slower.
+- **Everything runs on WSL2 (Ubuntu 24.04), builds inside the Linux filesystem**
+  (`~/…`), never under `/mnt/c` — the 9p mount is 5–20× slower.
+- **Each lab has a `commands.sh`** that replays it from a clean state, plus a
+  `README.md` with the requirements, the real output and the reasoning.
+- **The Kubernetes labs share one cluster.** Lab 9 creates `kind` cluster
+  `ivolve` (1 control plane + 2 workers, Calico); Labs 10–18 build on it, and
+  it is removed with `kind delete cluster --name ivolve` when the work is done.
+- **The unrelated `aiops` cluster and containers belong to another project** and
+  are never touched.
+- **No fabricated output.** Every console block is a real run. The two
+  exceptions are flagged where they appear: the rendered terminal images in
+  Labs 1–2, and the one `sudo` line in Lab 1 that was never executed.
+
+## 🧭 Known deviations and limits
+
+1. **Lab 9 uses kind instead of hand-run kubeadm.** This host has no second
+   machine and no passwordless sudo; kind still bootstraps each node with
+   kubeadm and containerd, so the control-plane/worker split and Calico are
+   real. The README says exactly what is and is not proven.
+2. **Lab 15's image is built locally and `kind load`ed.** The deck asks for a
+   Docker Hub image from Lab 8, which was not run, and this session had no Hub
+   credentials. `imagePullPolicy: IfNotPresent` makes the loaded image work;
+   the deviation is documented in that lab.
+3. **Kubernetes names are lowercased** where the deck capitalises them
+   (`ivolveQuota` → `ivolvequota`, `ivolveCM` → `ivolvecm`, `ivolveDBSvc` →
+   `ivolvedbsvc`, `ivolveNP` → `ivolvenp`, …). The API rejects uppercase names.
+4. **Labs 1–2's evidence images are rendered** from real captured output, not
+   raw screenshots. Both READMEs say so.
+5. **The Lab 14 MySQL data directory was re-initialised** after a full Windows
+   host disk caused WSL I/O errors during the first deployment; the incident and
+   the recovery are recorded in that README.
+6. **The Kubernetes labs share one kernel.** "Three nodes" is three
+   containerised kubelets, not three machines.
+
+---
+
+## 🚀 Quick start
+
+> **These labs require Linux.** Docker and kind need a Linux kernel; Windows
+> CMD or PowerShell alone cannot run them. Use **WSL2** (`wsl --install`), a
+> native Linux install, or a VM. On WSL keep projects under `/home/<you>`.
 
 ```bash
 sudo apt update && sudo apt install -y openjdk-17-jdk maven
@@ -225,12 +256,13 @@ sudo apt update && sudo apt install -y openjdk-17-jdk maven
 git clone https://github.com/EslamNabawy/iVolve-Tasks.git && cd iVolve-Tasks
 ```
 
-Then follow any lab's README, or run its `commands.sh` end to end.
+Then open any lab's `README.md` and run its `commands.sh`. The labs build on
+each other, so the order matters for the Kubernetes track (9 → 18).
 
 ---
 
 <div align="center">
 
-**Eslam Nabawy** · iVolve DevOps Training · October 2026
+**Eslam Nabawy** · iVolve DevOps Training · October–November 2026
 
 </div>

@@ -1,0 +1,31 @@
+# Lab 20 — users and permissions declared as code.
+# Passwords come from environment variables; nothing secret is committed.
+#
+# The deck asks for "admin role for user1, read-only role for user2". This
+# uses Matrix Authorization: the same two permission sets, expressed per user.
+# (role-strategy's JCasC `assignments` field is rejected as deprecated by the
+# current plugin, so named roles cannot be declared this way.)
+jenkins:
+  systemMessage: "iVolve Lab 20 — role-based authorization"
+  numExecutors: 1
+  slaveAgentPort: -1
+
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          password: "${JENKINS_ADMIN_PASSWORD}"
+        - id: "user1"
+          password: "${USER1_PASSWORD}"
+        - id: "user2"
+          password: "${USER2_PASSWORD}"
+
+  authorizationStrategy:
+    globalMatrix:
+      permissions:
+        - "Overall/Administer:admin"
+        - "Overall/Administer:user1"
+        - "Overall/Read:user2"
+        - "Job/Read:user2"
+        - "View/Read:user2"

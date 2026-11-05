@@ -1,0 +1,4 @@
+# Lab 20 — just enough for users and permissions declared as code.
+configuration-as-code
+# Matrix Authorization Strategy: per-user permissions (admin vs read-only).
+matrix-auth

@@ -93,7 +93,8 @@ for i in $(seq 1 60); do
   [ "$OFF" = "False" ] && break
   sleep 2
 done
-curl -s -u "$USER:$PASS" "$URL/computer/api/json?tree=computer[displayName,offline,numExecutors]"
+#    -g: curl reads [] in the tree= query as a URL glob and exits 3
+curl -sg -u "$USER:$PASS" "$URL/computer/api/json?tree=computer[displayName,offline,numExecutors]"
 echo
 docker logs --tail 5 jenkins-agent22 2>&1
 

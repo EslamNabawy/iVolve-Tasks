@@ -1,0 +1,45 @@
+services:
+  app:
+    build: .
+    image: eslamnabawy/ivolveapp:lab8
+    container_name: ivolveapp
+    ports:
+      - "3000:3000"
+    environment:
+      DB_HOST: db
+      DB_USER: ivolveuser
+      DB_PASSWORD: ivolvepass
+      DB_NAME: ivolve
+    volumes:
+      - app_logs:/app/logs
+    networks:
+      - ivolve-net
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.4
+    container_name: ivolvedb
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: ivolve
+      MYSQL_USER: ivolveuser
+      MYSQL_PASSWORD: ivolvepass
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - ivolve-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpass"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  app_logs:
+  db_data:
+
+networks:
+  ivolve-net:
+    driver: bridge

@@ -1,0 +1,26 @@
+# Trivy triage file for the DemoApp image — Lab 23.
+#
+# These nine CRITICAL findings are real and fixable, but every one of them is
+# inherited from the application's pinned dependencies, not from the GitOps pipeline:
+#   * 8 x tomcat-embed-core 10.1.16   (Spring Boot 3.2.0's managed Tomcat)
+#   * 1 x spring-webmvc     6.1.1     (Spring Boot 3.2.0's managed Spring)
+# The lab clones DemoApp as-is, so the app is left on 3.2.0 and the findings are
+# triaged here instead of silently disappearing. Bumping the Spring Boot parent
+# (3.4+) removes them; delete the matching lines when that happens.
+#
+# Everything not listed here still gates the GitOps pipeline: the Scan stage runs
+#   trivy image --severity CRITICAL --ignore-unfixed --exit-code 1
+# so a new CRITICAL fails the build.
+
+# tomcat-embed-core 10.1.16
+CVE-2025-24813
+CVE-2026-41293
+CVE-2026-43512
+CVE-2026-43515
+CVE-2026-55276
+CVE-2026-65182
+CVE-2026-65905
+CVE-2026-68525
+
+# spring-webmvc 6.1.1
+CVE-2026-47884

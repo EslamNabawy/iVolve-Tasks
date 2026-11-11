@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ivolve
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/EslamNabawy/iVolve-Tasks.git
+    targetRevision: gitops
+    path: Jenkins/Lab23/manifests
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: lab23
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

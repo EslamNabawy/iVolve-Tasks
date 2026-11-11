@@ -1,0 +1,112 @@
+// Lab 23 — GitOps with Argo CD.
+//
+// Same build as Lab 22, but the last stage no longer talks to the cluster:
+// it rewrites the manifest and pushes the commit to the `gitops` branch of
+// this repository. Argo CD watches that branch and applies the change.
+//
+// The one Kubernetes object Jenkins still creates is nothing at all — that is
+// the point of the lab.
+@Library('ivolve-lib@main') _
+
+pipeline {
+  agent { label 'docker' }
+
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+    buildDiscarder(logRotator(numToKeepStr: '5'))
+  }
+
+  environment {
+    IMAGE      = "localhost:5000/eslamnabawy/demoapp:${env.BUILD_NUMBER}"
+    DEPLOY_REF = "172.18.0.1:5000/eslamnabawy/demoapp:${env.BUILD_NUMBER}"
+    GIT_REPO   = 'github.com/EslamNabawy/iVolve-Tasks.git'
+    GIT_BRANCH = 'gitops'
+    MANIFEST   = 'Jenkins/Lab23/manifests/deployment.yaml'
+
+    JAVA_HOME  = '/opt/jdk17'
+    PATH       = "/opt/jdk17/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    KUBECONFIG = '/kube/config'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        deleteDir()
+        dir('app') {
+          git url: 'file:///home/eslam/labs-workspace/DemoApp', branch: 'main'
+        }
+        // The GitOps checkout has to come from GitHub, because Jenkins pushes
+        // back to it. The local mirror would refuse a push to a checked-out branch.
+        withCredentials([usernamePassword(credentialsId: 'github-token',
+                                         usernameVariable: 'GH_USER',
+                                         passwordVariable: 'GH_PAT')]) {
+          dir('repo') {
+            git url: "https://${GH_USER}:${GH_PAT}@${GIT_REPO}",
+                branch: GIT_BRANCH
+            sh "git log --oneline -1; git branch --show-current"
+          }
+        }
+        sh "hostname; echo agent=${env.NODE_NAME}"
+      }
+    }
+
+    stage('Build app') {
+      steps {
+        buildApp(dir: 'app')
+      }
+    }
+
+    stage('Build, scan, push image') {
+      steps {
+        buildImage(
+          dir: 'app',
+          image: env.IMAGE,
+          ignoreFile: '../repo/Jenkins/Lab23/.trivyignore'
+        )
+      }
+    }
+
+    stage('Deploy to Kubernetes (git push)') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'github-token',
+                                         usernameVariable: 'GH_USER',
+                                         passwordVariable: 'GH_PAT')]) {
+          sh '''
+            cd repo
+            git config user.name  "jenkins-lab23"
+            git config user.email "jenkins@ivolve.local"
+            git remote set-url origin "https://$GH_USER:$GH_PAT@$GIT_REPO"
+          '''
+          deployOnK8s(
+            dir: 'repo',
+            image: env.DEPLOY_REF,
+            manifest: env.MANIFEST,
+            namespace: 'lab23',
+            deployment: 'demoapp',
+            gitBranch: env.GIT_BRANCH
+          )
+          sh '''
+            cd repo
+            git log --oneline -2
+            git show --stat --oneline HEAD
+          '''
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      echo "Pipeline finished: ${currentBuild.currentResult} (build #${env.BUILD_NUMBER} on ${env.NODE_NAME})"
+      archiveArtifacts artifacts: 'app/trivy-report.txt', allowEmptyArchive: true
+      sh "docker rmi ${env.IMAGE} >/dev/null 2>&1 || true"
+    }
+    success {
+      echo "Pushed ${env.DEPLOY_REF} to ${env.GIT_BRANCH} — Argo CD will sync namespace lab23."
+    }
+    failure {
+      echo 'Pipeline failed.'
+    }
+  }
+}

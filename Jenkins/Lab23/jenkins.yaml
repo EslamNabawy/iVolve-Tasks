@@ -1,0 +1,69 @@
+# Lab 23 — Jenkins without cluster credentials: it only writes to Git.
+jenkins:
+  systemMessage: |
+    iVolve Lab 23 — GitOps. Jenkins pushes the rewritten manifest to the
+    `gitops` branch; Argo CD applies it to the cluster.
+  numExecutors: 2
+
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${JENKINS_ADMIN_ID}"
+          password: "${JENKINS_ADMIN_PASSWORD}"
+
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - usernamePassword:
+              scope: GLOBAL
+              id: "github-token"
+              username: "EslamNabawy"
+              password: "${GITHUB_TOKEN}"
+              description: "GitHub PAT from the gh CLI (repo scope) — used only to push the gitops branch"
+
+unclassified:
+  location:
+    url: "http://localhost:8082/"
+    adminAddress: "eslamtarek.dev@gmail.com"
+
+  globalLibraries:
+    libraries:
+      - name: "ivolve-lib"
+        defaultVersion: "main"
+        implicit: false
+        allowVersionOverride: true
+        includeInChangesets: false
+        retriever:
+          modernSCM:
+            libraryPath: "Jenkins/Lab22/shared-library"
+            scm:
+              git:
+                remote: "file:///home/eslam/iVolve-Tasks"
+
+jobs:
+  - script: >
+      pipelineJob('lab23-pipeline') {
+          description('''DemoApp to GitOps: builds and pushes the image, then commits
+                         the new tag to the gitops branch. Argo CD syncs it.''')
+          definition {
+              cpsScm {
+                  scm {
+                      git {
+                          remote {
+                              url('file:///home/eslam/iVolve-Tasks')
+                          }
+                          branch('main')
+                          extensions { }
+                      }
+                  }
+                  scriptPath('Jenkins/Lab23/Jenkinsfile')
+                  lightweight(false)
+              }
+          }
+      }

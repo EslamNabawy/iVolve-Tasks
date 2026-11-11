@@ -1,0 +1,36 @@
+# Lab 22 — the Jenkins AGENT image.
+#
+# The agent does the work; the controller only schedules. It therefore needs the
+# same toolchain as the Lab 21 controller image (Maven, JDK 17, Docker CLI,
+# Trivy, kubectl) but none of the Jenkins plugins or the CLI entrypoint: the
+# official inbound-agent image supplies the remoting client.
+FROM jenkins/inbound-agent:latest
+
+USER root
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ca-certificates \
+      curl \
+      docker-buildx \
+      docker-cli \
+      docker.io \
+      git \
+      maven \
+      unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# JDK 17 — the app targets 17 and the image ships a newer JDK only.
+ADD https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.21%2B9/OpenJDK17U-jdk_x64_linux_hotspot_17.0.21_9.tar.gz /tmp/jdk17.tar.gz
+RUN mkdir -p /opt/jdk17 \
+    && tar -xzf /tmp/jdk17.tar.gz -C /opt/jdk17 --strip-components=1 \
+    && rm -f /tmp/jdk17.tar.gz
+
+ADD https://github.com/aquasecurity/trivy/releases/download/v0.76.1/trivy_0.76.1_Linux-64bit.deb /tmp/trivy.deb
+RUN apt-get update && apt-get install -y /tmp/trivy.deb && rm -f /tmp/trivy.deb
+
+ADD https://dl.k8s.io/release/v1.37.1/bin/linux/amd64/kubectl /usr/local/bin/kubectl
+RUN chmod +x /usr/local/bin/kubectl
+
+ENV DOCKER_BUILDKIT=1
+
+USER jenkins

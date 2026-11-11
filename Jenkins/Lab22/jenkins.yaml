@@ -1,0 +1,71 @@
+# Lab 22 — Jenkins as code: no controller executors, one inbound agent,
+# one global pipeline library.
+jenkins:
+  systemMessage: |
+    iVolve Lab 22 — the pipeline runs on agent `docker-agent` and every stage
+    comes from the `ivolve-lib` shared library.
+  numExecutors: 0
+  slaveAgentPort: 50000
+
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${JENKINS_ADMIN_ID}"
+          password: "${JENKINS_ADMIN_PASSWORD}"
+
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+  nodes:
+    - permanent:
+        name: "docker-agent"
+        labelString: "docker linux"
+        numExecutors: 1
+        remoteFS: "/home/jenkins/agent"
+        retentionStrategy: "always"
+        launcher: jnlp
+
+unclassified:
+  location:
+    url: "http://localhost:8082/"
+    adminAddress: "eslamtarek.dev@gmail.com"
+
+  # The shared library lives inside this repository, so the library path points
+  # at Jenkins/Lab22/shared-library instead of the repository root.
+  globalLibraries:
+    libraries:
+      - name: "ivolve-lib"
+        defaultVersion: "main"
+        implicit: false
+        allowVersionOverride: true
+        includeInChangesets: false
+        retriever:
+          modernSCM:
+            libraryPath: "Jenkins/Lab22/shared-library"
+            scm:
+              git:
+                remote: "file:///home/eslam/iVolve-Tasks"
+
+jobs:
+  - script: >
+      pipelineJob('lab22-pipeline') {
+          description('''DemoApp on a Jenkins agent, built entirely from shared
+                         library steps: buildApp, buildImage, deployOnK8s.''')
+          definition {
+              cpsScm {
+                  scm {
+                      git {
+                          remote {
+                              url('file:///home/eslam/iVolve-Tasks')
+                          }
+                          branch('main')
+                          extensions { }
+                      }
+                  }
+                  scriptPath('Jenkins/Lab22/Jenkinsfile')
+                  lightweight(false)
+              }
+          }
+      }

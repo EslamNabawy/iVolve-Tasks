@@ -1,0 +1,88 @@
+// Lab 22 — the Lab 21 pipeline rebuilt on shared library steps.
+//
+// Every stage body is now a library call (ivolve-lib, defined in
+// Jenkins/Lab22/shared-library/vars). The pipeline itself knows nothing about
+// Maven, Trivy, registries or kubectl — it only decides *what* to run, not how.
+//
+// The agent runs the build: `agent { label 'docker' }` matches the permanent
+// agent declared in jenkins.yaml, and the controller has numExecutors: 0.
+@Library('ivolve-lib@main') _
+
+pipeline {
+  agent { label 'docker' }
+
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+    buildDiscarder(logRotator(numToKeepStr: '5'))
+  }
+
+  environment {
+    IMAGE      = "localhost:5000/eslamnabawy/demoapp:${env.BUILD_NUMBER}"
+    DEPLOY_REF = "172.18.0.1:5000/eslamnabawy/demoapp:${env.BUILD_NUMBER}"
+
+    JAVA_HOME  = '/opt/jdk17'
+    PATH       = "/opt/jdk17/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    KUBECONFIG = '/kube/config'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        deleteDir()
+        dir('app') {
+          git url: 'file:///home/eslam/labs-workspace/DemoApp', branch: 'main'
+        }
+        dir('repo') {
+          git url: 'file:///home/eslam/iVolve-Tasks', branch: 'main'
+        }
+        sh 'ls -d app repo'
+        sh "hostname; echo agent=${env.NODE_NAME}"
+      }
+    }
+
+    stage('Build app') {
+      steps {
+        buildApp(dir: 'app')
+      }
+    }
+
+    stage('Build, scan, push image') {
+      steps {
+        buildImage(
+          dir: 'app',
+          image: env.IMAGE,
+          ignoreFile: '../repo/Jenkins/Lab22/.trivyignore'
+        )
+      }
+    }
+
+    stage('Deploy to Kubernetes') {
+      steps {
+        deployOnK8s(
+          dir: 'repo',
+          image: env.DEPLOY_REF,
+          manifest: 'Jenkins/Lab22/deployment.yaml',
+          namespace: 'lab22',
+          deployment: 'demoapp'
+        )
+      }
+    }
+  }
+
+  post {
+    always {
+      echo "Pipeline finished: ${currentBuild.currentResult} (build #${env.BUILD_NUMBER} on ${env.NODE_NAME})"
+      archiveArtifacts artifacts: 'app/trivy-report.txt', allowEmptyArchive: true
+      sh "docker rmi ${env.IMAGE} >/dev/null 2>&1 || true"
+    }
+    success {
+      echo "${env.DEPLOY_REF} is running in namespace lab22, built on agent ${env.NODE_NAME}."
+    }
+    failure {
+      echo 'Pipeline failed — last cluster state:'
+      sh 'kubectl -n lab22 get pods -o wide 2>&1 || true'
+      sh 'kubectl -n lab22 describe pods 2>&1 | tail -40 || true'
+    }
+  }
+}

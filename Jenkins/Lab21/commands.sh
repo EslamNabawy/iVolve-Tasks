@@ -85,8 +85,8 @@ for i in $(seq 1 300); do
 done
 echo "pipeline result: $R"
 curl -s -u "$USER:$PASS" "$URL/job/lab21-pipeline/lastBuild/api/json?tree=result,duration,number" | python3 -m json.tool
-curl -s -u "$USER:$PASS" "$URL/job/lab21-pipeline/lastBuild/consoleText" | tail -45
-
+curl -s -u "$USER:$PASS" "$URL/job/lab21-pipeline/lastBuild/consoleText" > /tmp/lab21-console.txt
+tail -50 /tmp/lab21-console.txt
 [ "$R" = "SUCCESS" ] || { echo "PIPELINE FAILED"; exit 1; }
 
 # 7. The manifest the pipeline edited now names the build's image

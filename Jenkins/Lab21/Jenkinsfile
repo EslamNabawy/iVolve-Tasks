@@ -23,11 +23,15 @@ pipeline {
 
   environment {
     // The deck says Docker Hub. This host has no Hub credentials, so the image
-    // registry is the local `registry:2` from Lab 8 — reachable from the kind
-    // nodes at the docker bridge gateway, not at localhost.
-    REGISTRY   = '172.18.0.1:5000'
-    IMAGE_REPO = 'eslamnabawy/demoapp'
-    IMAGE_FULL = "172.18.0.1:5000/eslamnabawy/demoapp:${env.BUILD_NUMBER}"
+    // registry is the local `registry:2` from Lab 8 — one registry, two names:
+    //   * the host Docker daemon trusts 127.0.0.1 as insecure, so it pushes to
+    //     localhost:5000 without any daemon.json change;
+    //   * the kind nodes cannot resolve localhost to the host, so the manifest
+    //     names the bridge gateway 172.18.0.1:5000 (containerd is configured
+    //     for plain HTTP there). Both names address the same registry store.
+    IMAGE_NAME  = 'eslamnabawy/demoapp'
+    PUSH_REF    = "localhost:5000/eslamnabawy/demoapp:${env.BUILD_NUMBER}"
+    DEPLOY_REF  = "172.18.0.1:5000/eslamnabawy/demoapp:${env.BUILD_NUMBER}"
 
     JAVA_HOME  = '/opt/jdk17'
     PATH       = "/opt/jdk17/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
@@ -62,8 +66,8 @@ pipeline {
     stage('Build Docker Image') {
       steps {
         dir('app') {
-          sh 'docker build -t "$IMAGE_FULL" .'
-          sh 'docker images "$IMAGE_FULL" --format "{{.Repository}}:{{.Tag}} {{.Size}}"'
+          sh 'docker build -t "$PUSH_REF" .'
+          sh 'docker images "$PUSH_REF" --format "{{.Repository}}:{{.Tag}} {{.Size}}"'
         }
       }
     }
@@ -78,11 +82,11 @@ pipeline {
           sh '''
             trivy image --no-progress --timeout 30m --scanners vuln \
               --severity HIGH,CRITICAL --ignore-unfixed \
-              --format table -o trivy-report.txt "$IMAGE_FULL"
+              --format table -o trivy-report.txt "$PUSH_REF"
             grep -E "^Total:" trivy-report.txt
             trivy image --no-progress --timeout 30m --scanners vuln \
               --severity CRITICAL --ignore-unfixed \
-              --ignorefile .trivyignore --exit-code 1 "$IMAGE_FULL"
+              --ignorefile .trivyignore --exit-code 1 "$PUSH_REF"
           '''
         }
       }
@@ -90,14 +94,16 @@ pipeline {
 
     stage('Push image to DockerHub') {
       steps {
-        sh 'docker push "$IMAGE_FULL"'
+        sh 'docker push "$PUSH_REF"'
+        sh 'curl -s localhost:5000/v2/_catalog'
+        sh 'curl -s localhost:5000/v2/eslamnabawy/demoapp/tags/list'
       }
     }
 
     stage('Delete image locally') {
       steps {
-        sh 'docker rmi "$IMAGE_FULL"'
-        sh 'docker images "$IMAGE_FULL" --format "{{.Repository}}:{{.Tag}}" || true'
+        sh 'docker rmi "$PUSH_REF"'
+        sh 'docker images "$PUSH_REF" --format "{{.Repository}}:{{.Tag}}" || true'
       }
     }
 
@@ -107,7 +113,7 @@ pipeline {
           sh '''
             MANIFEST=Jenkins/Lab21/deployment.yaml
             echo "old: $(grep 'image:' $MANIFEST)"
-            sed -i "s|^\\( *image:\\).*|\\1 $IMAGE_FULL|" $MANIFEST
+            sed -i "s|^\\( *image:\\).*|\\1 $DEPLOY_REF|" $MANIFEST
             echo "new: $(grep 'image:' $MANIFEST)"
           '''
         }
@@ -133,10 +139,10 @@ pipeline {
     always {
       echo "Pipeline finished: ${currentBuild.currentResult} (build #${env.BUILD_NUMBER})"
       archiveArtifacts artifacts: 'app/trivy-report.txt', allowEmptyArchive: true
-      sh 'docker rmi "$IMAGE_FULL" >/dev/null 2>&1 || true'
+      sh 'docker rmi "$PUSH_REF" >/dev/null 2>&1 || true'
     }
     success {
-      echo "Image ${IMAGE_FULL} is running in namespace lab21."
+      echo "Image ${DEPLOY_REF} is running in namespace lab21."
     }
     failure {
       echo 'Pipeline failed — last cluster state:'

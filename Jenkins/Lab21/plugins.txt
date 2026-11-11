@@ -1,0 +1,7 @@
+# Lab 21 — plugins actually used by this pipeline.
+workflow-aggregator
+configuration-as-code
+job-dsl
+git
+junit
+timestamper

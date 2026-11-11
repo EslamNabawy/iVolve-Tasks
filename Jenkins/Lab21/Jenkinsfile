@@ -1,0 +1,147 @@
+// Lab 21 — Jenkins Pipeline for Application Deployment
+//
+// Seven labelled stages, exactly the deck's list, plus the post block:
+//   1 Build app          -> mvn package, jar in target/
+//   2 Build Docker Image -> from the app's own Dockerfile
+//   3 Scan Docker Image  -> Trivy; CRITICAL/fixable findings gate the build
+//   4 Push image         -> to the registry (Docker Hub in the deck)
+//   5 Delete image locally
+//   6 Update image in deployment file
+//   7 Deploy to Kubernetes
+//
+// Two checkouts on purpose:
+//   app/  the application under CI (upstream DemoApp)
+//   repo/ this repository, which owns the Kubernetes manifests
+pipeline {
+  agent any
+
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+    buildDiscarder(logRotator(numToKeepStr: '5'))
+  }
+
+  environment {
+    // The deck says Docker Hub. This host has no Hub credentials, so the image
+    // registry is the local `registry:2` from Lab 8 — reachable from the kind
+    // nodes at the docker bridge gateway, not at localhost.
+    REGISTRY   = '172.18.0.1:5000'
+    IMAGE_REPO = 'eslamnabawy/demoapp'
+    IMAGE_FULL = "172.18.0.1:5000/eslamnabawy/demoapp:${env.BUILD_NUMBER}"
+
+    JAVA_HOME  = '/opt/jdk17'
+    PATH       = "/opt/jdk17/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    KUBECONFIG = '/kube/config'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        // A reused workspace makes `git` fail; start empty every time.
+        deleteDir()
+        dir('app') {
+          git url: 'file:///home/eslam/labs-workspace/DemoApp', branch: 'main'
+        }
+        dir('repo') {
+          git url: 'file:///home/eslam/iVolve-Tasks', branch: 'main'
+        }
+        sh 'ls -d app repo'
+      }
+    }
+
+    stage('Build app') {
+      steps {
+        dir('app') {
+          sh 'mvn -B clean package'
+          sh 'ls -l target/*.jar'
+          junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
+        }
+      }
+    }
+
+    stage('Build Docker Image') {
+      steps {
+        dir('app') {
+          sh 'docker build -t "$IMAGE_FULL" .'
+          sh 'docker images "$IMAGE_FULL" --format "{{.Repository}}:{{.Tag}} {{.Size}}"'
+        }
+      }
+    }
+
+    stage('Scan Docker Image') {
+      steps {
+        dir('app') {
+          // Triage file from this repo: the nine CRITICALs inherited from the
+          // app's pinned Spring Boot 3.2.0 (Tomcat 10.1.16 + Spring MVC 6.1.1).
+          // Everything else — including any *new* CRITICAL — still fails.
+          sh 'cp ../repo/Jenkins/Lab21/.trivyignore .trivyignore'
+          sh '''
+            trivy image --no-progress --timeout 30m --scanners vuln \
+              --severity HIGH,CRITICAL --ignore-unfixed \
+              --format table -o trivy-report.txt "$IMAGE_FULL"
+            grep -E "^Total:" trivy-report.txt
+            trivy image --no-progress --timeout 30m --scanners vuln \
+              --severity CRITICAL --ignore-unfixed \
+              --ignorefile .trivyignore --exit-code 1 "$IMAGE_FULL"
+          '''
+        }
+      }
+    }
+
+    stage('Push image to DockerHub') {
+      steps {
+        sh 'docker push "$IMAGE_FULL"'
+      }
+    }
+
+    stage('Delete image locally') {
+      steps {
+        sh 'docker rmi "$IMAGE_FULL"'
+        sh 'docker images "$IMAGE_FULL" --format "{{.Repository}}:{{.Tag}}" || true'
+      }
+    }
+
+    stage('Update image in deployment file') {
+      steps {
+        dir('repo') {
+          sh '''
+            MANIFEST=Jenkins/Lab21/deployment.yaml
+            echo "old: $(grep 'image:' $MANIFEST)"
+            sed -i "s|^\\( *image:\\).*|\\1 $IMAGE_FULL|" $MANIFEST
+            echo "new: $(grep 'image:' $MANIFEST)"
+          '''
+        }
+      }
+    }
+
+    stage('Deploy to Kubernetes cluster') {
+      steps {
+        dir('repo') {
+          sh '''
+            kubectl apply -f Jenkins/Lab21/namespace.yaml
+            kubectl apply -f Jenkins/Lab21/deployment.yaml
+            kubectl apply -f Jenkins/Lab21/service.yaml
+            kubectl -n lab21 rollout status deployment/demoapp --timeout=240s
+            kubectl -n lab21 get pods -o wide
+          '''
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      echo "Pipeline finished: ${currentBuild.currentResult} (build #${env.BUILD_NUMBER})"
+      archiveArtifacts artifacts: 'app/trivy-report.txt', allowEmptyArchive: true
+      sh 'docker rmi "$IMAGE_FULL" >/dev/null 2>&1 || true'
+    }
+    success {
+      echo "Image ${IMAGE_FULL} is running in namespace lab21."
+    }
+    failure {
+      echo 'Pipeline failed — last cluster state:'
+      sh 'kubectl -n lab21 get pods -o wide 2>&1 || true'
+      sh 'kubectl -n lab21 describe pods 2>&1 | tail -40 || true'
+    }
+  }
+}

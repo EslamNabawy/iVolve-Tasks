@@ -1,0 +1,49 @@
+# Lab 21 — Jenkins as code: one admin user, one job, one executor.
+jenkins:
+  systemMessage: |
+    iVolve Lab 21 — build, scan, push, update the manifest, deploy to Kubernetes.
+  numExecutors: 1
+  slaveAgentPort: -1
+
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${JENKINS_ADMIN_ID}"
+          password: "${JENKINS_ADMIN_PASSWORD}"
+
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+unclassified:
+  location:
+    url: "http://localhost:8082/"
+    adminAddress: "eslamtarek.dev@gmail.com"
+
+jobs:
+  - script: >
+      pipelineJob('lab21-pipeline') {
+          description('''DemoApp: Maven build, image build, Trivy scan,
+                         push, delete the local copy, rewrite the image
+                         tag in deployment.yaml and apply it to kind.''')
+          definition {
+              cpsScm {
+                  scm {
+                      git {
+                          remote {
+                              // The lab repository is mounted read-write at
+                              // this path: the pipeline edits its own
+                              // deployment.yaml and, in Lab 23, commits that
+                              // edit back to GitHub.
+                              url('file:///home/eslam/iVolve-Tasks')
+                          }
+                          branch('main')
+                          extensions { }
+                      }
+                  }
+                  scriptPath('Jenkins/Lab21/Jenkinsfile')
+                  lightweight(false)
+              }
+          }
+      }

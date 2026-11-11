@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demoapp
+  namespace: lab21
+  labels:
+    app: demoapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demoapp
+  template:
+    metadata:
+      labels:
+        app: demoapp
+    spec:
+      containers:
+        - name: demoapp
+          # Rewritten by the pipeline's "Update image in deployment file" stage.
+          image: eslamnabawy/demoapp:initial
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 768Mi

@@ -35,6 +35,12 @@ docker build --network=host -t ivolve-jenkins:lab21 "$LAB"
 # 3. Controller. --network host so 127.0.0.1:<kind API> and the registry work;
 #    the docker CLI still drives the HOST daemon through the socket.
 rm -rf "$JHOME" && mkdir -p "$JHOME"
+# Warm the scanner's cache from the host so the first pipeline run does not
+# spend ten minutes re-downloading the 1.7 GB Trivy DB through WSL networking.
+if [ -d "$HOME/.cache/trivy" ]; then
+  mkdir -p "$JHOME/.cache"
+  cp -a "$HOME/.cache/trivy" "$JHOME/.cache/trivy"
+fi
 docker rm -f jenkins-lab21 >/dev/null 2>&1 || true
 docker run -d --name jenkins-lab21 \
   --network host \

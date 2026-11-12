@@ -146,6 +146,18 @@ curl -s -o /dev/null -w 'GET http://127.0.0.1:8090/ -> HTTP %{http_code}\n' http
 kill $PF2 || true
 kill $PF || true
 
+# 9b. selfHeal: a manual edit is reverted, because Git owns the desired state
+IMG_OK=$(kubectl -n lab23 get deploy demoapp -o jsonpath='{.spec.template.spec.containers[0].image}')
+kubectl -n lab23 set image deployment/demoapp demoapp=eslamnabawy/demoapp:initial >/dev/null
+kubectl -n lab23 get deploy demoapp -o jsonpath='{.spec.template.spec.containers[0].image}'
+echo "  <- right after kubectl set image"
+kubectl -n argocd annotate application ivolve argocd.argoproj.io/refresh=normal --overwrite >/dev/null
+for i in $(seq 1 40); do
+  IMG=$(kubectl -n lab23 get deploy demoapp -o jsonpath='{.spec.template.spec.containers[0].image}')
+  if [ "$IMG" = "$IMG_OK" ]; then echo "reverted after ~$((i*3))s: $IMG"; break; fi
+  sleep 3
+done
+
 # 10. Cleanup — Jenkins only. Argo CD and the Application stay: they are the result.
 docker rm -f jenkins-lab23 >/dev/null
 docker rmi ivolve-jenkins:lab23 >/dev/null

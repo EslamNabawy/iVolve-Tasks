@@ -1,0 +1,37 @@
+# A "managed node" for the Ansible labs.
+#
+# This host has no passwordless sudo, so it cannot run a second sshd of its own
+# (WSL's PID 1 is systemd, but starting another unit needs root). The managed
+# node is therefore a container running sshd in the foreground — the same way a
+# cloud VM would be reached, without systemd in the picture.
+#
+# The `ansible` user has passwordless sudo inside the container, which is what
+# real managed nodes in these labs have too.
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ca-certificates \
+      curl \
+      gnupg \
+      lsb-release \
+      openssh-server \
+      python3 \
+      python3-apt \
+      sudo \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -s /bin/bash ansible \
+    && echo 'ansible:ansible' | chpasswd \
+    && printf 'ansible ALL=(ALL) NOPASSWD:ALL\n' > /etc/sudoers.d/ansible \
+    && chmod 0440 /etc/sudoers.d/ansible
+
+# Password auth only for the very first connection; ssh-copy-id installs the key
+# and every later connection uses it.
+RUN mkdir -p /var/run/sshd \
+    && ssh-keygen -A \
+    && sed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D", "-e"]

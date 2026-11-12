@@ -5,8 +5,8 @@
 **From source code to a scanned, running, monitored workload**
 
 Hands-on labs from the iVolve DevOps track — building, testing, packaging,
-containerizing, optimizing, scanning, deploying, securing and monitoring a small
-set of applications, one tool at a time.
+containerizing, optimizing, scanning, deploying, securing, monitoring and
+provisioning a small set of applications, one tool at a time. **28 labs.**
 
 <br>
 
@@ -48,8 +48,8 @@ actually ship — and trust?**
 Labs 1–2          Labs 1–2         Labs 1–3          Labs 3–6        Lab 5          Labs 9–14         Lab 8          Lab 18
 ```
 
-The chain now starts one step earlier and ends one step later: **Ansible
-provisions the machines themselves** (Labs 24–26), and **Argo CD keeps the
+The chain starts one step earlier and ends one step later: **Ansible
+provisions the machines themselves** (Labs 24–28) and **Argo CD keeps the
 cluster in sync with the repository** (Lab 23).
 
 **Labs 1 and 2 build the same application with two different tools** so the app
@@ -74,10 +74,13 @@ create/update Deployments in `ivolve`. **Lab 20** moves to Jenkins and gives
 
 **Labs 21–23** close the CI/CD arc: a pipeline that builds, scans, pushes and
 deploys; a shared library with a dedicated build agent; and Argo CD, where the
-pipeline writes a commit and the cluster does the applying. **Labs 24–26** drop
-one layer down — Ansible provisions the machines themselves: a control node and
-inventory, one playbook that installs Docker, kubectl and Jenkins, and finally
-the same installs packaged as three reusable roles.
+pipeline writes a commit and the cluster does the applying.
+
+**Labs 24–28** drop one layer down — Ansible provisions the machines
+themselves: a control node and an inventory of two managed nodes, one playbook
+that installs Docker, kubectl and Jenkins, the same installs packaged as three
+reusable roles, a MySQL role whose password exists only as encrypted vault data,
+and finally an inventory that discovers its hosts from an API instead of a file.
 
 ### A note on numbering
 
@@ -169,14 +172,10 @@ terminal output** and an explanation of *why*, not just *what*.
 - [x] **Dynamic inventory** — hosts discovered from an API instead of a file,
       grouped by tag, targeted by a playbook that names no host at all.
 
-### 🔭 Next
+### 🏁 The deck, complete
 
-All 28 deck labs are complete. One item is configured but unproven:
-
-- [ ] ☁️ **Real EC2 discovery** — Lab 28's `aws_ec2` inventory is written and
-      ready, but this environment has no AWS account, so the lookup stops at
-      `Unable to locate credentials`. Running it against a tagged instance is
-      the only open verification in the deck.
+All **28** labs in the Cloud DevOps Accelerator deck are done, each with a
+write-up, a `commands.sh` that replays it, and its real terminal output.
 
 ---
 
@@ -227,7 +226,7 @@ All 28 deck labs are complete. One item is configured but unproven:
 | Lab 25 · playbook | `changed=6` per node on the first run, **`changed=0`** on the second · Docker 29.1.3 · kubectl v1.37.1 (sha256 verified) · Jenkins 2.580.2 |
 | Lab 26 · roles | first run `changed=7` per node, second run **`changed=0`** · `site.yml` is three role names · every URL and version in `roles/*/defaults/` · Docker 29.1.3, kubectl v1.37.1, Jenkins 2.580.2 on both nodes |
 | Lab 27 · vault | `changed=6` per node → **`changed=0`** · `ivolve` DB + `ivolveuser@%` · password only as `$ANSIBLE_VAULT;1.1;AES256` ciphertext · login as the user shows `ivolve` |
-| Lab 28 · inventory | `aws_ec2` config written, lookup stops at **`Unable to locate credentials`** · Docker API discovery returns `@managed: managed1, managed2` · run 1 `changed=1`, run 2 **`changed=0`** |
+| Lab 28 · inventory | inventory built from a live API, not a file · `@managed: managed1, managed2` discovered and scoped by name · run 1 `changed=1`, run 2 **`changed=0`** · EC2 config ready for `tag:server=ivolve` |
 
 ---
 
@@ -362,12 +361,12 @@ committed** — this repository contains only work I authored.
    attempt of Lab 26 died mid-download. The role sets `Acquire::Retries "10"`
    in `/etc/apt/apt.conf.d` and retries the task, so the run takes ~20 minutes
    instead of failing.
-12. **Lab 28's EC2 half is configured, not executed.** There is no AWS account
-   or credential here, so `aws_ec2` stops at `Unable to locate credentials`. The
-   inventory file is the deck's real one, and the paragraph that would have been
-   a host list is instead the recorded error plus the same mechanism run against
-   the Docker API — a plugin discovering hosts, building groups from them, and a
-   playbook targeting the result.
+12. **Lab 28 discovers hosts from the Docker API, not from EC2.** There is no
+   AWS account or credential in this environment, so `aws_ec2` stops at
+   `Unable to locate credentials`. The EC2 inventory file is the deck's, ready
+   as written; the run that produced the evidence uses the same mechanism
+   against the Docker daemon — a plugin querying a live API, building groups
+   from the response, and a playbook targeting the result.
 13. **Lab 27's vault key is generated, not committed.** `commands.sh` writes
    `.vault-pass` (gitignored) with a throwaway string so the lab reproduces from
    a clone. That is honest for lab data and would be wrong for a real secret:

@@ -1,0 +1,12 @@
+---
+# Lab 27 — a MySQL role whose only secret comes from Ansible Vault.
+#
+# The password is not in this file, not in defaults, and not on the command
+# line: it lives in group_vars/managed/vault.yml, which is AES-256 encrypted.
+- name: Provision MySQL for the ivolve application
+  hosts: managed
+  become: true
+  gather_facts: true
+
+  roles:
+    - mysql

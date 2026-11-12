@@ -1,0 +1,17 @@
+---
+# defaults file for mysql
+mysql_package: mysql-server
+mysql_python_driver: python3-pymysql
+
+# Names are not secret, so they are ordinary defaults. The password is not
+# here: it is `vault_mysql_user_password` in group_vars/managed/vault.yml.
+mysql_db: ivolve
+mysql_user: ivolveuser
+mysql_socket: /var/run/mysqld/mysqld.sock
+mysql_bind_address: 127.0.0.1
+
+# mysql-server drags in ~40 MB through this network; same retry story as Lab 26.
+mysql_install_retries: 6
+mysql_install_delay: 15
+mysql_apt_retries: 10
+mysql_apt_timeout: 120

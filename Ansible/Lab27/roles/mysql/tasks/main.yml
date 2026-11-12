@@ -1,0 +1,92 @@
+---
+# Role: mysql — install, create the database and the account, prove the account
+# works.
+#
+# The managed nodes are containers with no systemd, so `service: mysql state=started`
+# is not available. mysqld is started directly and its socket is polled until it
+# answers; everything after that is the same as on a VM.
+- name: Make apt retry slow downloads
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/99-ivolve-retries
+    mode: "0644"
+    content: |
+      Acquire::Retries "{{ mysql_apt_retries }}";
+      Acquire::http::Timeout "{{ mysql_apt_timeout }}";
+      Acquire::https::Timeout "{{ mysql_apt_timeout }}";
+
+- name: Install MySQL and the Python driver the modules use
+  ansible.builtin.apt:
+    name:
+      - "{{ mysql_package }}"
+      - "{{ mysql_python_driver }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  register: mysql_install
+  until: mysql_install is succeeded
+  retries: "{{ mysql_install_retries }}"
+  delay: "{{ mysql_install_delay }}"
+
+# On a VM /var/run/mysqld is a tmpfs created by systemd-tmpfiles. In a container
+# nothing creates it, and mysqld aborts before it can log why.
+- name: Create the socket directory
+  ansible.builtin.file:
+    path: /var/run/mysqld
+    state: directory
+    owner: mysql
+    group: mysql
+    mode: "0755"
+
+- name: Check whether mysqld is already running
+  ansible.builtin.command: pgrep -x mysqld
+  register: mysqld_running
+  failed_when: false
+  changed_when: false
+
+- name: Start mysqld
+  ansible.builtin.command: /usr/sbin/mysqld --daemonize --user=mysql
+  when: mysqld_running.rc != 0
+
+- name: Wait for the server to answer on its socket
+  ansible.builtin.command: mysqladmin ping
+  register: mysql_ping
+  until: mysql_ping.rc == 0
+  retries: 30
+  delay: 2
+  changed_when: false
+
+- name: Create the ivolve database
+  community.mysql.mysql_db:
+    name: "{{ mysql_db }}"
+    state: present
+    login_unix_socket: "{{ mysql_socket }}"
+
+# The password comes from the vault. `no_log: true` keeps it out of the play
+# output — Ansible would otherwise print the module arguments, password included.
+- name: Create ivolveuser with all privileges on ivolve
+  community.mysql.mysql_user:
+    name: "{{ mysql_user }}"
+    password: "{{ vault_mysql_user_password }}"
+    priv: "{{ mysql_db }}.*:ALL"
+    host: "%"
+    state: present
+    login_unix_socket: "{{ mysql_socket }}"
+  no_log: true
+
+# The proof the lab asks for: log in AS the created user (not as root) and list
+# the databases. The root account on Ubuntu is auth_socket, so this is the only
+# way to show the account itself works.
+- name: Log in as ivolveuser and list the databases
+  ansible.builtin.shell: |
+    set -eu
+    mysql -u {{ mysql_user }} -p"$MYSQL_PWD" -h {{ mysql_bind_address }} \
+      -N -e 'SHOW DATABASES;' | sort
+  environment:
+    MYSQL_PWD: "{{ vault_mysql_user_password }}"
+  register: mysql_databases
+  changed_when: false
+  no_log: true
+
+- name: Show what ivolveuser can see
+  ansible.builtin.debug:
+    msg: "databases visible to {{ mysql_user }}: {{ mysql_databases.stdout_lines | join(', ') }}"

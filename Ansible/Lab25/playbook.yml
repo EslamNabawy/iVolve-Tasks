@@ -1,0 +1,138 @@
+---
+# Lab 25 — one playbook that installs Docker, kubectl and Jenkins on every
+# managed node, then proves each one is there.
+- name: Install Docker, kubectl and Jenkins
+  hosts: managed
+  become: true
+  gather_facts: true
+
+  vars:
+    kubectl_version: v1.37.1
+    kubectl_base: "https://dl.k8s.io/release/{{ kubectl_version }}/bin/linux/amd64"
+    # Downloaded once on the control node, then copied. See the note below.
+    kubectl_local: /tmp/kubectl-{{ kubectl_version }}
+    jenkins_version: 2.580.2
+    jenkins_local: /tmp/jenkins_{{ jenkins_version }}_all.deb
+
+  tasks:
+    # ---- Docker -------------------------------------------------------
+    - name: Install Docker
+      ansible.builtin.apt:
+        name: docker.io
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Report the Docker version
+      ansible.builtin.command: docker --version
+      register: docker_version
+      changed_when: false
+
+    # ---- kubectl ------------------------------------------------------
+    # Two `get_url` runs downloading 59 MB each timed out on this host with
+    # "failed to create temporary content file: The read operation timed out",
+    # even with a 120 s socket timeout: the download is slow enough that two
+    # parallel streams stall. Fetch it once and copy it, which is also what a
+    # fleet would do behind a proxy.
+    - name: Download kubectl on the control node
+      ansible.builtin.get_url:
+        url: "{{ kubectl_base }}/kubectl"
+        dest: "{{ kubectl_local }}"
+        mode: "0755"
+        timeout: 300
+      delegate_to: localhost
+      become: false
+      run_once: true
+
+    - name: Download the published checksum
+      ansible.builtin.get_url:
+        url: "{{ kubectl_base }}/kubectl.sha256"
+        dest: "{{ kubectl_local }}.sha256"
+        mode: "0644"
+        timeout: 60
+      delegate_to: localhost
+      become: false
+      run_once: true
+
+    # The checksum is the one published with the release, not a hash typed into
+    # this file: a copied hash proves nothing after the next patch release.
+    - name: Verify the binary against it
+      ansible.builtin.shell: |
+        set -euo pipefail
+        echo "$(cat {{ kubectl_local }}.sha256)  {{ kubectl_local }}" | sha256sum -c -
+      args:
+        executable: /bin/bash
+      delegate_to: localhost
+      become: false
+      run_once: true
+      register: kubectl_checksum
+      changed_when: false
+
+    - name: Copy kubectl to the managed node
+      ansible.builtin.copy:
+        src: "{{ kubectl_local }}"
+        dest: /usr/local/bin/kubectl
+        mode: "0755"
+        owner: root
+        group: root
+
+    - name: Report the kubectl version
+      ansible.builtin.command: kubectl version --client
+      register: kubectl_version_out
+      changed_when: false
+
+    # ---- Jenkins ------------------------------------------------------
+    - name: Add the Jenkins repository key
+      ansible.builtin.get_url:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
+        dest: /usr/share/keyrings/jenkins-keyring.asc
+        mode: "0644"
+        force: true
+        timeout: 120
+
+    - name: Add the Jenkins repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/"
+        filename: jenkins
+        state: present
+        update_cache: true
+
+    # This network is assigned a mirror that apt cannot finish downloading
+    # from: pkg.jenkins.io redirects to mirrors.zerolag.ro and the 53.8 MB
+    # package exceeded apt's connection window ("Failed to fetch ...
+    # Connection timed out"). The same file fetched with curl completes in
+    # ~40 s, so it is downloaded once on the control node and installed from
+    # disk. The repository above is still configured and still used for
+    # dependencies.
+    - name: Download the Jenkins package on the control node
+      ansible.builtin.get_url:
+        url: "https://get.jenkins.io/debian-stable/jenkins_{{ jenkins_version }}_all.deb"
+        dest: "{{ jenkins_local }}"
+        mode: "0644"
+        timeout: 300
+      delegate_to: localhost
+      become: false
+      run_once: true
+
+    - name: Copy the package to the managed nodes
+      ansible.builtin.copy:
+        src: "{{ jenkins_local }}"
+        dest: "{{ jenkins_local }}"
+        mode: "0644"
+
+    - name: Install Jenkins from the package
+      ansible.builtin.apt:
+        deb: "{{ jenkins_local }}"
+
+    - name: Report the Jenkins version
+      ansible.builtin.shell: dpkg-query -W -f='${Version}\n' jenkins
+      register: jenkins_version
+      changed_when: false
+
+    # ---- proof --------------------------------------------------------
+    - name: Verification summary
+      ansible.builtin.debug:
+        msg:
+          - "docker  : {{ docker_version.stdout }}"
+          - "kubectl : {{ kubectl_checksum.stdout }} / {{ kubectl_version_out.stdout_lines | join(' ') }}"
+          - "jenkins : {{ jenkins_version.stdout }}"

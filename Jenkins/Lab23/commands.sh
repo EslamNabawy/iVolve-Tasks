@@ -36,7 +36,10 @@ git log --oneline -1 gitops
 
 # 2. Argo CD in the cluster
 kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+# The applicationsets CRD is bigger than a client-side apply annotation allows
+# (262144 bytes), so the manifests go in server-side.
+kubectl apply -n argocd --server-side --force-conflicts \
+  -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 kubectl -n argocd rollout status deploy/argocd-server --timeout=600s
 kubectl -n argocd get pods
 kubectl -n argocd get deploy -o custom-columns='NAME:.metadata.name,IMAGE:.spec.template.spec.containers[0].image' | grep argocd-server

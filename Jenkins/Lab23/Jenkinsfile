@@ -9,7 +9,8 @@
 @Library('ivolve-lib@main') _
 
 pipeline {
-  agent { label 'docker' }
+  // Lab 23 does not need the dedicated agent: the controller has executors.
+  agent any
 
   options {
     timestamps()

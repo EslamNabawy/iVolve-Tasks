@@ -10,7 +10,7 @@ set of applications, one tool at a time.
 
 <br>
 
-![Status](https://img.shields.io/badge/Labs_Complete-26-brightgreen?style=for-the-badge)
+![Status](https://img.shields.io/badge/Labs_Complete-28-brightgreen?style=for-the-badge)
 ![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![Maven](https://img.shields.io/badge/Maven-3.8.7-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)
 ![Gradle](https://img.shields.io/badge/Gradle-9.8.2-02303A?style=for-the-badge&logo=gradle&logoColor=white)
@@ -125,6 +125,8 @@ terminal output** and an explanation of *why*, not just *what*.
 | 24 | Ansible | [**Control node, keys and inventory**](Ansible/Lab24/README.md) | `ssh-copy-id` · 2 managed nodes · Docker via ad-hoc | ✅ |
 | 25 | Ansible | [**One playbook, three installs**](Ansible/Lab25/README.md) | Docker · kubectl · Jenkins · `changed=6` → `changed=0` | ✅ |
 | 26 | Ansible | [**The same installs as roles**](Ansible/Lab26/README.md) | 3 roles · `changed=7` → `changed=0` · same versions | ✅ |
+| 27 | Ansible | [**MySQL role + Ansible Vault**](Ansible/Lab27/README.md) | `ivolve` DB · `ivolveuser` · AES-256 secret · `changed=6` → `changed=0` | ✅ |
+| 28 | Ansible | [**Dynamic inventory**](Ansible/Lab28/README.md) | EC2 tag config · Docker API discovery · `changed=1` → `changed=0` | ✅ |
 
 ### ✅ Done
 
@@ -161,11 +163,20 @@ terminal output** and an explanation of *why*, not just *what*.
 - [x] **Roles** — the same three installs packaged as `docker`, `kubectl` and
       `jenkins`, with every version and URL in `defaults/` and a `site.yml` that
       is three words long.
+- [x] **Secrets** — a MySQL role whose application password lives in an
+      AES-256 vault file, with the key kept out of git, and a login test run
+      **as the created user** rather than as root.
+- [x] **Dynamic inventory** — hosts discovered from an API instead of a file,
+      grouped by tag, targeted by a playbook that names no host at all.
 
 ### 🔭 Next
 
-- [ ] ⚙️ **Ansible, continued** — a MySQL role with Vault-encrypted secrets
-      (deck 27), then the final deck lab (28)
+All 28 deck labs are complete. One item is configured but unproven:
+
+- [ ] ☁️ **Real EC2 discovery** — Lab 28's `aws_ec2` inventory is written and
+      ready, but this environment has no AWS account, so the lookup stops at
+      `Unable to locate credentials`. Running it against a tagged instance is
+      the only open verification in the deck.
 
 ---
 
@@ -215,6 +226,8 @@ terminal output** and an explanation of *why*, not just *what*.
 | Lab 24 · Ansible | `ansible-core 2.16.3` · 2 managed nodes · `ping` **SUCCESS** · Docker installed by one ad-hoc task on both |
 | Lab 25 · playbook | `changed=6` per node on the first run, **`changed=0`** on the second · Docker 29.1.3 · kubectl v1.37.1 (sha256 verified) · Jenkins 2.580.2 |
 | Lab 26 · roles | first run `changed=7` per node, second run **`changed=0`** · `site.yml` is three role names · every URL and version in `roles/*/defaults/` · Docker 29.1.3, kubectl v1.37.1, Jenkins 2.580.2 on both nodes |
+| Lab 27 · vault | `changed=6` per node → **`changed=0`** · `ivolve` DB + `ivolveuser@%` · password only as `$ANSIBLE_VAULT;1.1;AES256` ciphertext · login as the user shows `ivolve` |
+| Lab 28 · inventory | `aws_ec2` config written, lookup stops at **`Unable to locate credentials`** · Docker API discovery returns `@managed: managed1, managed2` · run 1 `changed=1`, run 2 **`changed=0`** |
 
 ---
 
@@ -271,8 +284,13 @@ iVolve-Tasks
 ├── 📁 Ansible
 │   ├── 📁 Lab24         Dockerfile.node · inventory.ini · commands.sh · README
 │   ├── 📁 Lab25         playbook.yml · commands.sh · README
-│   └── 📁 Lab26         site.yml · commands.sh · README
-│                        roles/{docker,kubectl,jenkins}/{defaults,tasks}/main.yml
+│   ├── 📁 Lab26         site.yml · commands.sh · README
+│   │                    roles/{docker,kubectl,jenkins}/{defaults,tasks}/main.yml
+│   ├── 📁 Lab27         site.yml · commands.sh · README
+│   │                    roles/mysql/{defaults,tasks}/main.yml
+│   │                    group_vars/managed/vault.yml (AES-256) · .gitignore
+│   └── 📁 Lab28         inventory.aws_ec2.yml · inventory.docker.yml
+│                        verify.yml · commands.sh · README
 └── 📄 README.md
 ```
 
@@ -331,7 +349,9 @@ committed** — this repository contains only work I authored.
    There is no systemd inside them, so `docker.io` and `jenkins` are installed
    but their services are not started — the labs verify the packages and the
    binaries, not a running daemon. On a VM the same playbook would add one
-   `service` task.
+   `service` task. Lab 27 needs MySQL *running*, so its role starts `mysqld
+   --daemonize` directly, creates the socket directory itself and guards the
+   start with `pgrep` to stay idempotent.
 10. **Labs 25–26 fetch large artefacts on the control node.** This network
    cannot complete a 59 MB kubectl download inside `get_url`'s socket timeout,
    and the Jenkins mirror assigned to apt drops the 53 MB `.deb`. Both are
@@ -342,6 +362,17 @@ committed** — this repository contains only work I authored.
    attempt of Lab 26 died mid-download. The role sets `Acquire::Retries "10"`
    in `/etc/apt/apt.conf.d` and retries the task, so the run takes ~20 minutes
    instead of failing.
+12. **Lab 28's EC2 half is configured, not executed.** There is no AWS account
+   or credential here, so `aws_ec2` stops at `Unable to locate credentials`. The
+   inventory file is the deck's real one, and the paragraph that would have been
+   a host list is instead the recorded error plus the same mechanism run against
+   the Docker API — a plugin discovering hosts, building groups from them, and a
+   playbook targeting the result.
+13. **Lab 27's vault key is generated, not committed.** `commands.sh` writes
+   `.vault-pass` (gitignored) with a throwaway string so the lab reproduces from
+   a clone. That is honest for lab data and would be wrong for a real secret:
+   the value protected by a committed ciphertext plus a discoverable key is
+   obfuscation, and the README says so.
 
 ---
 

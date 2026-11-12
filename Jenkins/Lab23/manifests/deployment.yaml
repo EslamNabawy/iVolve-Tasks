@@ -21,7 +21,7 @@ spec:
           # Starts as the image Lab 21 already pushed, so the first Argo CD
           # sync is Healthy. The pipeline rewrites this line and Argo CD
           # follows it.
-          image: 172.18.0.1:5000/eslamnabawy/demoapp:c88337f
+          image: 172.18.0.1:5000/eslamnabawy/demoapp:20261112-014221
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

@@ -1,0 +1,35 @@
+---
+# Lab 28 — dynamic inventory for EC2 instances tagged server=ivolve.
+#
+# This is the file the deck asks for. `ansible-inventory -i inventory.aws_ec2.yml
+# --graph` reads it and asks the EC2 API which instances carry that tag.
+#
+# NOT RUN HERE: there is no AWS account or credential in this environment, so
+# the plugin cannot reach the API (see README — the failure is recorded, not
+# hidden). inventory.docker.yml runs the same mechanism against real hosts.
+plugin: amazon.aws.aws_ec2
+
+regions:
+  - us-east-1
+
+# The deck's tag, plus "only instances that are actually up".
+filters:
+  tag:server: ivolve
+  instance-state-name: running
+
+# One group per value of the tag, so a play can target `hosts: tag_server_ivolve`
+# without knowing any instance id.
+keyed_groups:
+  - key: tags.server
+    prefix: tag
+    separator: "_"
+  - key: placement.region
+    prefix: region
+
+# The name tag is the inventory hostname; the instance id is the fallback.
+hostnames:
+  - tag:Name
+  - instance-id
+
+compose:
+  ansible_host: public_ip_address

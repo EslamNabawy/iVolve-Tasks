@@ -1,0 +1,23 @@
+---
+# Lab 28 — the same mechanism, against the hosts this lab can really reach.
+#
+# `docker_containers` asks the Docker API which containers are running instead
+# of reading a static list — exactly what `aws_ec2` does against the EC2 API.
+#
+# `groups` is the part that does the work of the EC2 filter: only containers
+# whose name starts with `managed` join the `managed` group, so the kind nodes,
+# the registry and another project's aiops containers are never targeted. (This
+# host runs all of them; the EC2 equivalent is `filters: tag:server: ivolve`.)
+plugin: community.docker.docker_containers
+docker_host: unix:///var/run/docker.sock
+add_legacy_groups: false
+
+groups:
+  managed: inventory_hostname.startswith('managed')
+
+# No port and no key anywhere: the plugin sets `connection_type: docker_api`
+# by default, so the Docker socket itself is the transport. (A compose entry for
+# ansible_connection is overridden by that option — it looked right and did
+# nothing until the host vars were inspected.)
+compose:
+  ansible_python_interpreter: /usr/bin/python3

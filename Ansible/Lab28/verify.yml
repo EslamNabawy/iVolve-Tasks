@@ -1,0 +1,43 @@
+---
+# Lab 28 — the playbook that runs on whatever the dynamic inventory found.
+#
+# Nothing in this file mentions a hostname, a port or a key. The group name is
+# the only input, and it comes from the inventory plugin:
+#   docker inventory -> `managed`
+#   aws_ec2          -> `tag_server_ivolve`
+- name: Verify the discovered hosts
+  hosts: "{{ lab28_group | default('managed') }}"
+  gather_facts: true
+
+  tasks:
+    - name: Show what was discovered and where it lands
+      ansible.builtin.debug:
+        msg:
+          - "host       : {{ inventory_hostname }}"
+          - "connection : {{ ansible_connection | default('ssh') }}"
+          - "os         : {{ ansible_distribution }} {{ ansible_distribution_version }}"
+          - "kernel     : {{ ansible_kernel }}"
+          - "python     : {{ ansible_python_version }}"
+          - "memory     : {{ ansible_memtotal_mb }} MB"
+          - "groups     : {{ group_names | sort | join(', ') }}"
+
+    # No timestamp in this file on purpose: a timestamp makes every run report
+    # changed=1, and then run 2 cannot prove idempotence.
+    - name: Leave proof of the run on the host
+      ansible.builtin.copy:
+        dest: /etc/ivolve-lab28.txt
+        mode: "0644"
+        content: |
+          written by Lab 28
+          host={{ inventory_hostname }}
+          os={{ ansible_distribution }} {{ ansible_distribution_version }}
+          python={{ ansible_python_version }}
+
+    - name: Read it back
+      ansible.builtin.command: cat /etc/ivolve-lab28.txt
+      register: lab28_marker
+      changed_when: false
+
+    - name: Show the marker
+      ansible.builtin.debug:
+        msg: "{{ lab28_marker.stdout_lines }}"

@@ -72,6 +72,7 @@ docker run -d --name jenkins-lab23 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   --group-add "$DG" \
   -v "$HOME/iVolve-Tasks:$HOME/iVolve-Tasks:ro" \
+  -v "$HOME/labs-workspace/DemoApp:$HOME/labs-workspace/DemoApp:ro" \
   -v "$LAB/jenkins.yaml:/var/jenkins_home/casc/jenkins.yaml:ro" \
   -v "$JHOME:$JHOME" \
   -e JENKINS_HOME="$JHOME" \

@@ -19,8 +19,11 @@ pipeline {
   }
 
   environment {
-    IMAGE      = "localhost:5000/eslamnabawy/demoapp:${env.BUILD_NUMBER}"
-    DEPLOY_REF = "172.18.0.1:5000/eslamnabawy/demoapp:${env.BUILD_NUMBER}"
+    // The tag comes from the commit, not from the build number: re-running the
+    // same commit produces the same tag, and a new commit always produces a
+    // new one. Argo CD can only notice a change that actually changes.
+    IMAGE      = "localhost:5000/eslamnabawy/demoapp:${env.GIT_COMMIT.take(7)}"
+    DEPLOY_REF = "172.18.0.1:5000/eslamnabawy/demoapp:${env.GIT_COMMIT.take(7)}"
     GIT_REPO   = 'github.com/EslamNabawy/iVolve-Tasks.git'
     GIT_BRANCH = 'gitops'
     MANIFEST   = 'Jenkins/Lab23/manifests/deployment.yaml'

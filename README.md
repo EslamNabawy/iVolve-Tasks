@@ -10,7 +10,7 @@ set of applications, one tool at a time.
 
 <br>
 
-![Status](https://img.shields.io/badge/Labs_Complete-24-brightgreen?style=for-the-badge)
+![Status](https://img.shields.io/badge/Labs_Complete-25-brightgreen?style=for-the-badge)
 ![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![Maven](https://img.shields.io/badge/Maven-3.8.7-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)
 ![Gradle](https://img.shields.io/badge/Gradle-9.8.2-02303A?style=for-the-badge&logo=gradle&logoColor=white)
@@ -109,6 +109,7 @@ terminal output** and an explanation of *why*, not just *what*.
 | 20 | CI/CD | [**Role-based authorization**](Jenkins/Lab20/README.md) | `user1` admin · `user2` read-only · build 403 | ✅ |
 | 21 | CI/CD | [**Deployment pipeline**](Jenkins/Lab21/README.md) | build → scan → push → deploy, build #1 `SUCCESS` | ✅ |
 | 22 | CI/CD | [**Shared libraries + build agent**](Jenkins/Lab22/README.md) | `ivolve-lib` · pipeline ran on `docker-agent` | ✅ |
+| 23 | GitOps | [**Argo CD** watching the repository](Jenkins/Lab23/README.md) | pipeline pushes a commit · Argo CD syncs it | ✅ |
 
 ### ✅ Done
 
@@ -136,10 +137,12 @@ terminal output** and an explanation of *why*, not just *what*.
 - [x] **Shared libraries** — `BuildApp`, `BuildImage`, `DeployOnK8s` as global
       steps, executed on a dedicated agent while the controller ran zero
       executors.
+- [x] **GitOps** — Argo CD watches a branch; the pipeline pushes a commit and
+      never touches the cluster, and a manual `kubectl set image` is reverted in
+      six seconds.
 
 ### 🔭 Next
 
-- [ ] 🔄 **ArgoCD** — GitOps sync from this repository (deck Lab 23)
 - [ ] ⚙️ **Ansible** — provision the machines everything runs on (deck 24–28)
 
 ---
@@ -186,6 +189,7 @@ terminal output** and an explanation of *why*, not just *what*.
 | D8 · compose | app 221 MB · `db` healthy · products survived `compose down` + `up` · push to a local `registry:2` on `:5000` |
 | Lab 21 · pipeline | build #1 **`SUCCESS`** · 725 MB image pushed · CRITICAL gate with 9 triaged CVEs · pod `Running`, HTTP **200** |
 | Lab 22 · libraries | 3 library steps · `Running on docker-agent` · controller `numExecutors: 0` |
+| Lab 23 · GitOps | Argo CD **v3.6.1** · commit `2e0a472` pushed → `Synced`/`Healthy` at that revision · `selfHeal` reverted a manual edit in **6 s** |
 
 ---
 
@@ -232,10 +236,13 @@ iVolve-Tasks
 │   ├── 📁 Lab21         Dockerfile · Jenkinsfile · jenkins.yaml · plugins.txt
 │   │                    namespace/deployment/service.yaml · .trivyignore
 │   │                    commands.sh · README
-│   └── 📁 Lab22         Dockerfile.agent · Jenkinsfile · jenkins.yaml
+│   ├── 📁 Lab22         Dockerfile.agent · Jenkinsfile · jenkins.yaml
 │                        namespace/deployment/service.yaml · .trivyignore
 │                        shared-library/vars/  (buildApp · buildImage · deployOnK8s)
 │                        commands.sh · README
+│   └── 📁 Lab23         Jenkinsfile · jenkins.yaml · application.yaml
+│                        manifests/deployment.yaml · manifests/service.yaml
+│                        .trivyignore · commands.sh · README
 └── 📄 README.md
 ```
 
@@ -283,6 +290,9 @@ committed** — this repository contains only work I authored.
    Docker Hub credentials, so the image goes to a `registry:2` container on
    `:5000`. The push/delete/pull cycle is real; only the destination differs, and
    each README says so where the deck says "Docker Hub".
+8. **Lab 23's CI commits land on a `gitops` branch.** Argo CD watches that
+   branch so the authored history on `main` stays human-written; every pipeline
+   run adds one commit there, and the branch is real evidence of the loop.
 
 ---
 

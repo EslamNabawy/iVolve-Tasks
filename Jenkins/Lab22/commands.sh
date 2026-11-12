@@ -18,8 +18,13 @@ REGISTRY=172.18.0.1:5000
 DG=$(stat -c %g /var/run/docker.sock)
 
 # 0. Registry + containerd trust (idempotent, same as Lab 21).
-docker ps --format '{{.Names}}' | grep -qx lab8-registry \
-  || docker run -d --name lab8-registry -p 5000:5000 registry:2
+# The registry may exist but be stopped (a WSL restart stops containers);
+# `docker ps` alone would then try to create a second one with the same name.
+if docker ps -a --format '{{.Names}}' | grep -qx lab8-registry; then
+  docker start lab8-registry >/dev/null
+else
+  docker run -d --name lab8-registry -p 5000:5000 registry:2
+fi
 for n in ivolve-control-plane ivolve-worker ivolve-worker2; do
   docker exec "$n" bash -c "
     grep -q '$REGISTRY' /etc/containerd/config.toml ||

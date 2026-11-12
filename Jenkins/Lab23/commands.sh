@@ -16,8 +16,13 @@ DG=$(stat -c %g /var/run/docker.sock)
 GH_TOKEN=$(gh auth token)
 
 # 0. Registry + containerd trust (idempotent, same as Labs 21-22).
-docker ps --format '{{.Names}}' | grep -qx lab8-registry \
-  || docker run -d --name lab8-registry -p 5000:5000 registry:2
+# The registry may exist but be stopped (a WSL restart stops containers);
+# `docker ps` alone would then try to create a second one with the same name.
+if docker ps -a --format '{{.Names}}' | grep -qx lab8-registry; then
+  docker start lab8-registry >/dev/null
+else
+  docker run -d --name lab8-registry -p 5000:5000 registry:2
+fi
 for n in ivolve-control-plane ivolve-worker ivolve-worker2; do
   docker exec "$n" bash -c "
     grep -q '$REGISTRY' /etc/containerd/config.toml ||
@@ -65,7 +70,8 @@ kubectl -n argocd get application ivolve -o jsonpath='{.status.sync.status} {.st
 # 5. Jenkins: the Lab 21 controller image (git + credentials-binding included)
 docker build --network=host -t ivolve-jenkins:lab23 "$HOME/iVolve-Tasks/Jenkins/Lab21"
 rm -rf "$JHOME" && mkdir -p "$JHOME"
-if [ -d "$HOME/.cache/trivy" ]; then mkdir -p "$JHOME/.cache"; cp -a "$HOME/.cache/trivy" "$JHOME/.cache/trivy"; fi
+# One shared Trivy DB for the host and the container: no 1.7 GB copy per run.
+mkdir -p "$HOME/.cache/trivy"
 docker rm -f jenkins-lab23 >/dev/null 2>&1 || true
 docker run -d --name jenkins-lab23 \
   --network host \
@@ -74,6 +80,8 @@ docker run -d --name jenkins-lab23 \
   -v "$HOME/iVolve-Tasks:$HOME/iVolve-Tasks:ro" \
   -v "$HOME/labs-workspace/DemoApp:$HOME/labs-workspace/DemoApp:ro" \
   -v "$LAB/jenkins.yaml:/var/jenkins_home/casc/jenkins.yaml:ro" \
+  -v "$HOME/.cache/trivy:/trivy-cache" \
+  -e TRIVY_CACHE_DIR=/trivy-cache \
   -v "$JHOME:$JHOME" \
   -e JENKINS_HOME="$JHOME" \
   -e CASC_JENKINS_CONFIG=/var/jenkins_home/casc \
@@ -111,24 +119,29 @@ tail -40 /tmp/lab23-console.txt
 cd "$HOME/iVolve-Tasks"
 git fetch origin --quiet
 git log --oneline -3 origin/gitops
-git diff --stat origin/main origin/gitops | tail -3
+git show --stat --oneline origin/gitops | head -5
 
-# 8. Argo CD noticed on its own
+# 8. Argo CD noticed on its own: it polls the branch, no Jenkins call reaches it
+WANT=$(git rev-parse origin/gitops)
+echo "pushed commit: $WANT"
 for i in $(seq 1 60); do
-  read -r S H < <(kubectl -n argocd get application ivolve -o jsonpath='{.status.sync.status} {.status.health.status}')
-  echo "sync=$S health=$H"
-  [ "$S" = "Synced" ] && [ "$H" = "Healthy" ] && break
-  kubectl -n argocd annotate application ivolve argocd.argoproj.io/refresh=normal --overwrite >/dev/null
+  S=$(kubectl -n argocd get application ivolve -o jsonpath='{.status.sync.status}' 2>/dev/null || true)
+  H=$(kubectl -n argocd get application ivolve -o jsonpath='{.status.health.status}' 2>/dev/null || true)
+  R=$(kubectl -n argocd get application ivolve -o jsonpath='{.status.sync.revision}' 2>/dev/null || true)
+  echo "sync=$S health=$H revision=${R:0:7}"
+  if [ "$R" = "$WANT" ] && [ "$S" = "Synced" ] && [ "$H" = "Healthy" ]; then break; fi
+  kubectl -n argocd annotate application ivolve argocd.argoproj.io/refresh=normal --overwrite >/dev/null 2>&1 || true
   sleep 6
 done
 kubectl -n argocd get application ivolve
 kubectl -n argocd get application ivolve -o jsonpath='{.status.operationState.phase} {.status.operationState.message}{"\n"}'
 
 # 9. What Argo CD applied
+kubectl -n lab23 rollout status deployment/demoapp --timeout=240s
 kubectl -n lab23 get deploy,pods,svc -o wide
 kubectl -n lab23 get deploy demoapp -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'
 kubectl -n lab23 port-forward svc/demoapp 8090:80 >/tmp/lab23-pf.log 2>&1 &
-PF2=$!; sleep 4
+PF2=$!; sleep 5
 curl -s -o /dev/null -w 'GET http://127.0.0.1:8090/ -> HTTP %{http_code}\n' http://127.0.0.1:8090/
 kill $PF2 || true
 kill $PF || true

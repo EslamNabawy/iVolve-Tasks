@@ -19,11 +19,11 @@ pipeline {
   }
 
   environment {
-    // The tag comes from the commit, not from the build number: re-running the
-    // same commit produces the same tag, and a new commit always produces a
-    // new one. Argo CD can only notice a change that actually changes.
-    IMAGE      = "localhost:5000/eslamnabawy/demoapp:${env.GIT_COMMIT.take(7)}"
-    DEPLOY_REF = "172.18.0.1:5000/eslamnabawy/demoapp:${env.GIT_COMMIT.take(7)}"
+    // IMAGE and DEPLOY_REF are set per build in the "Build, scan, push" stage.
+    // They used to be derived from the commit, which deadlocked the loop: the
+    // same commit rebuilt the same tag, the manifest never changed, no commit
+    // was made, and Argo CD had nothing to sync. A build timestamp always
+    // changes, so every run pushes a new tag and a new commit.
     GIT_REPO   = 'github.com/EslamNabawy/iVolve-Tasks.git'
     GIT_BRANCH = 'gitops'
     MANIFEST   = 'Jenkins/Lab23/manifests/deployment.yaml'
@@ -63,6 +63,12 @@ pipeline {
 
     stage('Build, scan, push image') {
       steps {
+        script {
+          env.TAG        = sh(returnStdout: true, script: 'date +%Y%m%d-%H%M%S').trim()
+          env.IMAGE      = "localhost:5000/eslamnabawy/demoapp:${env.TAG}"
+          env.DEPLOY_REF = "172.18.0.1:5000/eslamnabawy/demoapp:${env.TAG}"
+          echo "build tag: ${env.TAG}"
+        }
         buildImage(
           dir: 'app',
           image: env.IMAGE,

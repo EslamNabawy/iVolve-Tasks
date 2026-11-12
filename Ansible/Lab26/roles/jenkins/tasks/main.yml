@@ -1,0 +1,55 @@
+---
+# Role: jenkins — key, repository, package, verification.
+- name: Download the Jenkins signing key on the control node
+  ansible.builtin.command:
+    cmd: "curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors -o {{ jenkins_key_local }} {{ jenkins_key_url }}"
+    creates: "{{ jenkins_key_local }}"
+  delegate_to: localhost
+  become: false
+  run_once: true
+  register: jenkins_key_download
+
+- name: Install the signing key
+  ansible.builtin.copy:
+    src: "{{ jenkins_key_local }}"
+    dest: "{{ jenkins_key_dest }}"
+    mode: "0644"
+    owner: root
+    group: root
+
+- name: Add the Jenkins repository
+  ansible.builtin.apt_repository:
+    repo: "{{ jenkins_repo }}"
+    filename: jenkins
+    state: present
+    update_cache: true
+
+- name: Download the Jenkins package on the control node
+  ansible.builtin.command:
+    cmd: "curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors -o {{ jenkins_deb_local }} {{ jenkins_deb_url }}"
+    creates: "{{ jenkins_deb_local }}"
+  delegate_to: localhost
+  become: false
+  run_once: true
+  register: jenkins_deb_download
+
+- name: Copy the package to the managed nodes
+  ansible.builtin.copy:
+    src: "{{ jenkins_deb_local }}"
+    dest: "{{ jenkins_deb_local }}"
+    mode: "0644"
+
+- name: Install Jenkins from the package
+  ansible.builtin.apt:
+    deb: "{{ jenkins_deb_local }}"
+
+- name: Read the Jenkins version
+  ansible.builtin.shell: dpkg-query -W -f='${Version}' jenkins
+  args:
+    executable: /bin/bash
+  register: jenkins_version_out
+  changed_when: false
+
+- name: Show it
+  ansible.builtin.debug:
+    msg: "jenkins {{ jenkins_version_out.stdout }}"

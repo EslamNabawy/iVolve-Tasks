@@ -1,0 +1,49 @@
+---
+# Role: kubectl — fetch once on the control node, distribute, verify.
+- name: Download kubectl on the control node
+  ansible.builtin.command:
+    cmd: "curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors -o {{ kubectl_local }} {{ kubectl_url }}"
+    creates: "{{ kubectl_local }}"
+  delegate_to: localhost
+  become: false
+  run_once: true
+  register: kubectl_download
+
+- name: Read the published checksum
+  ansible.builtin.uri:
+    url: "{{ kubectl_url }}.sha256"
+    return_content: true
+    timeout: 60
+  delegate_to: localhost
+  become: false
+  run_once: true
+  register: kubectl_sha_published
+  changed_when: false
+
+- name: Verify the download on the control node
+  ansible.builtin.shell: |
+    set -eu
+    printf '%s  %s\n' "{{ kubectl_sha_published.content | trim }}" "{{ kubectl_local }}" | sha256sum -c -
+  args:
+    executable: /bin/bash
+  delegate_to: localhost
+  become: false
+  run_once: true
+  changed_when: false
+
+- name: Install kubectl
+  ansible.builtin.copy:
+    src: "{{ kubectl_local }}"
+    dest: "{{ kubectl_dest }}"
+    mode: "0755"
+    owner: root
+    group: root
+
+- name: Read the kubectl version
+  ansible.builtin.command: kubectl version --client
+  register: kubectl_version_out
+  changed_when: false
+
+- name: Show it
+  ansible.builtin.debug:
+    msg: "{{ kubectl_version_out.stdout_lines | join(' ') }}"

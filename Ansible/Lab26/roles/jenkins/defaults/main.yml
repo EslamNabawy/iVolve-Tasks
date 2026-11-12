@@ -1,0 +1,16 @@
+---
+# defaults file for jenkins
+jenkins_version: 2.580.2
+jenkins_key_url: https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
+jenkins_deb_url: "https://get.jenkins.io/debian-stable/jenkins_{{ jenkins_version }}_all.deb"
+
+# Both artefacts are fetched once on the control node and copied to the nodes:
+# apt cannot finish the 53 MB download inside its own connection window from
+# the mirror this network is assigned, while curl completes it in ~40 s.
+jenkins_key_local: /tmp/jenkins-keyring.asc
+jenkins_key_dest: /usr/share/keyrings/jenkins-keyring.asc
+jenkins_deb_local: "/tmp/jenkins_{{ jenkins_version }}_all.deb"
+
+jenkins_repo: >-
+  deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc]
+  https://pkg.jenkins.io/debian-stable binary/

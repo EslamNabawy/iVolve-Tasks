@@ -1,0 +1,36 @@
+---
+# Role: docker — install the engine, then prove the binary is there.
+#
+# The install failed twice on the first attempt of this lab:
+#   E: Failed to fetch http://archive.ubuntu.com/.../containerd_2.2.1...deb
+#      Connection timed out
+# 93 MB across 46 packages at ~100 kB/s is enough for apt to give up. The two
+# tasks below make the install survive that instead of restarting the lab.
+- name: Make apt retry slow downloads
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/99-ivolve-retries
+    mode: "0644"
+    content: |
+      Acquire::Retries "{{ docker_apt_retries }}";
+      Acquire::http::Timeout "{{ docker_apt_timeout }}";
+      Acquire::https::Timeout "{{ docker_apt_timeout }}";
+
+- name: Install Docker
+  ansible.builtin.apt:
+    name: "{{ docker_package }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  register: docker_install
+  until: docker_install is succeeded
+  retries: "{{ docker_install_retries }}"
+  delay: "{{ docker_install_delay }}"
+
+- name: Read the Docker version
+  ansible.builtin.command: docker --version
+  register: docker_version
+  changed_when: false
+
+- name: Show it
+  ansible.builtin.debug:
+    msg: "{{ docker_version.stdout }}"

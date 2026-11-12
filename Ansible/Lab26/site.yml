@@ -1,0 +1,15 @@
+---
+# Lab 26 — the same three installs as Lab 25, expressed as three roles.
+#
+# site.yml is now a list of names. Everything a role needs (versions, URLs,
+# local artefact paths) lives in that role's defaults, so the play is readable
+# and the next host only needs `hosts:` changed.
+- name: Provision managed nodes with roles
+  hosts: managed
+  become: true
+  gather_facts: true
+
+  roles:
+    - docker
+    - kubectl
+    - jenkins

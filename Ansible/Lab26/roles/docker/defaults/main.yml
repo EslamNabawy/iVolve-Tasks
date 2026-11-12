@@ -1,0 +1,11 @@
+---
+# defaults file for docker
+docker_package: docker.io
+
+# docker.io drags in 45 packages and ~93 MB of downloads. On this network apt
+# gives up after one slow-but-alive connection, so retries are configured at
+# both levels: apt retries each file, and the task retries the whole install.
+docker_apt_retries: 10
+docker_apt_timeout: 120
+docker_install_retries: 6
+docker_install_delay: 15

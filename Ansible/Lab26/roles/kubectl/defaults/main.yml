@@ -1,0 +1,10 @@
+---
+# defaults file for kubectl
+kubectl_version: v1.37.1
+kubectl_url: "https://dl.k8s.io/release/{{ kubectl_version }}/bin/linux/amd64/kubectl"
+kubectl_dest: /usr/local/bin/kubectl
+
+# 59 MB. Downloaded once on the control node, then copied: two parallel
+# downloads through this network time out, and the checksum only has to be
+# verified once.
+kubectl_local: "/tmp/kubectl-{{ kubectl_version }}"

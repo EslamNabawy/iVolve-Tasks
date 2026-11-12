@@ -10,7 +10,7 @@ set of applications, one tool at a time.
 
 <br>
 
-![Status](https://img.shields.io/badge/Labs_Complete-25-brightgreen?style=for-the-badge)
+![Status](https://img.shields.io/badge/Labs_Complete-26-brightgreen?style=for-the-badge)
 ![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![Maven](https://img.shields.io/badge/Maven-3.8.7-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)
 ![Gradle](https://img.shields.io/badge/Gradle-9.8.2-02303A?style=for-the-badge&logo=gradle&logoColor=white)
@@ -18,6 +18,7 @@ set of applications, one tool at a time.
 ![Trivy](https://img.shields.io/badge/Trivy-0.76.1-1904DA?style=for-the-badge&logo=aquasec&logoColor=white)
 ![Kubernetes](https://img.shields.io/badge/kind_1.37.0-Calico_3.33-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)
 ![Jenkins](https://img.shields.io/badge/Jenkins-LTS-D24939?style=for-the-badge&logo=jenkins&logoColor=white)
+![Ansible](https://img.shields.io/badge/Ansible-core_2.16.3-EE0000?style=for-the-badge&logo=ansible&logoColor=white)
 
 </div>
 
@@ -32,7 +33,7 @@ set of applications, one tool at a time.
 | **GitHub** | [@EslamNabawy](https://github.com/EslamNabawy) |
 | **Email** | eslamtarek.dev@gmail.com |
 | **Repository** | [iVolve-Tasks](https://github.com/EslamNabawy/iVolve-Tasks) |
-| **Environment** | Ubuntu 24.04 LTS on WSL2 · Java 17 · Maven · Gradle · Docker · Trivy · kind · kubectl · Jenkins · Prometheus · Grafana |
+| **Environment** | Ubuntu 24.04 LTS on WSL2 · Java 17 · Maven · Gradle · Docker · Trivy · kind · kubectl · Jenkins · Prometheus · Grafana · Ansible |
 
 ---
 
@@ -46,6 +47,10 @@ actually ship — and trust?**
 .java files       Maven/Gradle     calculator.jar    Docker          Trivy          kind + Calico     Jenkins        Prometheus
 Labs 1–2          Labs 1–2         Labs 1–3          Labs 3–6        Lab 5          Labs 9–14         Lab 8          Lab 18
 ```
+
+The chain now starts one step earlier and ends one step later: **Ansible
+provisions the machines themselves** (Labs 24–26), and **Argo CD keeps the
+cluster in sync with the repository** (Lab 23).
 
 **Labs 1 and 2 build the same application with two different tools** so the app
 is held constant and the *tooling* is the only variable. **Lab 3** packages
@@ -67,14 +72,21 @@ Alertmanager / Grafana monitoring stack.
 create/update Deployments in `ivolve`. **Lab 20** moves to Jenkins and gives
 `user1` admin rights and `user2` read-only access.
 
+**Labs 21–23** close the CI/CD arc: a pipeline that builds, scans, pushes and
+deploys; a shared library with a dedicated build agent; and Argo CD, where the
+pipeline writes a commit and the cluster does the applying. **Labs 24–26** drop
+one layer down — Ansible provisions the machines themselves: a control node and
+inventory, one playbook that installs Docker, kubectl and Jenkins, and finally
+the same installs packaged as three reusable roles.
+
 ### A note on numbering
 
 This repository numbers labs **in the order they were delivered**. The deck's
 Docker labs 7–8 arrived later, so their folders are `Docker/Lab7` and
 `Docker/Lab8` while the table lists them as **D7** and **D8** — the repo's own
 Lab 7 (Kubernetes) and Lab 8 (Jenkins) keep their numbers. The deck's Kubernetes
-block maps to Labs 9–18, and the deck's Jenkins labs continue the repo's
-sequence as Labs 21–22.
+block maps to Labs 9–18, the deck's Jenkins labs continue the repo's sequence as
+Labs 21–22, Argo CD is Lab 23, and the deck's Ansible block runs 24–28.
 
 Every lab folder holds the files I authored plus a write-up with the **real
 terminal output** and an explanation of *why*, not just *what*.
@@ -110,6 +122,9 @@ terminal output** and an explanation of *why*, not just *what*.
 | 21 | CI/CD | [**Deployment pipeline**](Jenkins/Lab21/README.md) | build → scan → push → deploy, build #1 `SUCCESS` | ✅ |
 | 22 | CI/CD | [**Shared libraries + build agent**](Jenkins/Lab22/README.md) | `ivolve-lib` · pipeline ran on `docker-agent` | ✅ |
 | 23 | GitOps | [**Argo CD** watching the repository](Jenkins/Lab23/README.md) | pipeline pushes a commit · Argo CD syncs it | ✅ |
+| 24 | Ansible | [**Control node, keys and inventory**](Ansible/Lab24/README.md) | `ssh-copy-id` · 2 managed nodes · Docker via ad-hoc | ✅ |
+| 25 | Ansible | [**One playbook, three installs**](Ansible/Lab25/README.md) | Docker · kubectl · Jenkins · `changed=6` → `changed=0` | ✅ |
+| 26 | Ansible | [**The same installs as roles**](Ansible/Lab26/README.md) | 3 roles · `changed=7` → `changed=0` · same versions | ✅ |
 
 ### ✅ Done
 
@@ -140,10 +155,17 @@ terminal output** and an explanation of *why*, not just *what*.
 - [x] **GitOps** — Argo CD watches a branch; the pipeline pushes a commit and
       never touches the cluster, and a manual `kubectl set image` is reverted in
       six seconds.
+- [x] **Ansible** — a control node, a dedicated key, an inventory of two
+      managed nodes, and one idempotent playbook that installs Docker, kubectl
+      and Jenkins and proves it on every host.
+- [x] **Roles** — the same three installs packaged as `docker`, `kubectl` and
+      `jenkins`, with every version and URL in `defaults/` and a `site.yml` that
+      is three words long.
 
 ### 🔭 Next
 
-- [ ] ⚙️ **Ansible** — provision the machines everything runs on (deck 24–28)
+- [ ] ⚙️ **Ansible, continued** — a MySQL role with Vault-encrypted secrets
+      (deck 27), then the final deck lab (28)
 
 ---
 
@@ -190,6 +212,9 @@ terminal output** and an explanation of *why*, not just *what*.
 | Lab 21 · pipeline | build #1 **`SUCCESS`** · 725 MB image pushed · CRITICAL gate with 9 triaged CVEs · pod `Running`, HTTP **200** |
 | Lab 22 · libraries | 3 library steps · `Running on docker-agent` · controller `numExecutors: 0` |
 | Lab 23 · GitOps | Argo CD **v3.6.1** · commit `2e0a472` pushed → `Synced`/`Healthy` at that revision · `selfHeal` reverted a manual edit in **6 s** |
+| Lab 24 · Ansible | `ansible-core 2.16.3` · 2 managed nodes · `ping` **SUCCESS** · Docker installed by one ad-hoc task on both |
+| Lab 25 · playbook | `changed=6` per node on the first run, **`changed=0`** on the second · Docker 29.1.3 · kubectl v1.37.1 (sha256 verified) · Jenkins 2.580.2 |
+| Lab 26 · roles | first run `changed=7` per node, second run **`changed=0`** · `site.yml` is three role names · every URL and version in `roles/*/defaults/` · Docker 29.1.3, kubectl v1.37.1, Jenkins 2.580.2 on both nodes |
 
 ---
 
@@ -243,6 +268,11 @@ iVolve-Tasks
 │   └── 📁 Lab23         Jenkinsfile · jenkins.yaml · application.yaml
 │                        manifests/deployment.yaml · manifests/service.yaml
 │                        .trivyignore · commands.sh · README
+├── 📁 Ansible
+│   ├── 📁 Lab24         Dockerfile.node · inventory.ini · commands.sh · README
+│   ├── 📁 Lab25         playbook.yml · commands.sh · README
+│   └── 📁 Lab26         site.yml · commands.sh · README
+│                        roles/{docker,kubectl,jenkins}/{defaults,tasks}/main.yml
 └── 📄 README.md
 ```
 
@@ -262,6 +292,10 @@ committed** — this repository contains only work I authored.
   it is removed with `kind delete cluster --name ivolve` when the work is done.
 - **The unrelated `aiops` cluster and containers belong to another project** and
   are never touched.
+- **The Ansible labs use two managed nodes that are containers** (`managed1` on
+  `:2222`, `managed2` on `:2223`), reached with a dedicated key. Each
+  `commands.sh` rebuilds them first, because a playbook run against an
+  already-provisioned host reports `changed=0` and proves nothing.
 - **No fabricated output.** Every console block is a real run. The two
   exceptions are flagged where they appear: the rendered terminal images in
   Labs 1–2, and the one `sudo` line in Lab 1 that was never executed.
@@ -293,6 +327,21 @@ committed** — this repository contains only work I authored.
 8. **Lab 23's CI commits land on a `gitops` branch.** Argo CD watches that
    branch so the authored history on `main` stays human-written; every pipeline
    run adds one commit there, and the branch is real evidence of the loop.
+9. **The Ansible managed nodes are containers with `sshd` in the foreground.**
+   There is no systemd inside them, so `docker.io` and `jenkins` are installed
+   but their services are not started — the labs verify the packages and the
+   binaries, not a running daemon. On a VM the same playbook would add one
+   `service` task.
+10. **Labs 25–26 fetch large artefacts on the control node.** This network
+   cannot complete a 59 MB kubectl download inside `get_url`'s socket timeout,
+   and the Jenkins mirror assigned to apt drops the 53 MB `.deb`. Both are
+   fetched once with `curl --retry-all-errors`, verified, and copied — the
+   install is real, only the transport differs from the textbook task.
+11. **The Docker role retries a slow mirror.** `docker.io` is 93 MB across 46
+   packages, and `archive.ubuntu.com` served it at 73–113 kB/s; the first
+   attempt of Lab 26 died mid-download. The role sets `Acquire::Retries "10"`
+   in `/etc/apt/apt.conf.d` and retries the task, so the run takes ~20 minutes
+   instead of failing.
 
 ---
 

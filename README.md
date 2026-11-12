@@ -10,7 +10,7 @@ set of applications, one tool at a time.
 
 <br>
 
-![Status](https://img.shields.io/badge/Labs_Complete-20-brightgreen?style=for-the-badge)
+![Status](https://img.shields.io/badge/Labs_Complete-24-brightgreen?style=for-the-badge)
 ![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![Maven](https://img.shields.io/badge/Maven-3.8.7-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)
 ![Gradle](https://img.shields.io/badge/Gradle-9.8.2-02303A?style=for-the-badge&logo=gradle&logoColor=white)
@@ -70,10 +70,11 @@ create/update Deployments in `ivolve`. **Lab 20** moves to Jenkins and gives
 ### A note on numbering
 
 This repository numbers labs **in the order they were delivered**. The deck's
-Docker labs 7–8 (multi-network microservices and a Compose stack) are **not**
-in this repository and remain on the Next list; the repo's Lab 7 (Kubernetes)
-and Lab 8 (Jenkins) are the additional tracks, and the deck's Kubernetes block
-maps to Labs 9–18.
+Docker labs 7–8 arrived later, so their folders are `Docker/Lab7` and
+`Docker/Lab8` while the table lists them as **D7** and **D8** — the repo's own
+Lab 7 (Kubernetes) and Lab 8 (Jenkins) keep their numbers. The deck's Kubernetes
+block maps to Labs 9–18, and the deck's Jenkins labs continue the repo's
+sequence as Labs 21–22.
 
 Every lab folder holds the files I authored plus a write-up with the **real
 terminal output** and an explanation of *why*, not just *what*.
@@ -90,6 +91,8 @@ terminal output** and an explanation of *why*, not just *what*.
 | 4 | Docker | [**Image optimization** + export/load](Docker/Lab4/README.md) | `image1` 671 MB → `image2` 294 MB | ✅ |
 | 5 | Docker | [**Vulnerability scanning** with Trivy](Docker/Lab5/README.md) | 2,343 HIGH/CRITICAL → **0** | ✅ |
 | 6 | Docker | [**Env vars** + resource limits](Docker/Lab6/README.md) | 3 runs · 1 CPU / 256 MB | ✅ |
+| D7 | Docker | [**Multi-network microservices**](Docker/Lab7/README.md) | 3 images · 2 bridge networks · 2 volumes | ✅ |
+| D8 | Docker | [**Compose stack** with MySQL](Docker/Lab8/README.md) | `compose up` · data and logs survive `down`/`up` | ✅ |
 | 7 | Kubernetes | [**Deploying to a cluster** with kind](Kubernetes/Lab7/README.md) | cluster `ivolve` · `app3` 1/1 Running | ✅ |
 | 8 | CI/CD | [**Jenkins pipeline** replaying Labs 1–6](Jenkins/Lab8/README.md) | `ivolve-labs-1-6` — build 11 `SUCCESS` | ✅ |
 | 9 | Kubernetes | [**Three-node cluster + Calico**](Kubernetes/Lab9/README.md) | 3 nodes `Ready` · cross-node pod network | ✅ |
@@ -104,6 +107,8 @@ terminal output** and an explanation of *why*, not just *what*.
 | 18 | Kubernetes | [**Monitoring stack**](Kubernetes/Lab18/README.md) | Prometheus · Alertmanager · Grafana · node-exporter | ✅ |
 | 19 | Security | [**RBAC + service account**](Kubernetes/Lab19/README.md) | `jenkinssa` · create/update Deployments only | ✅ |
 | 20 | CI/CD | [**Role-based authorization**](Jenkins/Lab20/README.md) | `user1` admin · `user2` read-only · build 403 | ✅ |
+| 21 | CI/CD | [**Deployment pipeline**](Jenkins/Lab21/README.md) | build → scan → push → deploy, build #1 `SUCCESS` | ✅ |
+| 22 | CI/CD | [**Shared libraries + build agent**](Jenkins/Lab22/README.md) | `ivolve-lib` · pipeline ran on `docker-agent` | ✅ |
 
 ### ✅ Done
 
@@ -122,11 +127,18 @@ terminal output** and an explanation of *why*, not just *what*.
 - [x] **Jenkins access control** — two users, admin vs read-only, verified by
       HTTP status codes (201 vs 403).
 - [x] **CI/CD** — one Jenkins pipeline that rebuilds Labs 1–6 end to end.
+- [x] **Microservices** — three services, two networks, two log volumes and a
+      bind mount, with the traffic path proven at both network boundaries.
+- [x] **Compose** — app + MySQL in one file, named volumes, a custom network
+      and a health check; the data outlived `docker compose down`.
+- [x] **Deployment pipeline** — build, Trivy gate, push, local delete, manifest
+      rewrite and rollout, with a real pod serving HTTP 200 at the end.
+- [x] **Shared libraries** — `BuildApp`, `BuildImage`, `DeployOnK8s` as global
+      steps, executed on a dedicated agent while the controller ran zero
+      executors.
 
 ### 🔭 Next
 
-- [ ] 🐳 **Docker Labs 7–8** — multi-network microservices, Compose stack (deck)
-- [ ] 🤖 **Jenkins CI/CD** — deployment pipeline, agents, shared libraries (deck 21–22)
 - [ ] 🔄 **ArgoCD** — GitOps sync from this repository (deck Lab 23)
 - [ ] ⚙️ **Ansible** — provision the machines everything runs on (deck 24–28)
 
@@ -170,6 +182,10 @@ terminal output** and an explanation of *why*, not just *what*.
 | Lab 18 · monitoring | node-exporter **3/3** · all targets `up` · Grafana 11.2.0 with a provisioned dashboard |
 | Lab 19 · RBAC | `jenkinssa` create/update **yes**, patch/list/delete **no**, other namespaces **no** |
 | Lab 20 · Jenkins | `user1` build **201**, `user2` build **403**, anonymous **403** |
+| D7 · networks | 3 images (198–202 MB) · subnets `172.28.0.0/24` + `172.29.0.0/24` · notification log shows source `172.29.0.3`, backend request `172.28.0.3` |
+| D8 · compose | app 221 MB · `db` healthy · products survived `compose down` + `up` · push to a local `registry:2` on `:5000` |
+| Lab 21 · pipeline | build #1 **`SUCCESS`** · 725 MB image pushed · CRITICAL gate with 9 triaged CVEs · pod `Running`, HTTP **200** |
+| Lab 22 · libraries | 3 library steps · `Running on docker-agent` · controller `numExecutors: 0` |
 
 ---
 
@@ -187,7 +203,9 @@ iVolve-Tasks
 │   │                    commands.sh · README
 │   ├── 📁 Lab5          Dockerfile · Dockerfile.v2 · .dockerignore · package-lock.json
 │   │                    commands.sh · README · reports/
-│   └── 📁 Lab6          Dockerfile · Dockerfile.env · env.txt · commands.sh · README
+│   ├── 📁 Lab6          Dockerfile · Dockerfile.env · env.txt · commands.sh · README
+│   ├── 📁 Lab7          frontend/ backend/ notification/ (Dockerfiles) · commands.sh · README
+│   └── 📁 Lab8          docker-compose.yml · commands.sh · README
 ├── 📁 Kubernetes
 │   ├── 📁 Lab7          deployment.yaml · service.yaml · commands.sh · README
 │   ├── 📁 Lab9          kind-config.yaml · nettest.yaml · nettest2.yaml
@@ -209,7 +227,14 @@ iVolve-Tasks
 ├── 📁 Jenkins
 │   ├── 📁 Lab8          Dockerfile · Jenkinsfile · jenkins.yaml · plugins.txt
 │   │                    html.tpl · commands.sh · README
-│   └── 📁 Lab20         Dockerfile · plugins.txt · jenkins.yaml · job.xml
+│   ├── 📁 Lab20         Dockerfile · plugins.txt · jenkins.yaml · job.xml
+│   │                    commands.sh · README
+│   ├── 📁 Lab21         Dockerfile · Jenkinsfile · jenkins.yaml · plugins.txt
+│   │                    namespace/deployment/service.yaml · .trivyignore
+│   │                    commands.sh · README
+│   └── 📁 Lab22         Dockerfile.agent · Jenkinsfile · jenkins.yaml
+│                        namespace/deployment/service.yaml · .trivyignore
+│                        shared-library/vars/  (buildApp · buildImage · deployOnK8s)
 │                        commands.sh · README
 └── 📄 README.md
 ```
@@ -254,6 +279,10 @@ committed** — this repository contains only work I authored.
    the recovery are recorded in that README.
 6. **The Kubernetes labs share one kernel.** "Three nodes" is three
    containerised kubelets, not three machines.
+7. **Labs 21–22 push to a local registry, not Docker Hub.** This session has no
+   Docker Hub credentials, so the image goes to a `registry:2` container on
+   `:5000`. The push/delete/pull cycle is real; only the destination differs, and
+   each README says so where the deck says "Docker Hub".
 
 ---
 

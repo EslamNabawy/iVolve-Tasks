@@ -1,11 +1,11 @@
-# Lab 27 — Securing sensitive data with Ansible Vault
+# Lab 27: Securing sensitive data with Ansible Vault
 
 > **Deck task:** create a MySQL role that installs MySQL, creates the `ivolve`
 > database and an `ivolveuser` with all privileges on it; keep the password in
 > Ansible Vault; then prove the account works by connecting as it and listing
 > the databases.
 
-## Requirements
+## The ask
 
 - [x] A **MySQL role**
 - [x] … that installs MySQL
@@ -27,7 +27,7 @@ Lab27/
 └── .gitignore                   # .vault-pass
 ```
 
-The managed nodes are the Lab 24 containers (`managed1:2222`, `managed2:2223`),
+The managed nodes are the Lab 24 containers (`managed1:2222`, `managed2:2223`)
 rebuilt from the Lab 24 image before every run.
 
 ---
@@ -48,12 +48,12 @@ rebuilt from the Lab 24 image before every run.
 `mysql_user` are Python modules that run **on the managed node** and need a
 MySQL driver there.
 
-The install is wrapped in `until: mysql_install is succeeded` with six retries,
+The install is wrapped in `until: mysql_install is succeeded` with six retries
 and `/etc/apt/apt.conf.d/99-ivolve-retries` sets `Acquire::Retries 10` and
 120-second timeouts. Same reason as Lab 26: this network drops large apt
 transfers.
 
-### Start — without systemd
+### Start, without systemd
 
 The managed nodes are containers. There is no systemd, so
 `service: name=mysql state=started` cannot work, and the package's post-install
@@ -78,7 +78,7 @@ task is guarded by a `pgrep` so the second playbook run does not start a second
 server.
 
 A `mysqladmin ping` loop with 30 retries / 2 s waits for the socket before any
-module talks to it — the first version raced the server and failed with
+module talks to it, the first version raced the server and failed with
 `Can't connect to local MySQL server through socket`.
 
 ### Database and account
@@ -106,7 +106,7 @@ authenticated by `auth_socket`, and Ansible runs the role as root, so no root
 password exists anywhere in this lab.
 
 `no_log: true` matters more than it looks: without it Ansible prints the module
-arguments — password included — in the task result on every run.
+arguments, password included, in the task result on every run.
 
 `host: "%"` creates `ivolveuser` for any source address. The validation below
 connects over TCP to 127.0.0.1, which only matches `%` (a `localhost`-only
@@ -146,7 +146,7 @@ $ANSIBLE_VAULT;1.1;AES256
 
 **The key is not committed.** `commands.sh` writes `.vault-pass` (which
 `.gitignore` excludes) with a throwaway string, and every Ansible call passes
-`--vault-password-file`. That is the whole mechanism — and the honest caveat:
+`--vault-password-file`. That is the whole mechanism, and the honest caveat:
 the throwaway string is in `commands.sh` because the ciphertext here protects
 lab data. A real vault password is never stored next to the ciphertext; it is
 typed, or read from a secret manager, or from a file the playbook user owns.
@@ -163,9 +163,9 @@ The key file is now created before anything else runs.
 
 ---
 
-## Result
+## The result
 
-First run, against freshly rebuilt nodes — six changes each, `failed=0`:
+First run, against freshly rebuilt nodes, six changes each, `failed=0`:
 
 ```
 PLAY RECAP *********************************************************************
@@ -196,10 +196,10 @@ managed1                   : ok=10   changed=0    unreachable=0    failed=0    s
 managed2                   : ok=10   changed=0    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0
 ```
 
-`changed=0` is the idempotence claim; the one skip is the `Start mysqld` task,
+`changed=0` is the idempotence claim; the one skip is the `Start mysqld` task
 correctly skipped because `pgrep` found the server already running.
 
-An independent check that does not use the vault at all — root over the socket:
+An independent check that does not use the vault at all, root over the socket:
 
 ```
 managed1 | CHANGED | rc=0 | (stdout) information_schema\nivolve\nmysql\nperformance_schema\nsys\nivolveuser	%
@@ -222,7 +222,7 @@ $ ansible-vault view --vault-password-file .vault-pass group_vars/managed/vault.
 
 ---
 
-## Things worth knowing
+## Gotchas
 
 1. **`group_vars/` is not just for playbooks.** Ad-hoc `ansible` commands in the
    same directory load it, so they need `--vault-password-file` too.
@@ -236,7 +236,7 @@ $ ansible-vault view --vault-password-file .vault-pass group_vars/managed/vault.
    in `ps`.
 5. **Ubuntu's `root@localhost` uses `auth_socket`.** That is why the role never
    has a root password: Ansible is already root, and the socket proves it.
-6. **`host: "%"` is a real decision.** It allows the account from any address —
+6. **`host: "%"` is a real decision.** It allows the account from any address 
    fine for a lab with a loopback-bound server, too broad for production, where
    the account would be `ivolveuser@10.0.%`.
 7. **Encrypted ≠ safe by itself.** A committed ciphertext plus a committed key is
@@ -252,7 +252,7 @@ cd ~/iVolve-Tasks/Ansible/Lab27
 ./commands.sh
 ```
 
-## Clean up
+## Cleanup
 
 ```bash
 docker rm -f managed1 managed2

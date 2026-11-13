@@ -1,8 +1,8 @@
-# Lab 7 — Multi-Network Microservices, Volumes, and Bind Mounts
+# Lab 7: Multi-Network Microservices, Volumes, and Bind Mounts
 
 **Track:** Docker · **Source:** https://github.com/Ibrahim-Adel15/MicroserviceApp.git
 
-Three small Flask services — `frontend`, `backend`, `notification` — that must talk
+Three small Flask services, `frontend`, `backend`, `notification`. That must talk
 to each other in one direction only:
 
 ```
@@ -23,11 +23,11 @@ messages must survive a container.
 ## Requirements
 
 - [x] Application cloned from the provided repository
-- [x] Dockerfile per service — [`frontend/`](frontend/Dockerfile), [`backend/`](backend/Dockerfile), [`notification/`](notification/Dockerfile)
-- [x] Three images built — `micro-frontend:lab7`, `micro-backend:lab7`, `micro-notification:lab7`
-- [x] Two bridge networks with separate subnets — `frontend-backend` `172.28.0.0/24`, `backend-notification` `172.29.0.0/24`
-- [x] Two volumes for logs — `backend-logs`, `notification-logs`
-- [x] Host directory bind-mounted for backend data — `~/labs-workspace/lab7-data` → `/app/data`
+- [x] Dockerfile per service, [`frontend/`](frontend/Dockerfile), [`backend/`](backend/Dockerfile), [`notification/`](notification/Dockerfile)
+- [x] Three images built, `micro-frontend:lab7`, `micro-backend:lab7`, `micro-notification:lab7`
+- [x] Two bridge networks with separate subnets, `frontend-backend` `172.28.0.0/24`, `backend-notification` `172.29.0.0/24`
+- [x] Two volumes for logs, `backend-logs`, `notification-logs`
+- [x] Host directory bind-mounted for backend data, `~/labs-workspace/lab7-data` → `/app/data`
 - [x] Notification running on `backend-notification` only
 - [x] Backend attached to **both** networks, `NOTIFICATION_URL` configured
 - [x] Frontend on `frontend-backend`, published on **8080**, `BACKEND_URL` configured
@@ -37,7 +37,7 @@ messages must survive a container.
 
 ## Results
 
-### 1 — Images
+### 1. Images
 
 ```
 $ docker images --format '{{.Repository}}:{{.Tag}}\t{{.Size}}' | grep lab7
@@ -49,7 +49,7 @@ micro-frontend:lab7	202MB
 All three share the same `python:3.12-slim` base; the backend and frontend are
 2 MB larger because they also install `requests`.
 
-### 2 — Networks
+### 2. Networks
 
 ```
 $ docker network create --driver bridge --subnet 172.28.0.0/24 frontend-backend
@@ -64,7 +64,7 @@ backend-notification 172.29.0.0/24
 Two separate subnets, so a container on one network has no route to a container
 that exists only on the other.
 
-### 3 — Containers
+### 3. Containers
 
 ```
 $ docker run -d --name notification --network backend-notification \
@@ -90,7 +90,7 @@ notification   micro-notification:lab7      5001/tcp
 Only the frontend publishes a port. The backend and notification services are
 reachable *by name* inside their networks and from nowhere else.
 
-### 4 — Create and retrieve messages
+### 4. Create and retrieve messages
 
 ```
 $ curl -s -o /dev/null -w 'GET  /      -> HTTP %{http_code}\n' http://localhost:8080/
@@ -107,10 +107,10 @@ $ curl -s http://localhost:8080/ | grep -o '<li>[^<]*</li>'
 <li>Second message via Docker networks</li>
 ```
 
-The `302` is the form redirect back to `/`; the page then lists both messages,
+The `302` is the form redirect back to `/`; the page then lists both messages
 which means the whole chain worked: **frontend → backend → notification → log**.
 
-### 5 — The network split is real
+### 5. The network split is real
 
 ```
 $ docker network inspect frontend-backend --format '{{range .Containers}}{{.Name}} {{end}}'
@@ -122,7 +122,7 @@ backend notification
 `notification` appears only in the second list. The frontend cannot resolve or
 reach it even though all three containers share one Docker daemon.
 
-### 6 — Persistence: volumes and the bind mount
+### 6. Persistence: volumes and the bind mount
 
 ```
 $ docker exec notification cat /app/logs/notification.log | tail -3
@@ -160,15 +160,15 @@ on `frontend-backend`.
 
 ---
 
-## Things worth knowing
+## Notes
 
 1. **A container can be on several networks at once.** `docker network connect`
    adds an interface without restarting the container; that is how the backend
-   sits between two isolated subnets. Name resolution is per network — the
+ sits between two isolated subnets. Name resolution is per network, the
    frontend can resolve `backend` but not `notification`, because the embedded DNS
    server only answers for networks the container is attached to.
 2. **`--network` at `docker run` is not exclusive.** The second attachment is a
-   separate command (`docker network connect`), which is exactly what the slide
+ separate command (`docker network connect`), which is what the slide
    asks for.
 3. **Volumes vs bind mounts.** A named volume is managed by Docker and has no
    useful host path in normal work. A bind mount points at a real directory, which
@@ -179,24 +179,24 @@ on `frontend-backend`.
    asks for the page on 8080.
 5. **Order matters only for DNS convenience, not for startup.** Backend could
    start before notification; `notify` calls would fail until it came up. The app
-   logs a notification failure instead of losing the message — a deliberate
+ logs a notification failure instead of losing the message, a deliberate
    property of this app.
 6. **All of this is why Compose exists.** Every command here becomes one line in
    Lab 8's `docker-compose.yml`.
 
-## Reproduce
+## Running it again
 
 ```bash
 bash ~/iVolve-Tasks/Docker/Lab7/commands.sh
 ```
 
-## Clean up
+## Tidy up after it
 
 `commands.sh` ends by removing the three containers, both networks, both volumes
-and the three images. The bind-mount directory is left behind on purpose — it is
+and the three images. The bind-mount directory is left behind on purpose. It is
 ordinary host data.
 
-## Commit
+## Committing this
 
 ```bash
 cd ~/iVolve-Tasks

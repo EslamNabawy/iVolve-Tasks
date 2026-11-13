@@ -1,22 +1,22 @@
-# Lab 21 — Jenkins Pipeline for Application Deployment
+# Lab 21: Jenkins Pipeline for Application Deployment
 
 <p align="center"><em>One pipeline that takes a Java application from source to a pod in kind:
 build, containerise, scan, push, clean up, rewrite the manifest, deploy.</em></p>
 
 ---
 
-## Requirements
+## What the lab asks for
 
 | # | Requirement | Where |
 |---|---|---|
 | 1 | Clone `DemoApp` with its `Dockerfile` | [Checkout stage](#1-checkout) |
-| 2 | Stage 1 — build the application | [Build app](#2-build-app) |
-| 3 | Stage 2 — build the Docker image | [Build Docker Image](#3-build-docker-image) |
-| 4 | Stage 3 — scan the image | [Scan Docker Image](#4-scan-docker-image) |
-| 5 | Stage 4 — push the image to DockerHub | [Push image](#5-push-image) |
-| 6 | Stage 5 — delete the image locally | [Delete image locally](#6-delete-image-locally) |
-| 7 | Stage 6 — update the image tag in the deployment file | [Update image](#7-update-image-in-the-deployment-file) |
-| 8 | Stage 7 — deploy to Kubernetes | [Deploy](#8-deploy-to-kubernetes) |
+| 2 | Stage 1, build the application | [Build app](#2-build-app) |
+| 3 | Stage 2, build the Docker image | [Build Docker Image](#3-build-docker-image) |
+| 4 | Stage 3, scan the image | [Scan Docker Image](#4-scan-docker-image) |
+| 5 | Stage 4, push the image to DockerHub | [Push image](#5-push-image) |
+| 6 | Stage 5, delete the image locally | [Delete image locally](#6-delete-image-locally) |
+| 7 | Stage 6, update the image tag in the deployment file | [Update image](#7-update-image-in-the-deployment-file) |
+| 8 | Stage 7, deploy to Kubernetes | [Deploy](#8-deploy-to-kubernetes) |
 | 9 | `post` actions: `always`, `success`, `failure` | [Post actions](#9-post-actions) |
 
 Two deviations, both stated up front because they change what the output looks like:
@@ -24,7 +24,7 @@ Two deviations, both stated up front because they change what the output looks l
 * **Registry = local, not Docker Hub.** This machine has no Docker Hub credentials
   (`~/.docker/config.json` is `{}`), so the push goes to the `registry:2` container
   from Lab 8. The image reference is `172.18.0.1:5000/eslamnabawy/demoapp:<build>`.
-  Every command is otherwise identical — swap `REGISTRY` and the `docker login`
+ Every command is otherwise identical, swap `REGISTRY` and the `docker login`
   step and the same pipeline pushes to Hub.
 * **The application is cloned from the local copy** (`file:///home/eslam/labs-workspace/DemoApp`)
   because GitHub is unreliable from this host (see Lab 8). The clone is the upstream
@@ -51,7 +51,7 @@ The controller runs in a purpose-built image (`ivolve-jenkins:lab21`, 3.09 GB):
 `jenkins/jenkins:lts` plus Maven, Temurin JDK 17, the Docker CLI, Trivy 0.76.1 and
 kubectl 1.37.1. It is started with `--network host` and the host's
 `/var/run/docker.sock` mounted, which is the same "build on the host daemon"
-pattern as Lab 8 — no Docker-in-Docker.
+pattern as Lab 8, no Docker-in-Docker.
 
 ---
 
@@ -116,7 +116,7 @@ Total: 38 (HIGH: 38, CRITICAL: 0)
 ```
 
 Two targets: the Ubuntu 24.04 base (2 HIGH, both fixable) and the packaged jar
-(38 HIGH). The nine CRITICALs are suppressed by `.trivyignore` — counted, not
+(38 HIGH). The nine CRITICALs are suppressed by `.trivyignore`, counted, not
 hidden: the same image scanned without the triage file reports
 
 ```text
@@ -150,7 +150,7 @@ The push refers to repository [localhost:5000/eslamnabawy/demoapp]
 {"name":"eslamnabawy/demoapp","tags":["1"]}
 ```
 
-`ivolveapp` is Lab 8's image — the same registry, still holding both labs.
+`ivolveapp` is Lab 8's image, the same registry, still holding both labs.
 
 ### 6. Delete image locally
 
@@ -206,7 +206,7 @@ $ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8088/   # via port-f
 200
 ```
 
-The pod started after `docker rmi`, so its image came from the registry — the
+The pod started after `docker rmi`, so its image came from the registry, the
 push in stage 5 and the pull in stage 7 are both real.
 
 ### 9. Post actions
@@ -220,7 +220,7 @@ Finished: SUCCESS
 ```
 
 `always` archived the Trivy report and cleaned the image; `success` stated where
-the image now runs. The `failure` branch was exercised too — the first attempt
+the image now runs. The `failure` branch was exercised too, the first attempt
 died at the push stage and the console shows its own diagnosis:
 
 ```text
@@ -235,7 +235,7 @@ registry.
 
 ---
 
-## Things worth knowing
+## Loose ends
 
 **The Jenkinsfile has to be committed before the job can read it.** The job is a
 *Pipeline script from SCM*: Jenkins clones the repository first and then looks for
@@ -248,7 +248,7 @@ ERROR: …/Jenkins/Lab21/Jenkinsfile not found
 Finished: FAILURE
 ```
 
-The build died in 1.1 s. Nothing about the pipeline was wrong — the file simply
+The build died in 1.1 s. Nothing about the pipeline was wrong, the file simply
 was not in the commit it checked out.
 
 **Two checkouts, because one SCM checkout owns the whole workspace.** The build
@@ -265,22 +265,22 @@ the default `--timeout 5m` gave up mid-layer:
 FATAL run error: … walk dir error: walk error: context deadline exceeded
 ```
 
-Worse, it still printed counts (`CRITICAL: 9, HIGH: 40`) that look like a
+Worse. It still printed counts (`CRITICAL: 9, HIGH: 40`) that look like a
 finished scan. Every scan in the pipeline passes `--timeout 30m`.
 
 **A gate that can never pass is not a gate.** The image has 49 fixable
 HIGH/CRITICAL findings, all inherited from the application's pinned Spring Boot
 3.2.0 (Tomcat 10.1.16, Spring MVC 6.1.1). Turning on
 `--severity HIGH,CRITICAL --exit-code 1` fails the build on the first run, on
-findings nobody in this lab can fix — the app is cloned as-is. The pipeline
+findings nobody in this lab can fix, the app is cloned as-is. The pipeline
 therefore gates on **CRITICAL only**, with the nine known CRITICALs listed in
 `Jenkins/Lab21/.trivyignore` and a comment naming the library and the reason.
-A new CRITICAL — or a fixable one after a dependency bump — still fails the
+A new CRITICAL, or a fixable one after a dependency bump, still fails the
 build. The report is archived as a build artefact either way.
 
 **`.trivyignore` is discovered automatically, which changes what the report
-shows.** Trivy reads the file from the working directory, so the *report* scan —
-which never passes `--ignorefile` — is already filtered, and its totals read
+shows.** Trivy reads the file from the working directory, so the *report* scan 
+which never passes `--ignorefile`, is already filtered, and its totals read
 `CRITICAL: 0`. The true count is the nine printed above from a scan with no
 triage file present. Nothing is hidden, but a reader who only looks at the
 archived report would undercount.
@@ -305,8 +305,8 @@ for `172.18.0.1:5000` and restarted:
   endpoint = ["http://172.18.0.1:5000"]
 ```
 
-The alternative — adding `insecure-registries` to the host daemon and restarting
-Docker — would have bounced the Lab 8 registry and every other container on this
+The alternative, adding `insecure-registries` to the host daemon and restarting
+Docker, would have bounced the Lab 8 registry and every other container on this
 machine.
 
 **Deleting the local image is what proves the push worked.** Stage 5 removes the
@@ -332,20 +332,20 @@ namespace keeps this lab's rollout independent of the earlier state.
 
 ---
 
-## Reproduce
+## Running it again
 
 ```bash
 cd ~/iVolve-Tasks/Jenkins/Lab21
 bash commands.sh
 ```
 
-`commands.sh` is the whole lab, in order: registry + containerd trust, namespace,
-CI image build, controller start, job trigger over the HTTP API with a CSRF crumb,
+`commands.sh` is the whole lab, in order: registry + containerd trust, namespace
+CI image build, controller start, job trigger over the HTTP API with a CSRF crumb
 result polling, manifest and cluster verification, and cleanup.
 
 ---
 
-## Clean up
+## Tidy up after it
 
 `commands.sh` ends with the cleanup:
 
@@ -355,12 +355,12 @@ docker rmi ivolve-jenkins:lab21
 rm -rf ~/jenkins-home-lab21
 ```
 
-The `lab21` namespace is left behind on purpose — it is the evidence that stage 7
+The `lab21` namespace is left behind on purpose. It is the evidence that stage 7
 worked. Remove it with `kubectl delete namespace lab21`.
 
 ---
 
-## Commit
+## Committing this
 
 ```bash
 cd ~/iVolve-Tasks

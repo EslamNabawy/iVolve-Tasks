@@ -1,4 +1,4 @@
-# Lab 4 — Docker Image Optimization and Export/Load
+# Lab 4: Docker Image Optimization and Export/Load
 
 **Track:** Docker · **Source:** https://github.com/Ibrahim-Adel15/ImageOptimization-.git
 
@@ -6,27 +6,27 @@ A Spring Boot web app: build it the way the repo does (JDK + Maven inside the
 image), then build it again properly (multi-stage, JRE only, non-root), compare
 the two, and prove an image survives a `save` → `rmi` → `load` round trip.
 
-## Requirements
+## What it asks for
 
 - [x] Application cloned from the provided repository
-- [x] Image built from the existing `Dockerfile` as `image1` — [`Dockerfile`](Dockerfile)
-- [x] Image size noted — **671 MB**
+- [x] Image built from the existing `Dockerfile` as `image1`, [`Dockerfile`](Dockerfile)
+- [x] Image size noted, **671 MB**
 - [x] Container `container1` run from `image1`, application verified
 - [x] `container1` stopped and deleted
-- [x] Multi-stage Dockerfile written — [`Dockerfile.multistage`](Dockerfile.multistage)
+- [x] Multi-stage Dockerfile written, [`Dockerfile.multistage`](Dockerfile.multistage)
 - [x] Application configured to run as a **non-root** user
-- [x] Optimized image built as `image2` — **294 MB**
+- [x] Optimized image built as `image2`, **294 MB**
 - [x] Sizes compared: `image2` is **2.28× smaller**
 - [x] Container `container2` run from `image2`, application verified, non-root proven
 - [x] `container2` stopped and deleted
-- [x] `image2` saved as `lab-image.tar` — **82 MB**
+- [x] `image2` saved as `lab-image.tar`, **82 MB**
 - [x] `image2` deleted from the local Docker host
 - [x] Image loaded back from the tar and verified in `docker images`
 - [x] Restored image run again to confirm it still works
 
 ---
 
-## Results
+## The run
 
 | Image | Stages | Base | Contains | Size |
 |---|---|---|---|---|
@@ -42,7 +42,7 @@ image1:latest  671MB
 **671 → 294 MB: 377 MB removed, a 2.28× reduction.** The whole Spring Boot fat
 jar is 19.6 MB, so almost none of either image is the application.
 
-### Verification — `container1` (image1)
+### Verification, `container1` (image1)
 
 ```
 $ docker run -d --name container1 -p 8080:8080 image1
@@ -55,10 +55,10 @@ $ docker logs container1 | tail -2
 ... Started DemoApplication in 1.74 seconds (process running for 2.14)
 ```
 
-Unlike Lab 3's calculator, this app really listens on its port — so `-p` and
+Unlike Lab 3's calculator. This app really listens on its port, so `-p` and
 `EXPOSE 8080` are functional here, not decoration.
 
-### Verification — `container2` (image2)
+### Verification, `container2` (image2)
 
 ```
 $ docker run -d --name container2 -p 8080:8080 image2
@@ -103,14 +103,14 @@ $ docker run -d --name container2 -p 8080:8080 image2 && curl -s localhost:8080
 Hello from Dockerized Spring Boot!
 ```
 
-The loaded image keeps its name, tag, size and ID — a tar is a complete copy of
+The loaded image keeps its name, tag, size and ID, a tar is a complete copy of
 the image, not a reference to it.
 
 ---
 
 ## The optimization, explained
 
-**What you need to BUILD is not what you need to RUN.** Compiling needs a JDK,
+**What you need to BUILD is not what you need to RUN.** Compiling needs a JDK
 Maven, and the whole dependency tree; running needs a JVM and one jar. `image1`
 ships the workshop with the product. The multi-stage build keeps the workshop in
 stage 1 and copies exactly one file into stage 2:
@@ -120,13 +120,13 @@ COPY --from=build --chown=appuser:appgroup \
      /build/target/demo-0.0.1-SNAPSHOT.jar app.jar
 ```
 
-Everything else in stage 1 — JDK, Maven, `~/.m2`, the source — is discarded.
+Everything else in stage 1, JDK, Maven, `~/.m2`, the source, is discarded.
 
 Three changes do the work:
 
-1. **Two stages instead of one** — build tooling never becomes a layer of the final image.
-2. **JRE instead of JDK** — `eclipse-temurin:17-jre-alpine` has no compiler.
-3. **Alpine instead of a full distro** — a few MB of base OS instead of ~70 MB.
+1. **Two stages instead of one**, build tooling never becomes a layer of the final image.
+2. **JRE instead of JDK**, `eclipse-temurin:17-jre-alpine` has no compiler.
+3. **Alpine instead of a full distro**, a few MB of base OS instead of ~70 MB.
 
 ### Non-root, properly
 
@@ -139,13 +139,13 @@ COPY --from=build --chown=appuser:appgroup /build/target/... app.jar
 USER appuser
 ```
 
-`USER` must come after the `COPY` here — otherwise Docker cannot write the
+`USER` must come after the `COPY` here, otherwise Docker cannot write the
 file into the image as that user's owner. Alpine uses `adduser`/`addgroup`
 (BusyBox), not `useradd`; the base image decides the available tooling.
 
 ---
 
-## Things worth knowing
+## Worth remembering
 
 **The build stalled, and it was not Maven's fault.** Two builds froze at 0% CPU
 inside `RUN mvn package`, after the same download, for 20+ minutes. Maven Central
@@ -167,11 +167,11 @@ After both changes the build finished in **31 seconds** from a warm layer cache.
 **A cache mount keeps rebuilds fast without growing the image.** `RUN --mount=type=cache,target=/root/.m2`
 stores Maven's dependency cache outside the image layers: source edits reuse the
 downloaded dependencies, and none of them are shipped. Even better for layer
-reuse is copying `pom.xml` before `src/` and resolving dependencies first —
+reuse is copying `pom.xml` before `src/` and resolving dependencies first 
 which is what the multi-stage file does here.
 
-**`.dockerignore` again.** [`​.dockerignore`](.dockerignore) excludes `.git`,
-`target` and markdown. It must not exclude `src/` — stage 1 compiles from it.
+**`.dockerignore` again.** [`​.dockerignore`](.dockerignore) excludes `.git`
+`target` and markdown. It must not exclude `src/`, stage 1 compiles from it.
 The same trap as Lab 3, in a different project.
 
 **Image size is not the only axis.** `image1` is self-contained and reproducible
@@ -181,7 +181,7 @@ you both: reproducible *and* small.
 
 ---
 
-## Commit this lab
+## Commit
 
 ```bash
 cd ~/iVolve-Tasks && git add Docker/Lab4 && \

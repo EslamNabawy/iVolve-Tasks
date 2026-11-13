@@ -1,9 +1,9 @@
-# Lab 15 — Node.js app Deployment and ClusterIP Service
+# Lab 15: Node.js app Deployment and ClusterIP Service
 
 **Track:** Container Orchestration · **Cluster:** kind `ivolve` (Lab 9) ·
 **Namespace:** `ivolve` · **Context:** `kind-ivolve`
 
-> Deck Lab 15 asks for an `ivolveApp` Deployment (2 replicas), the app image,
+> Deck Lab 15 asks for an `ivolveApp` Deployment (2 replicas), the app image
 > environment from the Lab 12 ConfigMap/Secret, the Lab 13 volume for logs, an
 > init container that prepares the database and grants, a ClusterIP Service
 > `ivolvaAppSvc`, and proof that the app reaches MySQL and serves traffic.
@@ -21,12 +21,12 @@ $ kind load docker-image ivolveapp:lab15 --name ivolve
 ```
 
 The Deployment sets `imagePullPolicy: IfNotPresent`, so the loaded image is
-used. Everything else — the init container, the ConfigMap/Secret wiring, the
-volume, the Service — is exactly what the lab asks. The source lives in
+used. Everything else, the init container, the ConfigMap/Secret wiring, the
+volume, the Service, is exactly what the lab asks. The source lives in
 `~/labs-workspace/iVolveApp` (cloned upstream, not committed), per this repo's
 rule that only authored files enter git.
 
-## Requirements
+## What the lab asks for
 
 - [x] Deployment `ivolveapp`, 2 replicas on `ivolve-worker`
 - [x] env from `ivolvecm` (`DB_HOST`, `DB_USER`) and `ivolvesecret`
@@ -39,12 +39,12 @@ rule that only authored files enter git.
 - [x] grants verified with `SHOW GRANTS`
 - [x] `access.log` appears on the node's `/mnt/app-logs`
 
-## Results
+## The run
 
 | Check | Result |
 |---|---|
-| Pods | `ivolveapp-…-26xbf`, `ivolveapp-…-bs8fc` — `2/2 Running` on `ivolve-worker` |
-| Quota | **3/3** (MySQL + two app replicas — exactly the Lab 11 cap) |
+| Pods | `ivolveapp-…-26xbf`, `ivolveapp-…-bs8fc`, `2/2 Running` on `ivolve-worker` |
+| Quota | **3/3** (MySQL + two app replicas, exactly the Lab 11 cap) |
 | Init container | `mysqld is alive` → `ivolve database and grants ready` |
 | App log | `✅ Connected to MySQL and 'ivolve' DB found.` / `🚀 Server started on http://0.0.0.0:3000` |
 | `/health` | `🚀 iVolve web app is working! ...` |
@@ -54,7 +54,7 @@ rule that only authored files enter git.
 
 ## Steps
 
-### 1 — Init container: prepare the database
+### 1. Init container: prepare the database
 
 MySQL's entrypoint already creates `ivolve` and the app user, but the lab asks
 for an explicit init container, and it makes the pod self-sufficient:
@@ -75,7 +75,7 @@ initContainers:
         echo "ivolve database and grants ready"
 ```
 
-Its environment comes from the same ConfigMap and Secret as the app — the
+Its environment comes from the same ConfigMap and Secret as the app, the
 requirements are passed, not hard-coded:
 
 ```console
@@ -84,7 +84,7 @@ mysqld is alive
 ivolve database and grants ready
 ```
 
-### 2 — The Deployment
+### 2. The Deployment
 
 Two replicas, pinned to the Lab 10 node, tolerating its taint, with the Lab 13
 claim mounted where the app writes its access log:
@@ -113,7 +113,7 @@ pod/ivolveapp-685887fc-bs8fc   1/1     Running   ivolve-worker
 pod/ivolvedb-0                 1/1     Running   ivolve-worker
 ```
 
-### 3 — The Service answers
+### 3. The Service answers
 
 Port-forwarding the ClusterIP for a local check:
 
@@ -132,7 +132,7 @@ $ curl -s http://127.0.0.1:3000/ | grep -o '<title>[^<]*</title>'
 Both endpoints run `SELECT 1` against MySQL, so a 200 is a real end-to-end
 check from HTTP to the database.
 
-### 4 — The connection and the grants
+### 4. The connection and the grants
 
 ```console
 $ kubectl --context kind-ivolve -n ivolve logs <pod> --tail=12
@@ -147,7 +147,7 @@ GRANT USAGE ON *.* TO `ivolveapp`@`%`
 GRANT ALL PRIVILEGES ON `ivolve`.* TO `ivolveapp`@`%`
 ```
 
-### 5 — Logs really go to the Lab 13 volume
+### 5. Logs really go to the Lab 13 volume
 
 ```console
 $ docker exec ivolve-worker sh -c 'ls -l /mnt/app-logs && tail -3 /mnt/app-logs/access.log'
@@ -158,7 +158,7 @@ $ docker exec ivolve-worker sh -c 'ls -l /mnt/app-logs && tail -3 /mnt/app-logs/
 127.0.0.1 - - [04/Nov/2026:23:47:30 +0000] "GET / HTTP/1.1" 200 2769 "-" "curl/8.5.0"
 ```
 
-## Things worth knowing
+## Loose ends
 
 1. **Init and app containers share the pod's labels.** NetworkPolicy (Lab 17)
    keys on `app=ivolveapp`, and the init container inherits it, so the DB
@@ -170,7 +170,7 @@ $ docker exec ivolve-worker sh -c 'ls -l /mnt/app-logs && tail -3 /mnt/app-logs/
 3. **`imagePullPolicy: IfNotPresent` is required for kind-loaded images.**
    With `Always`, kubelet would try Docker Hub and fail.
 4. **The quota is exactly saturated.** MySQL (1) + app (2) = 3/3. Anything else
-   in the namespace — even a debug pod — needs a slot or a quota change.
+ in the namespace, even a debug pod, needs a slot or a quota change.
 5. **`/health` is a database check, not a process check.** The app returns 200
    only after `SELECT 1` succeeds, which is why it is a meaningful probe.
 
@@ -178,7 +178,7 @@ $ docker exec ivolve-worker sh -c 'ls -l /mnt/app-logs && tail -3 /mnt/app-logs/
 
 The Deployment, Service and pods stay for Labs 16–17.
 
-## Commit this lab
+## Putting it in git
 
 ```bash
 cd ~/iVolve-Tasks

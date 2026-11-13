@@ -1,4 +1,4 @@
-# Lab 10 — Node isolation with taints and labels
+# Lab 10: Node isolation with taints and labels
 
 **Track:** Container Orchestration · **Cluster:** kind `ivolve` (3 nodes, from Lab 9) ·
 **Node:** `ivolve-worker` · **Context:** `kind-ivolve`
@@ -8,7 +8,7 @@
 > `project=ivolve` on the same worker for targeted scheduling, and verification
 > with `kubectl describe node` and `kubectl get nodes --show-labels`.
 
-## Requirements
+## The ask
 
 - [x] taint `workload=ivolveApp:NoSchedule` applied to a worker node
 - [x] label `project=ivolve` applied to the same node
@@ -17,20 +17,20 @@
 - [x] the same pod **with** the toleration runs on that node
 - [x] the other worker stays untainted and unlabelled (the control is honest)
 
-## Results
+## The run
 
 | Check | Result |
 |---|---|
 | Taint | `workload=ivolveApp:NoSchedule` on `ivolve-worker` |
 | Label | `project=ivolve` on `ivolve-worker` |
-| Pod with `nodeSelector: project=ivolve`, no toleration | **`Pending`** — `2 node(s) had untolerated taint(s)` |
+| Pod with `nodeSelector: project=ivolve`, no toleration | **`Pending`**, `2 node(s) had untolerated taint(s)` |
 | Same pod + toleration `workload=ivolveApp:NoSchedule` | **`Running`** on `ivolve-worker`, `192.168.194.4` |
 | `ivolve-worker2` | no taint, no `project` label |
 | Control plane | already tainted `node-role.kubernetes.io/control-plane:NoSchedule` |
 
-## Steps
+## Walkthrough
 
-### 1 — Taint and label the worker
+### 1. Taint and label the worker
 
 ```console
 $ kubectl --context kind-ivolve taint nodes ivolve-worker workload=ivolveApp:NoSchedule --overwrite
@@ -43,7 +43,7 @@ node/ivolve-worker labeled
 `--overwrite` matters for a re-run: without it, applying an existing
 taint/label exits with "already has ..." and the script stops.
 
-### 2 — Verify the taint
+### 2. Verify the taint
 
 ```console
 $ kubectl --context kind-ivolve describe node ivolve-worker | grep -E '^Taints:|workload='
@@ -60,7 +60,7 @@ Two taints exist in the cluster for different reasons: the control-plane taint
 is kind's own (it keeps normal workloads off the control plane), and ours is the
 Lab 10 one. That detail explains the scheduler message in step 4.
 
-### 3 — Verify the label
+### 3. Verify the label
 
 ```console
 $ kubectl --context kind-ivolve get nodes -L project
@@ -76,7 +76,7 @@ NAME            STATUS   ROLES    AGE   VERSION   LABELS
 project=ivolve
 ```
 
-### 4 — A pod that wants the node but does not tolerate the taint
+### 4. A pod that wants the node but does not tolerate the taint
 
 `pod-blocked.yaml` has `nodeSelector: {project: ivolve}` and no toleration:
 
@@ -95,7 +95,7 @@ LAST SEEN   TYPE      REASON             OBJECT                 MESSAGE
   preemption: 0/3 nodes are available: 3 Preemption is not helpful for scheduling.
 ```
 
-Read the message literally — it names both halves of the lab:
+Read the message literally. It names both halves of the lab:
 
 - **1 node didn't match the selector** → `ivolve-worker2`, which has no
   `project=ivolve` label.
@@ -104,7 +104,7 @@ Read the message literally — it names both halves of the lab:
 - **0/3** means the pod cannot be placed anywhere: the one node it asks for
   refuses it, and the others do not match.
 
-### 5 — Add the toleration, and it schedules
+### 5. Add the toleration, and it schedules
 
 `pod-allowed.yaml` is the same pod plus one toleration:
 
@@ -130,11 +130,11 @@ taint-demo-blocked   0/1     Pending   0          25s   <none>          <none>
 The two pods differ by exactly one field, so the result is attributable to the
 toleration, not to timing or luck.
 
-## Things worth knowing
+## Small things I learned
 
 1. **A taint repels; a label attracts.** The taint alone would have sent the pod
    anywhere else. The `nodeSelector` is what aims it at this node in the first
-   place — the toleration only removes the objection.
+ place, the toleration only removes the objection.
 2. **`NoSchedule` affects new pods, not running ones.** It is not an eviction
    policy; a pod already on the node keeps running. `NoExecute` is the effect
    that evicts (with an optional `tolerationSeconds`).
@@ -150,7 +150,7 @@ toleration, not to timing or luck.
 6. **`--overwrite` is the idempotency switch** for `kubectl taint` and
    `kubectl label`; without it a second run fails instead of converging.
 
-## Cleanup
+## Clearing the deck
 
 The cluster and demo pods are left in place for Labs 11–17. To undo only this
 lab:
@@ -161,7 +161,7 @@ kubectl --context kind-ivolve label node ivolve-worker project-
 kubectl --context kind-ivolve delete pod taint-demo-blocked taint-demo-allowed
 ```
 
-## Commit this lab
+## Committing the work
 
 ```bash
 cd ~/iVolve-Tasks

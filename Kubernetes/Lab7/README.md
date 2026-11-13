@@ -1,13 +1,13 @@
-# Lab 7 — Deploying the Lab 3 image to Kubernetes
+# Lab 7: Deploying the Lab 3 image to Kubernetes
 
 **Track:** Kubernetes · **Cluster tool:** kind v0.33.0 · **Client:** kubectl v1.37.1 · **Image:** `app3`, Lab 3's multi-stage build
 
-> This track has no slide photo — it is the first item on this repository's
-> own **Next** list: *"☸️ Kubernetes — deploy the Lab 3 image to a cluster."*
+> This track has no slide photo. It is the first item on this repository's
+> own **Next** list: *"☸️ Kubernetes, deploy the Lab 3 image to a cluster."*
 > Everything below was executed on this machine; nothing is copied from a
 > tutorial. Two kind clusters can exist here (`aiops` belongs to an unrelated
 > project), so every `kubectl` call pins `--context kind-ivolve` and every
-> `kind` call passes `--name ivolve` — the other cluster is never touched.
+> `kind` call passes `--name ivolve`, the other cluster is never touched.
 
 ## Requirements
 
@@ -17,15 +17,15 @@
 - [x] The calculator computes **inside** the pod (`kubectl exec -i`)
 - [x] Non-root proven inside the pod (`uid=1000(appuser)`)
 - [x] CPU/memory requests and limits declared on the container
-- [x] The stdin trap demonstrated honestly — default ENTRYPOINT → crash loop
+- [x] The stdin trap demonstrated honestly, default ENTRYPOINT → crash loop
 - [x] `EXPOSE 8080` re-checked through a Service → `Connection refused`
 - [x] Cluster and image cleaned up; the unrelated `aiops` cluster untouched
 
-## Results
+## The run
 
 | Check | Result |
 |---|---|
-| Cluster | `ivolve` — 1 control-plane node, **Ready after 16 s** |
+| Cluster | `ivolve`, 1 control-plane node, **Ready after 16 s** |
 | Image | `app3` **256 MB**, `kind load docker-image` (never pulled from a registry) |
 | Pod | `calculator-5565b9c99d-bgx5n` · `1/1 Running` · `uid=1000(appuser)` |
 | Math in-cluster | 7 and 3 → Sum **10.0** · Subtract **4.0** · Multiply **21.0** · Divide **2.3333333333333335** |
@@ -34,12 +34,12 @@
 | Service `:8080` | endpoint `10.244.0.7:8080` exists → **Connection refused** |
 | Cleanup | cluster deleted, `app3` removed, `aiops` cluster still listed |
 
-## Steps
+## Step by step
 
-### 1 — Rebuild the Lab 3 image
+### 1. Rebuild the Lab 3 image
 
 Lab 3's cleanup deleted `app3`, so it is rebuilt first. The build context must
-be the upstream clone in `~/labs-workspace/` (outside this repo — the repo
+be the upstream clone in `~/labs-workspace/` (outside this repo, the repo
 holds only authored files). Building from inside the repo folder is the first
 trap:
 
@@ -48,7 +48,7 @@ $ cd ~/iVolve-Tasks/Docker/Lab3 && docker build -f Dockerfile.multistage -t app3
 ERROR: failed to build: failed to solve: ... "/pom.xml": not found
 ```
 
-With the correct context — same clone Labs 1–2 used, same Dockerfile
+With the correct context, same clone Labs 1–2 used, same Dockerfile
 (byte-identical to [`Docker/Lab3/Dockerfile.multistage`](../../Docker/Lab3/Dockerfile.multistage)):
 
 ```console
@@ -66,10 +66,10 @@ app3:latest 256MB
 ```
 
 (The cached layers made it a sub-second rebuild. Lab 3 recorded 265 MB on
-21 Oct; this run printed 256 MB — the number of the run in front of us is
+21 Oct; this run printed 256 MB, the number of the run in front of us is
 the one reported here, not the older figure.)
 
-### 2 — Create the cluster
+### 2. Create the cluster
 
 ```console
 $ kind create cluster --name ivolve --wait 120s
@@ -103,10 +103,10 @@ ivolve-control-plane   Ready    control-plane   52s   v1.37.0   172.18.0.2    <n
 
 One node, `Ready`, Kubernetes v1.37.0 on the WSL2 kernel.
 
-### 3 — Load the image into the node
+### 3. Load the image into the node
 
 The node is a container running **containerd**, not the host's Docker
-daemon — images `docker` knows about are invisible to it, and `app3` does
+daemon, images `docker` knows about are invisible to it, and `app3` does
 not exist in any registry:
 
 ```console
@@ -114,7 +114,7 @@ $ kind load docker-image app3 --name ivolve
 Image: "app3" with ID "sha256:87fdd2ae486ae15de52023f5bb43c110259b69c61fc1bbe33cd618b60c33d009" not yet present on node "ivolve-control-plane", loading...
 ```
 
-### 4 — First contact: one interactive pod
+### 4. First contact: one interactive pod
 
 `kubectl run -i` with piped stdin is `docker run -i` in Kubernetes form:
 
@@ -131,10 +131,10 @@ pod "calc-quick" deleted from default namespace
 
 Same math Lab 3 produced with `docker run -i`, now inside a cluster pod.
 Note `--image-pull-policy=Never`: the image was loaded, never pushed, so a
-pull attempt can never succeed — saying so explicitly beats hoping the
+pull attempt can never succeed, saying so explicitly beats hoping the
 default behaves.
 
-### 5 — Deploy it as-is and watch it fail
+### 5. Deploy it as-is and watch it fail
 
 The honest negative test. What happens if a Deployment simply uses the
 image, exactly like `docker run` does?
@@ -175,11 +175,11 @@ Events:
   Warning  BackOff    8s                kubelet            spec.containers{calc-asis}: Back-off restarting failed container calc-asis in pod calc-asis_default(73c86839-ddca-49de-89b2-36f7e6c5d4b0)
 ```
 
-Lab 3's trap — *"the app is an interactive stdin CLI"* — did not disappear
+Lab 3's trap, *"the app is an interactive stdin CLI"*, did not disappear
 because we moved to Kubernetes. A container orchestrator schedules
 containers; it cannot type numbers into them.
 
-### 6 — The pattern that works
+### 6. The pattern that works
 
 [`deployment.yaml`](deployment.yaml) keeps the pod alive with a different
 main process, and the calculator is invoked *inside* that pod on demand:
@@ -200,9 +200,9 @@ NAME                              READY   STATUS    RESTARTS   AGE
 pod/calculator-5565b9c99d-bgx5n   1/1     Running   0          1s
 ```
 
-### 7 — The calculator, inside the cluster
+### 7. The calculator, inside the cluster
 
-`kubectl exec -i` opens a stream straight into the container — the same
+`kubectl exec -i` opens a stream straight into the container, the same
 contract as `docker run -i`:
 
 ```console
@@ -214,10 +214,10 @@ Multiply: 21.0
 Divide: 2.3333333333333335
 ```
 
-Different inputs than step 4 (7 and 3, as Lab 3 used) — it computes, it
+Different inputs than step 4 (7 and 3, as Lab 3 used). It computes. It
 does not echo.
 
-### 8 — Non-root, and the declared resources
+### 8. Non-root, and the declared resources
 
 ```console
 $ kubectl --context kind-ivolve exec deploy/calculator -- id
@@ -239,13 +239,13 @@ $ kubectl --context kind-ivolve describe pod -l app=calculator | grep -E 'Image:
 ```
 
 The manifest's numbers reached the API server, and the process really runs
-as `appuser` — the same non-root guarantee Labs 3–6 established, now
+as `appuser`, the same non-root guarantee Labs 3–6 established, now
 enforced by the scheduler instead of a `docker run` flag.
 
-### 9 — The Service that has nothing to serve
+### 9. The Service that has nothing to serve
 
 Lab 3 proved `EXPOSE 8080` opens no socket. Kubernetes deserves the same
-check — [`service.yaml`](service.yaml) declares port 8080 anyway:
+check, [`service.yaml`](service.yaml) declares port 8080 anyway:
 
 ```console
 $ kubectl --context kind-ivolve apply -f service.yaml
@@ -265,14 +265,14 @@ wget: can't connect to remote host (10.96.45.220): Connection refused
 command terminated with exit code 1
 ```
 
-The endpoint exists — kube-proxy tracks the **pod**, not open sockets — and
+The endpoint exists, kube-proxy tracks the **pod**, not open sockets, and
 the connection is still refused, because nothing in that container ever
 listens. `EXPOSE` remains documentation; a Service routes to a socket that
 must actually exist.
 
-### 10 — Full picture, then tidy up
+### 10. Full picture, then tidy up
 
-Both pods side by side — the image deployed the wrong way and the right
+Both pods side by side, the image deployed the wrong way and the right
 way:
 
 ```console
@@ -289,7 +289,7 @@ service/calculator   ClusterIP   10.96.45.220   <none>        8080/TCP   13s    
 service/kubernetes   ClusterIP   10.96.0.1      <none>        443/TCP    2m53s   <none>
 ```
 
-The crashed pod has restarted 4 times and will do so forever — deleted.
+The crashed pod has restarted 4 times and will do so forever, deleted.
 Two honest gaps worth recording while the cluster is up:
 
 ```console
@@ -309,7 +309,7 @@ $ kubectl --context kind-ivolve delete pod calc-asis --wait=false
 pod "calc-asis" deleted from default namespace
 ```
 
-### 11 — Cleanup
+### 11. Cleanup
 
 ```console
 $ kind delete cluster --name ivolve
@@ -352,7 +352,7 @@ Enter first number: Exception in thread "main" java.util.NoSuchElementException
 ```
 
 The arguments never ran: `docker run`'s trailing words replace the image's
-**CMD**, and this image sets an **ENTRYPOINT** (`java -jar …`) — so Java ran
+**CMD**, and this image sets an **ENTRYPOINT** (`java -jar …`), so Java ran
 instead, found no stdin, and died. Overriding the entrypoint explicitly
 does work, and Alpine's `sleep` accepts `infinity`:
 
@@ -364,33 +364,33 @@ $ docker ps --filter name=sleeptest3 --format '{{.Names}} {{.Status}}'
 sleeptest3 Up 3 seconds
 ```
 
-Kubernetes' `command:` field is the `--entrypoint` equivalent — it
-overrides the ENTRYPOINT, which is exactly what `deployment.yaml` does. So
+Kubernetes' `command:` field is the `--entrypoint` equivalent. It
+overrides the ENTRYPOINT, which is what `deployment.yaml` does. So
 the working shape of this lab is: **the pod's process keeps the container
 alive; the calculator runs on `kubectl exec -i`.** Scaling `replicas` would
-only produce more idle pods — a stdin CLI has no notion of concurrent
+only produce more idle pods, a stdin CLI has no notion of concurrent
 capacity to scale.
 
-## Things worth knowing
+## What tripped me up
 
 1. **`imagePullPolicy: Never` is load-bearing.** kind nodes run containerd
    and never see the host Docker daemon's images; `kind load docker-image`
    is the bridge. The manifest pins the policy because the tag is
-   `app3:latest`, whose Kubernetes default is `Always` — a pull that could
+ `app3:latest`, whose Kubernetes default is `Always`, a pull that could
    only fail, since no registry on earth has `app3`.
 2. **`runAsNonRoot` needs a number, not a name.** The Dockerfile says
    `USER appuser`. Kubernetes cannot resolve that name to a uid at admission
    time and would reject the pod ("image will run as root"), so the
-   manifest states `runAsUser: 1000` — the uid `adduser -D` gave appuser,
+ manifest states `runAsUser: 1000`, the uid `adduser -D` gave appuser
    verified by `id` in step 8.
 3. **`exec` output never reaches `kubectl logs`.** Logs capture PID 1 only;
    the calculator's answer belonged to the exec stream. That is why step 10
    shows `0` bytes of logs on a "successful" deployment.
 4. **Endpoints ≠ open sockets.** The Service's endpoint was populated
-   (`10.244.0.7:8080`) while the port refused connections — kube-proxy
+ (`10.244.0.7:8080`) while the port refused connections, kube-proxy
    watches pod readiness, not listeners. Lab 3's `EXPOSE` lesson, restated
    by a different control plane.
-5. **`kubectl top` needs metrics-server** — kind deliberately ships a bare
+5. **`kubectl top` needs metrics-server**, kind deliberately ships a bare
    cluster (`error: Metrics API not available`). Lab 6's `docker stats`
    observation has no default equivalent here.
 6. **The `Endpoints` deprecation warning** in step 9 is Kubernetes telling
@@ -402,7 +402,7 @@ capacity to scale.
    and measurement timing are candidates); the figure each run actually
    printed is the one reported.
 
-## Commit this lab
+## Committing this
 
 ```bash
 cd ~/iVolve-Tasks

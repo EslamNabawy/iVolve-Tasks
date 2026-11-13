@@ -1,4 +1,4 @@
-# Lab 22 — Jenkins Shared Libraries and a Build Agent
+# Lab 22: Jenkins Shared Libraries and a Build Agent
 
 <p align="center"><em>The Lab 21 pipeline, rebuilt so that the Jenkinsfile only decides
 <strong>what</strong> to run. The <strong>how</strong> lives in a shared library, and the work runs
@@ -11,17 +11,17 @@ on an agent, not on the controller.</em></p>
 | # | Requirement | Where |
 |---|---|---|
 | 1 | Clone `DemoApp` with its `Dockerfile` | [Checkout](#1-checkout) |
-| 2 | `BuildApp` library — unit test + build | [Build app](#2-build-app) |
-| 3 | `BuildImage` library — build, scan, push, delete local | [Build, scan, push](#3-build-scan-push-delete) |
-| 4 | `DeployOnK8s` library — edit the deployment file + deploy | [Deploy](#4-deploy-to-kubernetes) |
+| 2 | `BuildApp` library, unit test + build | [Build app](#2-build-app) |
+| 3 | `BuildImage` library, build, scan, push, delete local | [Build, scan, push](#3-build-scan-push-delete) |
+| 4 | `DeployOnK8s` library, edit the deployment file + deploy | [Deploy](#4-deploy-to-kubernetes) |
 | 5 | Update the pipeline to use the libraries | [The pipeline](#the-pipeline) |
 | 6 | Configure a Jenkins agent (slave) and run the pipeline there | [The agent](#the-agent) |
 
 Two deviations carried over from Lab 21, unchanged here:
 
-* **Registry = local, not Docker Hub** — no Hub credentials on this host, so the
+* **Registry = local, not Docker Hub**, no Hub credentials on this host, so the
   image goes to the `registry:2` container from Lab 8.
-* **`DemoApp` is cloned from `file:///home/eslam/labs-workspace/DemoApp`** — the
+* **`DemoApp` is cloned from `file:///home/eslam/labs-workspace/DemoApp`**, the
   upstream repository, unmodified, because GitHub is unreliable from this host.
 
 ---
@@ -46,14 +46,14 @@ stage('Build, scan, push image')  { steps { buildImage(dir: 'app', image: env.IM
 stage('Deploy to Kubernetes')     { steps { deployOnK8s(dir: 'repo', image: env.DEPLOY_REF, ...) } }
 ```
 
-Four of Lab 21's seven stages collapse into one library call, on purpose: build,
+Four of Lab 21's seven stages collapse into one library call, on purpose: build
 scan, push and "delete the local copy" are one decision, not four. If the push
-fails, keeping the local image would let the next step deploy from a stale copy —
+fails, keeping the local image would let the next step deploy from a stale copy 
 so they live together.
 
 ### The library
 
-`Jenkins/Lab22/shared-library/vars/` — three global steps, loaded with
+`Jenkins/Lab22/shared-library/vars/`, three global steps, loaded with
 `@Library('ivolve-lib@main') _`:
 
 | File | What it does |
@@ -103,7 +103,7 @@ curl -s -b "$JAR" -u "$USER:$PASS" -H "$CRUMB" -X POST \
   "$URL/scriptText"
 ```
 
-The agent is a container built from `Dockerfile.agent` — the Lab 21 controller
+The agent is a container built from `Dockerfile.agent`, the Lab 21 controller
 image minus the Jenkins plugins, plus the official `jenkins/inbound-agent`
 remoting client. It mounts the same docker socket, kubeconfig and repositories
 as the controller, because the work it does is identical; only the process
@@ -111,7 +111,7 @@ running it is different.
 
 ---
 
-## Results
+## How it went
 
 Every block below is copied from the terminal or the build console of the run
 that produced this README (build #1, 11 Nov 2026).
@@ -159,7 +159,7 @@ agent=docker-agent
 
 `DemoApp` is a single `DemoApplication.java` with no test sources, so
 `mvn package` has nothing to execute. The stage still publishes JUnit results
-with `allowEmptyResults: true` — on a project with tests it would show them,
+with `allowEmptyResults: true`, on a project with tests it would show them
 here it shows none, and that is the honest number.
 
 ### 3. Build, scan, push, delete
@@ -180,7 +180,7 @@ Deleted: sha256:6632358ae86f0aad9dc32f229bb790a54cfd33950e48159d1665a813e2541845
 
 The scan gate is identical to Lab 21's: CRITICAL, fixable, `--exit-code 1`, with
 the nine inherited tomcat/spring CVEs triaged in `.trivyignore`. HIGH does not
-fail the build — an application this old would never ship otherwise — but it is
+fail the build, an application this old would never ship otherwise, but it is
 counted and archived in `trivy-report.txt`.
 
 ### 4. Deploy to Kubernetes
@@ -216,11 +216,11 @@ pod proves the push worked: the node pulled `demoapp:1` from the registry.
 
 ---
 
-## Things worth knowing
+## Notes
 
 1. **A shared library in a subdirectory needs `libraryPath`.** `modernSCM` has a
    `libraryPath` field, but the UI hides it unless you expand the retriever. Point
-   it at `Jenkins/Lab22/shared-library` and `vars/*.groovy` resolves as usual —
+ it at `Jenkins/Lab22/shared-library` and `vars/*.groovy` resolves as usual 
    no extra repository, no copy step.
 2. **`launcher: jnlp` creates the node; Jenkins creates its secret.** There is no
    way to set a known secret from configuration, so the sensible move is to read
@@ -258,12 +258,12 @@ cd ~/iVolve-Tasks/Jenkins/Lab22
 bash commands.sh
 ```
 
-The script is idempotent: registry, containerd trust, namespace, both images,
+The script is idempotent: registry, containerd trust, namespace, both images
 controller, agent, trigger, verification and cleanup. It expects the Lab 9
-cluster (`kind-ivolve`) and the Lab 8 registry to exist — it recreates them if
+cluster (`kind-ivolve`) and the Lab 8 registry to exist. It recreates them if
 they do not.
 
-## Clean up
+## Removing it
 
 The script removes the controller, the agent, both images and
 `~/jenkins-home-lab22` at the end, and leaves the `lab22` namespace with the

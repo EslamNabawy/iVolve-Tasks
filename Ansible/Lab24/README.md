@@ -1,11 +1,11 @@
-# Lab 24 — Ansible control node, keys, inventory and an ad-hoc command
+# Lab 24: Ansible control node, keys, inventory and an ad-hoc command
 
 > **Deck task:** install and configure Ansible on the control node, generate a
 > key, copy the public key to the managed node with `ssh-copy-id`, create an
 > inventory that lists the managed node, then run an ad-hoc command that
 > installs Docker on it.
 
-## Requirements
+## What the lab asks for
 
 - [x] Ansible installed and configured on the control node
 - [x] A dedicated key pair, generated for this lab
@@ -18,7 +18,7 @@
 
 ## 1. What is the control node here
 
-The control node is this WSL machine — nothing is installed specially:
+The control node is this WSL machine, nothing is installed specially:
 
 ```
 ansible [core 2.16.3]
@@ -31,7 +31,7 @@ inventory path is passed with `-i`.
 ## 2. The managed node
 
 The deck assumes a second machine reachable over SSH. This host has no
-passwordless `sudo`, so it cannot run a second `sshd` of its own — a managed node
+passwordless `sudo`, so it cannot run a second `sshd` of its own, a managed node
 is therefore a **container with `sshd` in the foreground**, built by
 `Dockerfile.node`:
 
@@ -47,7 +47,7 @@ managed1 0.0.0.0:2222->22/tcp, [::]:2222->22/tcp
 ```
 
 Two nodes rather than one, because an inventory of a single host hides
-mistakes — `hosts: all` and `hosts: managed` behave identically with one entry.
+mistakes, `hosts: all` and `hosts: managed` behave identically with one entry.
 
 ## 3. The key
 
@@ -84,7 +84,7 @@ SSH_ASKPASS=/tmp/lab24-askpass.sh SSH_ASKPASS_REQUIRE=force setsid -w \
 Number of key(s) added: 1
 ```
 
-Twice — once per port.
+Twice, once per port.
 
 ## 5. The inventory
 
@@ -131,7 +131,7 @@ managed1 | SUCCESS => {
 }
 ```
 
-`ping` here is not ICMP — it is a module that connects over SSH, uploads a small
+`ping` here is not ICMP. It is a module that connects over SSH, uploads a small
 Python program and reports success. "pong" therefore proves the whole chain:
 network, key, user, Python.
 
@@ -151,7 +151,7 @@ managed2 | CHANGED | rc=0 | (stdout) Docker version 29.1.3, build 29.1.3-0ubuntu
 
 ---
 
-## Things worth knowing
+## Notes from this one
 
 1. **`ansible ping` says nothing about ICMP.** It is a module executed over
    SSH with Python; a green `ping` means SSH, key auth, Python and sudo all work.
@@ -162,9 +162,9 @@ managed2 | CHANGED | rc=0 | (stdout) Docker version 29.1.3, build 29.1.3-0ubuntu
    waits for input that never comes.
 4. **Ansible needs Python on the managed node,** not just SSH. A minimal image
    without `python3` fails with `MODULE FAILURE` before anything runs.
-5. **`docker.io` is the distro package.** It installs a working Docker 29.1.3,
+5. **`docker.io` is the distro package.** It installs a working Docker 29.1.3
    but inside these containers there is no systemd, so the daemon is not started
-   — the lab installs and reports the version, and says so rather than pretending
+, the lab installs and reports the version, and says so rather than pretending
    a daemon is running.
 6. **The inventory points at `127.0.0.1`, not at host names.** Only the port
    differs between the two nodes; that is the one visible difference from two

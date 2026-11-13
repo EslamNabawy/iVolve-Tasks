@@ -1,16 +1,16 @@
-# Lab 6 — Docker Environment Variables and Resource Management
+# Lab 6: Docker Environment Variables and Resource Management
 
 **Track:** Docker · **Source:** https://github.com/Ibrahim-Adel15/PythonApp.git
 
 A small Flask app that reads `APP_NAME` and `APP_ENV` at startup and serves them
-on port 5000. The lab is about *where those values come from* — the run command,
-an env file, or the image itself — and about capping what the container may use.
+on port 5000. The lab is about *where those values come from*, the run command
+an env file, or the image itself, and about capping what the container may use.
 
-## Requirements
+## What the lab asks for
 
 - [x] Application cloned from the provided repository
-- [x] Dockerfile written on `python:3.12-slim`, dependencies installed, port 5000 — [`Dockerfile`](Dockerfile)
-- [x] Image built as `ivolve1` — **185 MB**
+- [x] Dockerfile written on `python:3.12-slim`, dependencies installed, port 5000, [`Dockerfile`](Dockerfile)
+- [x] Image built as `ivolve1`, **185 MB**
 - [x] `container1` run, port 5000 mapped, `APP_NAME=iVolveApp1` / `APP_ENV=stg`
 - [x] Resources limited to **1 CPU** and **256 MB** memory
 - [x] Application verified at `http://localhost:5000`
@@ -18,13 +18,13 @@ an env file, or the image itself — and about capping what the container may us
 - [x] CPU/memory monitored with `docker stats`
 - [x] [`env.txt`](env.txt) created with `APP_NAME=iVolveApp2` / `APP_ENV=prod`
 - [x] `container2` run with the variables loaded from `env.txt`
-- [x] New image built with `APP_NAME=iVolveApp3` / `APP_ENV=dev` hardcoded in the Dockerfile — [`Dockerfile.env`](Dockerfile.env)
+- [x] New image built with `APP_NAME=iVolveApp3` / `APP_ENV=dev` hardcoded in the Dockerfile, [`Dockerfile.env`](Dockerfile.env)
 - [x] `container2` run again and the Dockerfile values validated
 - [x] Bonus: proven that a run-time `-e` overrides the Dockerfile `ENV`
 
 ---
 
-## Results
+## What happened
 
 | Run | Image | Variables come from | `APP_NAME` | `APP_ENV` |
 |---|---|---|---|---|
@@ -33,10 +33,10 @@ an env file, or the image itself — and about capping what the container may us
 | `container2` (again) | `ivolve3` | Dockerfile `ENV` | `iVolveApp3` | `dev` |
 | `container3` (bonus) | `ivolve3` | Dockerfile `ENV` + `-e` | `OverrideName` | `dev` |
 
-Same application, same port, same image — only the source of the configuration
+Same application, same port, same image, only the source of the configuration
 changes. That is the whole point of the exercise.
 
-### 1 — `container1`: run-time variables and resource limits
+### 1. `container1`: run-time variables and resource limits
 
 ```
 $ docker run -d --name container1 -p 5000:5000 \
@@ -68,13 +68,13 @@ NanoCpus=1000000000 Memory=268435456
 ```
 
 `1000000000` nano-CPUs is exactly 1 CPU; `268435456` bytes is 256 MiB. This is
-worth checking — `docker stats` shows what is *used*, `docker inspect` shows what
+worth checking, `docker stats` shows what is *used*, `docker inspect` shows what
 is *enforced*.
 
 The Flask process used 24.67 MiB of its 256 MiB allowance, so the cap is real but
 not tight.
 
-### 2 — `container2`: variables from `env.txt`
+### 2. `container2`: variables from `env.txt`
 
 ```
 $ cat env.txt
@@ -90,7 +90,7 @@ APP_ENV=prod
 APP_NAME=iVolveApp2
 ```
 
-### 3 — `container2`: variables baked into the image
+### 3. `container2`: variables baked into the image
 
 ```
 $ docker build -f Dockerfile.env -t ivolve3 .
@@ -106,12 +106,12 @@ $ docker inspect ivolve3 --format '{{json .Config.Env}}'
 [...,"APP_NAME=iVolveApp3","APP_ENV=dev"]
 ```
 
-The variables are part of the image configuration — `docker inspect` finds them
+The variables are part of the image configuration, `docker inspect` finds them
 even before a container exists. Note the **slide reuses the name `container2`**
 for this third run: the previous container was stopped and deleted first, so the
 name is free.
 
-### 4 — Bonus: precedence
+### 4. Bonus: precedence
 
 ```
 $ docker run -d --name container3 -p 5001:5000 -e APP_NAME=OverrideName ivolve3
@@ -162,25 +162,25 @@ CMD ["python", "app.py"]
 
 Four decisions worth naming:
 
-- **`requirements.txt` before `app.py`** — editing the app does not trigger a
+- **`requirements.txt` before `app.py`**, editing the app does not trigger a
   `pip install` on rebuild.
-- **`--no-cache-dir`** — pip's download cache is build waste; it would add tens of
+- **`--no-cache-dir`**, pip's download cache is build waste; it would add tens of
   MB to a 185 MB image.
-- **Non-root `appuser`** — Flask needs no privileges, and the files are copied
+- **Non-root `appuser`**, Flask needs no privileges, and the files are copied
   with `--chown` so the user can read them.
-- **`PYTHONUNBUFFERED=1`** — without it, `docker logs` can appear empty because
+- **`PYTHONUNBUFFERED=1`**, without it, `docker logs` can appear empty because
   Python buffers stdout when it is not a TTY.
 
 ---
 
-## Things worth knowing
+## Loose ends
 
 **`docker stats cont1` in the slide is a typo.** The container is named
 `container1`; `cont1` returns "No such container". Used `container1`.
 
 **`--cpus=1` and `--memory=256m` are hard limits.** The CPU quota is enforced by
 the CFS scheduler (1 CPU = 100 ms of CPU time per 100 ms period), and memory is
-enforced by the cgroup — exceed it and the kernel OOM-kills the process rather
+enforced by the cgroup, exceed it and the kernel OOM-kills the process rather
 than letting it swap. Neither changes the *app*, which is why the same image
 runs identically with and without limits.
 
@@ -192,16 +192,16 @@ That is why `env.txt` has no `export`.
 - In the run command: visible to anyone who can read the process list or
   `docker inspect`, and lost when the container is deleted.
 - In the image: baked in, same for every container, and a rebuild is needed to
-  change it — fine for a default, wrong for a secret.
+ change it, fine for a default, wrong for a secret.
 - In an env file: shareable, reviewable, and easy to keep out of git.
 
 **Rebuilding `ivolve3` is nearly free** because every layer except the final
-`ENV` change was cached — the build finished in 0.2 s. That is layer caching
+`ENV` change was cached, the build finished in 0.2 s. That is layer caching
 working as intended.
 
 ---
 
-## Commit this lab
+## Putting it in git
 
 ```bash
 cd ~/iVolve-Tasks && git add Docker/Lab6 && \

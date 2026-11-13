@@ -1,16 +1,16 @@
-# Lab 12 — ConfigMaps and Secrets for MySQL
+# Lab 12: ConfigMaps and Secrets for MySQL
 
 **Track:** Container Orchestration · **Cluster:** kind `ivolve` (Lab 9) ·
 **Namespace:** `ivolve` · **Context:** `kind-ivolve`
 
-> Deck Lab 12 asks for a ConfigMap `ivolveCM` holding `DB_HOST` and `DB_USER`,
+> Deck Lab 12 asks for a ConfigMap `ivolveCM` holding `DB_HOST` and `DB_USER`
 > a Secret `ivolveSecret` holding `MYSQL_ROOT_PASSWORD` and `DB_PASSWORD` with
 > **base64-encoded** values in the YAML, both in the `ivolve` namespace.
 
 ## Requirements
 
-- [x] ConfigMap `ivolvecm` — `DB_HOST` (headless Service hostname), `DB_USER`
-- [x] Secret `ivolvesecret` — `MYSQL_ROOT_PASSWORD`, `DB_PASSWORD`
+- [x] ConfigMap `ivolvecm`, `DB_HOST` (headless Service hostname), `DB_USER`
+- [x] Secret `ivolvesecret`, `MYSQL_ROOT_PASSWORD`, `DB_PASSWORD`
 - [x] both values written as base64 under `data:`
 - [x] objects verified in the cluster; base64 proven to decode
 - [x] a pod consuming both objects sees `DB_HOST`, `DB_USER`, `DB_PASSWORD`
@@ -20,27 +20,27 @@
 
 The slide says `ivolveCM` and `ivolveSecret`. Kubernetes object names are
 lowercase RFC 1123 subdomains, so the manifests use **`ivolvecm`** and
-**`ivolvesecret`** — the same rule Lab 11 hit with `ivolveQuota`.
+**`ivolvesecret`**, the same rule Lab 11 hit with `ivolveQuota`.
 
 `DB_HOST` is the headless Service that **Lab 14** creates (`ivolveDBSvc` on the
-slide). Lowercased, that is **`ivolvedbsvc`**, and that is the value stored
-today. It does not resolve yet — nothing named that exists until Lab 14 — which
+slide). Lowercased. That is **`ivolvedbsvc`**, and that is the value stored
+today. It does not resolve yet, nothing named that exists until Lab 14, which
 is why this lab proves the variable reaches the container instead of resolving
 it.
 
-## Results
+## What happened
 
 | Check | Result |
 |---|---|
-| ConfigMap | `ivolvecm` — `DB_HOST=ivolvedbsvc`, `DB_USER=ivolveapp` |
-| Secret | `ivolvesecret` (Opaque) — 2 keys, base64 in the manifest and in the API |
+| ConfigMap | `ivolvecm`, `DB_HOST=ivolvedbsvc`, `DB_USER=ivolveapp` |
+| Secret | `ivolvesecret` (Opaque), 2 keys, base64 in the manifest and in the API |
 | Base64 check | `DB_PASSWORD` decodes to **10 bytes** |
 | Consumer pod | `DB_HOST=ivolvedbsvc` · `DB_USER=ivolveapp` · `DB_PASSWORD_length=10` |
 | Quota | 3/3 before and after the test |
 
 ## Steps
 
-### 1 — The ConfigMap
+### 1. The ConfigMap
 
 ```yaml
 apiVersion: v1
@@ -74,7 +74,7 @@ metadata:
   uid: 12e96304-24a8-4d84-a8a2-0bc44b6da58a
 ```
 
-### 2 — The Secret, base64 in the manifest
+### 2. The Secret, base64 in the manifest
 
 ```yaml
 apiVersion: v1
@@ -110,7 +110,7 @@ type: Opaque
 **These are throwaway lab credentials**, committed so the lab is reproducible.
 base64 is encoding, not encryption: `echo aXZvbHZlcGFzcw== | base64 -d` gives
 the password back, and so does anyone with `get secret`. A real cluster needs
-RBAC restricting who can read Secrets plus encryption at rest — never commit a
+RBAC restricting who can read Secrets plus encryption at rest, never commit a
 credential that matters.
 
 The decode check here deliberately prints only the length:
@@ -120,7 +120,7 @@ $ kubectl --context kind-ivolve get secret ivolvesecret -n ivolve -o jsonpath='{
 10
 ```
 
-### 3 — Prove both objects reach a container
+### 3. Prove both objects reach a container
 
 `demo-pod.yaml` injects the whole ConfigMap and Secret with `envFrom`, then
 prints everything except the password value:
@@ -158,7 +158,7 @@ config-demo   0/1     Completed   0          3s
 The password arrived (10 characters, matching the decoded length) without ever
 being printed.
 
-### 4 — Restore the quota state
+### 4. Restore the quota state
 
 ```console
 $ kubectl --context kind-ivolve delete pod config-demo -n ivolve
@@ -168,9 +168,9 @@ NAME          REQUEST     LIMIT   AGE
 ivolvequota   pods: 3/3           6m52s
 ```
 
-## Things worth knowing
+## What tripped me up
 
-1. **base64 is not encryption.** A Secret hides values from `kubectl describe`,
+1. **base64 is not encryption.** A Secret hides values from `kubectl describe`
    not from anyone allowed to `get` it. The protection is RBAC plus (in a real
    cluster) etcd encryption.
 2. **`data:` is base64; `stringData:` is plaintext.** Both work; `stringData`
@@ -180,7 +180,7 @@ ivolvequota   pods: 3/3           6m52s
    container the same way; the difference is who is allowed to read them and
    how they are handled at rest and in logs.
 4. **`envFrom` injects every key; `valueFrom` picks one.** `envFrom` is quick
-   but makes the pod's environment depend on the whole object — adding a key
+ but makes the pod's environment depend on the whole object, adding a key
    later changes the pod. `valueFrom.secretKeyRef` names exactly one key.
 5. **`DB_HOST` is forward-looking.** `ivolvedbsvc` resolves only after Lab 14
    creates the headless Service; this lab proves the value is injected, not
@@ -193,7 +193,7 @@ ivolvequota   pods: 3/3           6m52s
 
 Both objects stay: Labs 14 and 15 consume them for MySQL and the Node app.
 
-## Commit this lab
+## Committing this
 
 ```bash
 cd ~/iVolve-Tasks

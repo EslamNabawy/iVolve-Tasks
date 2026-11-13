@@ -1,11 +1,11 @@
-# Lab 26 — Roles: Docker, kubectl and Jenkins as reusable units
+# Lab 26: The same three installs, as roles
 
 > **Deck task:** convert the Lab 25 playbook into roles, so the same three
 > installations can be reused by any playbook.
 
-## Requirements
+## What it asks for
 
-- [x] Three roles — `docker`, `kubectl`, `jenkins`
+- [x] Three roles, `docker`, `kubectl`, `jenkins`
 - [x] `site.yml` is nothing but a list of role names
 - [x] Every version, URL and path lives in that role's `defaults/`
 - [x] The roles install everything on both managed nodes
@@ -59,14 +59,14 @@ Vars sit near the top and are effectively frozen. Packaging a role with
 That is the whole play. Compare it with Lab 25's fifteen tasks.
 
 **`roles:` is play order.** The three entries run top to bottom, in exactly the
-order written — roles are not sorted or parallelised. Here the order is not
+order written, roles are not sorted or parallelised. Here the order is not
 cosmetic: `kubectl` and `jenkins` both use `apt`, and `docker`'s
 `cache_valid_time: 3600` gets the index warm so the later two do not pay for a
 refresh.
 
 ## How the roles differ from the Lab 25 playbook
 
-Not much — and that is the point. The tasks moved, the logic did not:
+Not much, and that is the point. The tasks moved, the logic did not:
 
 | Lab 25 (flat playbook) | Lab 26 (roles) |
 |---|---|
@@ -79,7 +79,7 @@ Three things did change, all intentional:
 1. **`kubectl` verifies with `sha256sum -c`** against the published `.sha256`
    instead of comparing two strings in `failed_when:`. The file is checked by
    the tool the checksum was designed for, and a failure names the file.
-2. **`jenkins` reads the version with `dpkg-query`** — the same command the
+2. **`jenkins` reads the version with `dpkg-query`**, the same command the
    verification step uses, so the role's own output and the final proof cannot
    disagree.
 3. **`docker` retries the install.** `docker.io` pulls 45 packages and 93 MB
@@ -122,12 +122,12 @@ jenkins_key_dest: /usr/share/keyrings/jenkins-keyring.asc
 jenkins_deb_local: "/tmp/jenkins_{{ jenkins_version }}_all.deb"
 ```
 
-To install a different Jenkins on a different host, only this file changes —
+To install a different Jenkins on a different host, only this file changes 
 which is the entire argument for roles.
 
 ---
 
-## Result
+## What happened
 
 Both managed nodes were rebuilt from the Lab 24 image first, so this is a real
 install and not a re-read of an already-provisioned machine.
@@ -139,14 +139,14 @@ managed1                   : ok=19   changed=7    unreachable=0    failed=0
 managed2                   : ok=14   changed=7    unreachable=0    failed=0
 ```
 
-`managed2` shows five fewer `ok` because the `run_once` tasks — the three
-control-node downloads, the checksum read and the verification — are counted
+`managed2` shows five fewer `ok` because the `run_once` tasks, the three
+control-node downloads, the checksum read and the verification, are counted
 only on the first host.
 
-`changed=7` is the seven state changes each node receives: the apt retry config,
+`changed=7` is the seven state changes each node receives: the apt retry config
 Docker, the kubectl binary, the keyring, the apt repository, the copied `.deb`
 and the Jenkins package. The three downloads themselves were already in `/tmp`
-on the control node from the previous attempt, so `creates:` skipped them — that
+on the control node from the previous attempt, so `creates:` skipped them. That
 is the guard doing its job, not a missing install.
 
 Second run, same nodes, same `site.yml`:
@@ -163,19 +163,19 @@ managed1 | CHANGED | rc=0 | (stdout) Docker version 29.1.3, build 29.1.3-0ubuntu
 managed2 | CHANGED | rc=0 | (stdout) Docker version 29.1.3, build 29.1.3-0ubuntu3~24.04.2\nClient Version: v1.37.1\nKustomize Version: v5.8.1\n2.580.2
 ```
 
-Three versions, one line per host — the roles and the flat playbook leave the
+Three versions, one line per host, the roles and the flat playbook leave the
 nodes in exactly the same state.
 
 ---
 
-## Things worth knowing
+## Worth remembering
 
 1. **`defaults/` versus `vars/` is the first design decision in any role.**
    Defaults are meant to be overridden; vars are not. A role shipped with
    `vars/` cannot be reconfigured without editing the role.
 2. **`roles:` order is execution order.** Ansible runs the listed roles in
    sequence; there is no dependency graph inside a single play. If `jenkins`
-   needs `docker`, put `docker` first — or declare the dependency in
+ needs `docker`, put `docker` first, or declare the dependency in
    `meta/main.yml` instead.
 3. **A role is only a directory convention.** `tasks/main.yml` is found
    automatically, which is why `site.yml` names a directory and never a file.
@@ -184,7 +184,7 @@ nodes in exactly the same state.
    not turn three control-node downloads into six; each `run_once` task counts
    once, whether it lives in a play or in a role.
 5. **Roles make the *play* reusable but not the *host* reusable.** Pointing
-   `hosts:` at another group is now a one-word change — that is what turned
+ `hosts:` at another group is now a one-word change. That is what turned
    Labs 24–28 from nine separate scripts into one set of units.
 6. **`gather_facts: true` is explicit here.** It is the default, but a role that
    reads `ansible_os_family` should not silently depend on a default someone
@@ -196,37 +196,37 @@ nodes in exactly the same state.
    list has already been partly cached, and the file retry alone gives up when
    the connection is dropped outright.
 8. **A slow mirror looks like a broken playbook.** `Fetched 33.6 MB in 7min 40s
-   (73.0 kB/s)` is a network fact, and the honest fix is retries — not
+ (73.0 kB/s)` is a network fact, and the honest fix is retries, not
    `--fix-missing` and not a `ignore_errors: true`.
 9. **`changed_when` overrides `creates:`.** The first version of these roles
    had `changed_when: reg.rc == 0` on the three downloads so they counted as
    changes when they actually ran. It also made them report `changed` when
-   `creates:` skipped them — the second run showed `changed=3` on the first
+ `creates:` skipped them, the second run showed `changed=3` on the first
    host and nothing was wrong except the guard. The `command` module already
    reports `changed` only when the command really ran; the guard was deleted and
    the recap became `changed=0`.
 
 ---
 
-## Reproduce
+## Running it again
 
 ```bash
 cd ~/iVolve-Tasks/Ansible/Lab26
 ./commands.sh
 ```
 
-The script rebuilds the two managed nodes, re-installs the Lab 24 SSH key,
+The script rebuilds the two managed nodes, re-installs the Lab 24 SSH key
 prints the role tree and every role's defaults, runs `site.yml`, runs it a
 second time for the idempotence proof, then reads the three versions back.
 
-## Clean up
+## Tidy up after it
 
 ```bash
 docker rm -f managed1 managed2
 docker rmi ivolve-node:base
 ```
 
-## Commit
+## Committing this
 
 ```bash
 git add Ansible/Lab26

@@ -1,16 +1,16 @@
-# Lab 14 — MySQL StatefulSet with a headless Service
+# Lab 14: MySQL StatefulSet with a headless Service
 
 **Track:** Container Orchestration · **Cluster:** kind `ivolve` (Lab 9) ·
 **Namespace:** `ivolve` · **Context:** `kind-ivolve`
 
 > Deck Lab 14 asks for an `ivolveDB` StatefulSet (1 replica, MySQL) that consumes
 > the ConfigMap and Secret from Lab 12, runs on the labelled `ivolve-worker`
-> (nodeSelector `project=ivolve`, toleration `workload=ivolveApp:NoSchedule`),
+> (nodeSelector `project=ivolve`, toleration `workload=ivolveApp:NoSchedule`)
 > keeps `/var/lib/mysql` on a `volumeClaimTemplate`, and is reached through a
 > headless Service `ivolveDBSvc`. Confirm the database works and that its DNS
 > name resolves.
 
-## Requirements
+## The ask
 
 - [x] StatefulSet `ivolvedb`, 1 replica, MySQL 8.4.13
 - [x] env from `ivolvecm` (`DB_HOST`, `DB_USER`) and `ivolvesecret`
@@ -28,21 +28,21 @@
 `ivolveDB` → **`ivolvedb`**, `ivolveDBSvc` → **`ivolvedbsvc`**: object names are
 lowercase RFC 1123 subdomains, so the deck's capitals cannot be stored.
 
-## Results
+## How it went
 
 | Check | Result |
 |---|---|
-| Pod | `ivolvedb-0` — `Running` on `ivolve-worker` |
+| Pod | `ivolvedb-0`, `Running` on `ivolve-worker` |
 | MySQL | `8.4.13`, `mysqld is alive` on 3306 |
 | App login via Service | `ivolveapp@%`, `SHOW DATABASES` lists **`ivolve`** |
 | Headless DNS | `ivolvedbsvc` and `ivolvedb-0.ivolvedbsvc.ivolve.svc.cluster.local` → pod IP |
-| Data claim | `data-ivolvedb-0` — `Bound`, 1Gi, `RWO` (dynamic `standard` class) |
+| Data claim | `data-ivolvedb-0`, `Bound`, 1Gi, `RWO` (dynamic `standard` class) |
 | Persistence | marker row written, pod deleted, row still there afterwards |
 | Quota | 1/3 used by MySQL |
 
-## Steps
+## Step by step
 
-### 1 — Headless Service
+### 1. Headless Service
 
 ```yaml
 apiVersion: v1
@@ -50,7 +50,7 @@ kind: Service
 metadata:
   name: ivolvedbsvc
   namespace: ivolve
-spec:
+    spec:
   clusterIP: None          # headless: DNS returns pod IPs, not a VIP
   selector:
     app: ivolvedb
@@ -64,7 +64,7 @@ A StatefulSet needs a headless Service to give each replica a stable DNS name
 (`ivolvedb-0.ivolvedbsvc...`). With a normal ClusterIP the name would resolve to
 the Service, not to the pod.
 
-### 2 — StatefulSet
+### 2. StatefulSet
 
 The pod consumes Lab 12's objects directly:
 
@@ -113,10 +113,10 @@ volumeClaimTemplates:
 
 No `storageClassName` here on purpose: MySQL's data uses kind's default dynamic
 class (`standard`), while **Lab 13's classless hostPath PV stays reserved for
-application logs**, which Lab 15 mounts. Mixing them would have failed — a
+application logs**, which Lab 15 mounts. Mixing them would have failed, a
 template claim cannot bind a PV that is already bound to `ivolvepvc`.
 
-### 3 — Deploy and wait for initdb
+### 3. Deploy and wait for initdb
 
 ```console
 $ kubectl --context kind-ivolve apply -f Kubernetes/Lab14/service.yaml -f Kubernetes/Lab14/statefulset.yaml
@@ -133,9 +133,9 @@ persistentvolumeclaim/data-ivolvedb-0   Bound    pvc-...   1Gi        RWO       
 persistentvolumeclaim/ivolvepvc         Bound    ivolvepv  1Gi        RWX
 ```
 
-### 4 — The database answers
+### 4. The database answers
 
-The MySQL image has no readiness probe, so `Running` means "container started",
+The MySQL image has no readiness probe, so `Running` means "container started"
 not "server ready". The check has to be a real connection:
 
 ```console
@@ -161,10 +161,10 @@ ivolve
 performance_schema
 ```
 
-The password is expanded from the pod's own environment — the value never
+The password is expanded from the pod's own environment, the value never
 appears in the command or this README.
 
-### 5 — DNS
+### 5. DNS
 
 Inside the pod:
 
@@ -185,7 +185,7 @@ Name:     ivolvedbsvc.ivolve.svc.cluster.local
 Address:  192.168.194.16
 ```
 
-### 6 — Identity and data survive a pod restart
+### 6. Identity and data survive a pod restart
 
 ```console
 $ ... mysql ... -e "CREATE TABLE lab14_marker (id INT PRIMARY KEY, note VARCHAR(40)); INSERT INTO lab14_marker VALUES (1,'created before restart');"
@@ -208,7 +208,7 @@ Same pod name, new IP, same claim, same row. That is the StatefulSet contract:
 
 ## An incident worth recording
 
-The first deployment did not survive — the Windows host filled its disk during
+The first deployment did not survive, the Windows host filled its disk during
 the MySQL image pull (C: went to 1.7 GB free), WSL returned
 `Input/output error` on reads, and MySQL's data directory ended up only
 half-initialised. The symptom was precise: `mysqld` ran, but logins returned
@@ -220,14 +220,14 @@ free again), then the claim `data-ivolvedb-0` was deleted and the StatefulSet
 scaled down/up so `initdb` ran cleanly with the same ConfigMap/Secret. Every
 result above is from that clean run.
 
-## Things worth knowing
+## Gotchas
 
 1. **StatefulSet DNS is per-pod.** `ivolvedb-0.ivolvedbsvc.ivolve.svc.cluster.local`
    is stable; the pod IP is not. Clients should use the Service name.
 2. **Headless ≠ ClusterIP.** `clusterIP: None` makes DNS return the pod
    addresses, which is what StatefulSets and per-pod discovery need.
 3. **`Running` is not `ready` without a probe.** The MySQL image ships no
-   readiness probe, so a TCP/`mysqladmin` check is the honest readiness test —
+ readiness probe, so a TCP/`mysqladmin` check is the honest readiness test 
    and a readiness probe is worth adding in real deployments.
 4. **The template claim is named `<template>-<statefulset>-<ordinal>`**:
    `data-ivolvedb-0`. Deleting the pod keeps the claim; deleting the claim
@@ -241,12 +241,12 @@ result above is from that clean run.
    half-initialised MySQL; `df` and the host's free space belong in the
    checklist before a stateful workload.
 
-## Cleanup
+## Teardown
 
 The StatefulSet, Service and claim stay: Lab 15 runs the Node app against this
 database and mounts Lab 13's PV for logs.
 
-## Commit this lab
+## The commit
 
 ```bash
 cd ~/iVolve-Tasks

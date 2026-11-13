@@ -1,4 +1,4 @@
-# Lab 8 — Containerized Node.js and MySQL Stack Using Docker Compose
+# Lab 8: Containerized Node.js and MySQL Stack Using Docker Compose
 
 **Track:** Docker · **Source:** https://github.com/Ibrahim-Adel15/iVolveApp.git
 
@@ -6,7 +6,7 @@ A Node/Express storefront that refuses to start until it can reach MySQL and the
 `ivolve` database exists. The lab turns Lab 7's pile of `docker run` flags into a
 single declarative file: two services, one private network, two volumes.
 
-## Requirements
+## What it asks for
 
 - [x] Application cloned from the provided repository
 - [x] [`docker-compose.yml`](docker-compose.yml) authored with an `app` and a `db` service
@@ -15,13 +15,13 @@ single declarative file: two services, one private network, two volumes.
 - [x] MySQL comes from the official image, its data persisted in the **`db_data`** volume at `/var/lib/mysql`
 - [x] Custom network **`ivolve-net`** for service-to-service traffic
 - [x] Services started; `/health`, `/ready` and the page verified; DB connectivity proven
-- [x] Image tagged with a Docker Hub username and pushed — **deviation:** pushed to a local `registry:2` because this host has no Docker Hub credentials (see §6)
+- [x] Image tagged with a Docker Hub username and pushed, **deviation:** pushed to a local `registry:2` because this host has no Docker Hub credentials (see §6)
 
 ---
 
-## Results
+## How it went
 
-### 1 — Build and start
+### 1. Build and start
 
 ```
 $ docker compose up -d
@@ -47,7 +47,7 @@ $ docker compose up -d
 contract doing its job: the app container is not even started until
 `mysqladmin ping` succeeds.
 
-### 2 — Both services up
+### 2. Both services up
 
 ```
 $ docker compose ps
@@ -59,7 +59,7 @@ ivolvedb    mysql:8.4                    db        Up 24 seconds (healthy)   330
 Only the app publishes a port. MySQL is reachable by the hostname `db` on
 `ivolve-net` and by nothing else.
 
-### 3 — The application answers
+### 3. The application answers
 
 ```
 $ curl -s http://localhost:3000/health
@@ -75,7 +75,7 @@ GET / -> HTTP 200 (2769 bytes)
 `/health` is not a static 200: it runs `SELECT 1` against the connection the app
 opened at boot, so a 200 here is a live database round trip.
 
-### 4 — Connectivity and DNS
+### 4. Connectivity and DNS
 
 ```
 $ docker compose exec app getent hosts db
@@ -102,7 +102,7 @@ id	name	price
 2	Blue Jeans	49.99
 ```
 
-### 5 — Volumes persist through `compose down`
+### 5. Volumes persist through `compose down`
 
 ```
 $ docker compose down
@@ -130,7 +130,7 @@ $ docker compose exec app tail -3 /app/logs/access.log
 volumes. That is why the rows and the access log are still there after a full
 recreate. Only `docker compose down -v` destroys them.
 
-### 6 — Tag and push
+### 6. Tag and push
 
 The deck asks for the image to be tagged with a Docker Hub username and pushed.
 This machine has no Docker Hub credentials (`~/.docker/config.json` is `{}`), so a
@@ -168,7 +168,7 @@ docker push eslamnabawy/ivolveapp:lab8
 
 ---
 
-## Things worth knowing
+## What I'd do differently
 
 1. **`depends_on` alone only waits for the container to *start*.** The
    `condition: service_healthy` form waits for the healthcheck, which is why the
@@ -178,13 +178,13 @@ docker push eslamnabawy/ivolveapp:lab8
    the app start too early.
 3. **`MYSQL_DATABASE` does two things**: creates `ivolve`, and grants `MYSQL_USER`
    access to it. The app never runs `CREATE DATABASE`.
-4. **Project prefixing.** Compose prefixes resources with the directory name —
+4. **Project prefixing.** Compose prefixes resources with the directory name 
    `ivolveapp_db_data`, `ivolveapp_ivolve-net`. The logical names in the YAML stay
    `db_data` and `ivolve-net`, as the slide asks.
 5. **`db.js` is not wired into `server.js` in this revision.** It contains the
    `products` DDL and seed rows, but the running server only connects and serves
    the static frontend. The table above was created with that file's own DDL to
-   prove persistence — the app does not create it itself. That is upstream
+ prove persistence, the app does not create it itself. That is upstream
    behaviour, not a lab bug.
 6. **Credentials in the YAML are throwaway.** A real stack reads them from an
    `.env` file or a secret store; committing `ivolvepass` would be a finding in any
@@ -196,7 +196,7 @@ docker push eslamnabawy/ivolveapp:lab8
 bash ~/iVolve-Tasks/Docker/Lab8/commands.sh
 ```
 
-## Clean up
+## Clear the workspace
 
 ```bash
 cd ~/labs-workspace/iVolveApp && docker compose down -v

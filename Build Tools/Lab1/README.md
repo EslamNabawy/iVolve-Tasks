@@ -1,13 +1,13 @@
-# Lab 1 — Building and Packaging a Java Application with Maven
+# Lab 1: Building and Packaging a Java Application with Maven
 
 **Track:** Build Tools · **Source:** https://github.com/Ibrahim-Adel15/CalculatorMavenApp.git
 
-## Requirements
+## The ask
 
 - [x] Install Java and Maven
 - [x] Clone the source code
 - [x] Run unit tests
-- [x] Build the app — artifact in `target/calculator.jar`
+- [x] Build the app, artifact in `target/calculator.jar`
 - [x] Run the app
 - [x] Verify the app is working
 
@@ -35,7 +35,7 @@ Java version: 17.0.20.1, vendor: Ubuntu, runtime: /usr/lib/jvm/java-17-openjdk-a
 
 ![Java 17 and Maven installed](evidence/lab1-1-toolchain.png)
 
-The `Java version` line inside `mvn -version` is the one that matters — `pom.xml`
+The `Java version` line inside `mvn -version` is the one that matters, `pom.xml`
 sets `maven.compiler.source` to 17, so an older JDK fails the build.
 
 ### 2. Clone the source
@@ -50,7 +50,7 @@ src/main/java/com/example/calculator/Main.java
 src/test/java/com/example/calculator/CalculatorTest.java
 ```
 
-Four files — one 60-line `pom.xml` drives the whole build.
+Four files, one 60-line `pom.xml` drives the whole build.
 
 ### 3. Run the unit tests
 
@@ -63,10 +63,10 @@ mvn -B test
 [INFO] BUILD SUCCESS
 ```
 
-![mvn test — 5 tests, 0 failures](evidence/lab1-2-unit-tests.png)
+![mvn test, 5 tests, 0 failures](evidence/lab1-2-unit-tests.png)
 
 **5 tests, all passing.** One of them asserts that dividing by zero throws
-`ArithmeticException` — the suite covers the error path, not just the happy path.
+`ArithmeticException`, the suite covers the error path, not just the happy path.
 
 ### 4. Build the artifact
 
@@ -104,7 +104,7 @@ Divide: 2.0
 
 ![Running the app and the jar manifest](evidence/lab1-4-run-verify.png)
 
-Correct for 10 and 5. Both prompts appear on one line because stdin was piped —
+Correct for 10 and 5. Both prompts appear on one line because stdin was piped 
 nothing paused for a human. Interactively (`java -jar target/calculator.jar`) the
 prompts appear one at a time.
 
@@ -132,30 +132,30 @@ name, and `<finalName>calculator</finalName>` in `pom.xml` overrides the default
 
 **Why `mvn package` also ran the tests.** Maven's phases are cumulative:
 validate → compile → **test** → package. Naming one runs every phase before it.
-If a test fails, packaging never happens — Maven refuses to produce a broken
+If a test fails, packaging never happens, Maven refuses to produce a broken
 artifact. That behaviour is the foundation of CI.
 
 **Where JUnit came from.** It was never downloaded by hand. `pom.xml` declares it
 with `<scope>test</scope>`, so Maven fetched it from Maven Central and put it on
-the *test* classpath only — deliberately absent at runtime, because shipping a
+the *test* classpath only, deliberately absent at runtime, because shipping a
 test framework to production is waste.
 
 ---
 
-## Evidence
+## The output
 
-Terminal output from real runs of these commands on this machine, rendered as terminal-style images. **These are not raw screen captures** — they were generated from [`evidence/lab1-terminal.log`](evidence/lab1-terminal.log), and the prompt lines and colours were added by the rendering script. The images come from a later run than the output blocks above, so timestamps and durations differ slightly; the results (tests, file sizes, program output) are identical.
+Terminal output from real runs of these commands on this machine, rendered as terminal-style images. **These are not raw screen captures**. They were generated from [`evidence/lab1-terminal.log`](evidence/lab1-terminal.log), and the prompt lines and colours were added by the rendering script. The images come from a later run than the output blocks above, so timestamps and durations differ slightly; the results (tests, file sizes, program output) are identical.
 
 | # | What it proves | Screenshot |
 |:-:|---|---|
 | 1 | Java **17** and Maven installed | [lab1-1-toolchain.png](evidence/lab1-1-toolchain.png) |
-| 2 | `mvn test` — **5 tests, 0 failures, 0 errors** | [lab1-2-unit-tests.png](evidence/lab1-2-unit-tests.png) |
+| 2 | `mvn test`, **5 tests, 0 failures, 0 errors** | [lab1-2-unit-tests.png](evidence/lab1-2-unit-tests.png) |
 | 3 | `mvn clean package` → **`target/calculator.jar`** built, `BUILD SUCCESS` | [lab1-3-build.png](evidence/lab1-3-build.png) |
 | 4 | App runs and prints correct maths; manifest names `Main-Class` | [lab1-4-run-verify.png](evidence/lab1-4-run-verify.png) |
 
 ---
 
-## Commit this lab
+## Save it
 
 ```bash
 cd ~/iVolve-Tasks && git status

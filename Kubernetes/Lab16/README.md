@@ -1,4 +1,4 @@
-# Lab 16 — CPU and memory requests/limits
+# Lab 16: CPU and memory requests/limits
 
 **Track:** Container Orchestration · **Cluster:** kind `ivolve` ·
 **Namespace:** `ivolve` · **Context:** `kind-ivolve`
@@ -15,25 +15,25 @@
 - [x] `kubectl top pod` returns live numbers (metrics-server installed)
 - [x] rollout completed without breaking the Lab 11 quota
 
-## Results
+## What I got
 
 | Check | Result |
 |---|---|
 | Requests | `cpu: 1`, `memory: 1Gi` |
 | Limits | `cpu: 2`, `memory: 2Gi` |
-| Rollout | with `maxSurge: 0` — a surge pod is impossible at 3/3 quota |
+| Rollout | with `maxSurge: 0`, a surge pod is impossible at 3/3 quota |
 | `kubectl top pods` | app replicas ~`1m` / `20Mi`; MySQL `4m` / `434Mi` |
 | `kubectl top nodes` | control-plane `190m 3% 1550Mi 15%`, worker `89m 1% 1660Mi 16%`, worker2 `141m 2% 1100Mi 11%` |
 
-## Steps
+## Walkthrough
 
-### 1 — The patch
+### 1. The patch
 
 `resources-patch.yaml` is a strategic merge patch, so it updates the existing
 container by name rather than replacing the Deployment:
 
 ```yaml
-spec:
+    spec:
   template:
     spec:
       containers:
@@ -53,7 +53,7 @@ $ kubectl --context kind-ivolve patch deployment ivolveapp -n ivolve \
 deployment.apps/ivolveapp patched
 ```
 
-### 2 — The rollout deadlock (and the fix)
+### 2. The rollout deadlock (and the fix)
 
 The first rollout stalled. The reason was the Lab 11 quota, not resources:
 
@@ -68,7 +68,7 @@ A default `RollingUpdate` adds a surge pod before removing an old one
 (`maxSurge: 25%` → 1 for two replicas). MySQL already holds one of the three
 slots, so the surge pod is refused and the rollout waits forever.
 
-The fix is zero surge — one old pod goes first, then its replacement:
+The fix is zero surge, one old pod goes first, then its replacement:
 
 ```console
 $ kubectl --context kind-ivolve -n ivolve patch deployment ivolveapp --type=merge \
@@ -77,7 +77,7 @@ $ kubectl --context kind-ivolve rollout status deployment/ivolveapp -n ivolve
 deployment "ivolveapp" successfully rolled out
 ```
 
-### 3 — Verify with describe
+### 3. Verify with describe
 
 ```console
 $ kubectl --context kind-ivolve -n ivolve describe pod <pod> | grep -A8 -E '^\s+Limits:|^\s+Requests:'
@@ -89,7 +89,7 @@ $ kubectl --context kind-ivolve -n ivolve describe pod <pod> | grep -A8 -E '^\s+
       memory:  1Gi
 ```
 
-### 4 — Live usage
+### 4. Live usage
 
 kind ships no metrics pipeline, so `kubectl top` fails until metrics-server is
 installed. The standard manifest needs one extra flag in kind, because the
@@ -114,7 +114,7 @@ ivolveapp-659fff8d5d-jwtjh   1m           20Mi
 ivolvedb-0                   4m           434Mi
 ```
 
-## Things worth knowing
+## Notes
 
 1. **Requests are for the scheduler, limits are for the kernel.** 1 CPU/1Gi
    requests reserve room on the node; 2 CPU/2Gi limits cap what the container
@@ -126,15 +126,15 @@ ivolvedb-0                   4m           434Mi
    Without that flag metrics-server cannot scrape the kubelet's self-signed
    certificate.
 4. **`kubectl top` is a snapshot**, refreshed on the metrics-server scrape
-   interval — not a monitoring system. Lab 18 installs Prometheus for history.
+ interval, not a monitoring system. Lab 18 installs Prometheus for history.
 5. **Memory limits kill; CPU limits throttle.** A container over its memory
    limit is OOM-killed instantly; over its CPU limit it just runs slower.
 
-## Cleanup
+## Clean up afterwards
 
 The Deployment keeps these resources for Labs 17–18.
 
-## Commit this lab
+## Committing this
 
 ```bash
 cd ~/iVolve-Tasks

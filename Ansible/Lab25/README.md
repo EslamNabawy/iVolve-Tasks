@@ -1,4 +1,4 @@
-# Lab 25 — One playbook: Docker, kubectl and Jenkins
+# Lab 25: One playbook for Docker, kubectl and Jenkins
 
 > **Deck task:** write a playbook that installs Docker, kubectl and Jenkins on
 > the managed node, then verify the three installations.
@@ -15,7 +15,7 @@
 
 | Role | What it is |
 |---|---|
-| Control node | this WSL host — `ansible-core 2.16.3` |
+| Control node | this WSL host, `ansible-core 2.16.3` |
 | Managed nodes | two containers built in Lab 24 (`managed1:2222`, `managed2:2223`), reached over SSH with the key `~/.ssh/ivolve_lab24` |
 | Inventory | `Ansible/Lab24/inventory.ini`, unchanged from Lab 24 |
 
@@ -36,9 +36,9 @@ Fifteen tasks, one file: `playbook.yml`.
 ```
 
 `hosts: managed` is the inventory group; `become: true` is why every task runs
-as root without a password — the `ansible` user has `NOPASSWD` sudo.
+as root without a password, the `ansible` user has `NOPASSWD` sudo.
 
-### Docker — one apt task
+### Docker, one apt task
 
 ```yaml
 - name: Install Docker
@@ -52,7 +52,7 @@ as root without a password — the `ansible` user has `NOPASSWD` sudo.
 `cache_valid_time: 3600` keeps the second run from refreshing the index again:
 that is part of what makes the idempotence claim below true.
 
-### kubectl — downloaded once, on the control node
+### kubectl, downloaded once, on the control node
 
 The obvious version of this task is a `get_url` per host. It failed:
 
@@ -80,7 +80,7 @@ The playbook therefore downloads once, on the control node, with retries:
 
 `creates:` is the idempotence guard: once the file exists the task is skipped, so
 the second run does not re-download 59 MB. `run_once: true` means it runs for one
-host only — the rest of the play then copies the file to every node.
+host only, the rest of the play then copies the file to every node.
 
 The binary is verified against the checksum **published with the release**, not
 against a hash typed into the playbook:
@@ -96,7 +96,7 @@ A hash copied into a file proves nothing after the next patch release; a hash
 fetched from the same release as the binary proves the transfer was not
 corrupted or replaced.
 
-### Jenkins — a repository, a key, and a package
+### Jenkins, a repository, a key, and a package
 
 The repository is configured the normal Debian way:
 
@@ -122,7 +122,7 @@ E: Failed to fetch https://mirrors.zerolag.ro/.../jenkins_2.580.2_all.deb
 ```
 
 The same URL fetched with `curl --retry` completes in about 40 s. So the package
-is fetched once on the control node and installed from disk — the same pattern
+is fetched once on the control node and installed from disk, the same pattern
 as kubectl, with the same `creates:` guard:
 
 ```yaml
@@ -136,9 +136,9 @@ dependencies, and the key is still what lets apt trust it.
 
 ---
 
-## Result
+## How it went
 
-First run, against freshly rebuilt nodes — this is where the installing happens:
+First run, against freshly rebuilt nodes. This is where the installing happens:
 
 ```
 PLAY RECAP *********************************************************************
@@ -150,7 +150,7 @@ managed2                   : ok=11   changed=6    unreachable=0    failed=0
 control-node downloads plus the checksum read) are counted only on the first
 host.
 
-The six changes per node are exactly the six state-changing tasks: Docker,
+The six changes per node are exactly the six state-changing tasks: Docker
 the kubectl binary, the keyring, the apt repository, the copied `.deb`, and the
 Jenkins package.
 
@@ -176,7 +176,7 @@ APT index from being refreshed needlessly.
 
 ---
 
-## Things worth knowing
+## What tripped me up
 
 1. **`get_url` has a 10-second socket timeout, and `timeout:` does not fix a
    slow transfer.** It sets the per-operation timeout; a 59 MB download on a
@@ -203,7 +203,7 @@ APT index from being refreshed needlessly.
 
 ---
 
-## Reproduce
+## To replay this
 
 ```bash
 cd ~/iVolve-Tasks/Ansible/Lab25
@@ -221,7 +221,7 @@ docker rm -f managed1 managed2
 docker rmi ivolve-node:base
 ```
 
-## Commit
+## Put it in git
 
 ```bash
 git add Ansible/Lab25

@@ -1,4 +1,4 @@
-# Lab 5 — Docker Image Vulnerability Scanning with Trivy
+# Lab 5: Docker Image Vulnerability Scanning with Trivy
 
 **Track:** Docker · **Source:** https://github.com/Ibrahim-Adel15/TrivyImage.git
 
@@ -6,25 +6,25 @@ Build the image exactly as shipped, scan it, then fix what the scan found and
 prove the fix with a second scan. The app is a small Express server: `GET /`
 and `GET /health` on port 3000.
 
-## Requirements
+## The ask
 
 - [x] Application and Dockerfile cloned from the provided repository
-- [x] Image built and tagged `trivy-lab:v1` — **1.46 GB**
-- [x] Trivy installed and verified — **0.76.1**
+- [x] Image built and tagged `trivy-lab:v1`, **1.46 GB**
+- [x] Trivy installed and verified, **0.76.1**
 - [x] Image scanned and results reviewed
 - [x] Scan filtered to **HIGH** and **CRITICAL** only
-- [x] HTML report generated and reviewed — [`reports/trivy-v1.html`](reports/trivy-v1.html)
+- [x] HTML report generated and reviewed, [`reports/trivy-v1.html`](reports/trivy-v1.html)
 
-**Bonus — remediation**
+**Bonus, remediation**
 - [x] HIGH/CRITICAL findings investigated
 - [x] Base image and application dependency updated
-- [x] Image rebuilt as `ivolve-app:v2` — **252 MB**
-- [x] Rescanned, new HTML report — [`reports/trivy-v2.html`](reports/trivy-v2.html)
-- [x] **No HIGH or CRITICAL vulnerabilities remain — no vulnerabilities at all**
+- [x] Image rebuilt as `ivolve-app:v2`, **252 MB**
+- [x] Rescanned, new HTML report, [`reports/trivy-v2.html`](reports/trivy-v2.html)
+- [x] **No HIGH or CRITICAL vulnerabilities remain, no vulnerabilities at all**
 
 ---
 
-## Results
+## What I got
 
 | Image | Base | express | Size | Total | HIGH | CRITICAL |
 |---|---|---|---|---|---|---|
@@ -43,7 +43,7 @@ $ trivy image --severity HIGH,CRITICAL --ignore-unfixed trivy-lab:v1
 Total: 1271 (HIGH: 1089, CRITICAL: 182)
 ```
 
-**2,343 HIGH/CRITICAL findings.** 1,271 of them have a published fix — so the
+**2,343 HIGH/CRITICAL findings.** 1,271 of them have a published fix, so the
 gap between "fixable" and "total" is not an excuse to stop at 1,271.
 
 After remediation, every target in the image reports zero:
@@ -63,7 +63,7 @@ The big number is not the application. It is mostly things the app never uses:
 
 | Source | Example findings |
 |---|---|
-| **Debian 11 (bullseye)** — end-of-life, no security updates | `libssl`, `zlib`, `perl-base`, `glibc` … |
+| **Debian 11 (bullseye)**, end-of-life, no security updates | `libssl`, `zlib`, `perl-base`, `glibc` … |
 | **npm's own bundled dependencies** (npm 10.8.2 ships ~17 MB of `node_modules`) | `tar` (CRITICAL), `sigstore`, `pacote`, `undici`, `brace-expansion` … |
 | **express 4.18.2 transitive deps** | `path-to-regexp` 0.1.7 → CVE-2024-45296, CVE-2024-52798 |
 
@@ -93,7 +93,7 @@ Two files changed, plus a lockfile. [`Dockerfile.v2`](Dockerfile.v2):
 | Remove `npm`, `npx`, `corepack`, `/opt/yarn-*` | They are build tools. Shipping them added ~20 MB and their bundled dependencies accounted for 4 HIGH findings on their own |
 
 That last row is the interesting one. A first remediation pass
-(`node:24-alpine` + express 5) still left **4 HIGH** — all of them inside
+(`node:24-alpine` + express 5) still left **4 HIGH**, all of them inside
 `/usr/local/lib/node_modules/npm` and `/opt/yarn-v1.22.22`, not in the app:
 
 ```
@@ -121,7 +121,7 @@ The fix is real: Express 5 still serves both routes, and the health check passes
 
 ---
 
-## Things worth knowing
+## Gotchas
 
 **Trivy no longer embeds the HTML template.** The common command
 `--template "@html.tpl"` fails with `open html.tpl: no such file or directory`
@@ -135,8 +135,8 @@ trivy image --format template --template "@$HOME/.local/share/trivy/html.tpl" -o
 
 **The full report is 40 MB; the HIGH/CRITICAL report is 9.3 MB.** Every finding
 is a table row, so a 12,430-row report is impractical to open. The committed
-report is filtered to HIGH/CRITICAL — matching what the lab actually asks you to
-review — and it is still large enough to make the point.
+report is filtered to HIGH/CRITICAL, matching what the lab actually asks you to
+review, and it is still large enough to make the point.
 
 **`--ignore-unfixed` is a reporting choice, not a fix.** It hides 1,072 findings
 that have no patch yet. That is useful to prioritise, but the honest statement is
@@ -144,7 +144,7 @@ that have no patch yet. That is useful to prioritise, but the honest statement i
 
 **A CVE in a dependency you never call still counts.** `http-cache-semantics`
 was reachable only through npm's own dependency tree, and it disappeared when
-npm was removed — not because the code was patched, but because it stopped
+npm was removed, not because the code was patched, but because it stopped
 being shipped.
 
 **Trivy needs a database.** The first scan downloads ~130 MB of vulnerability

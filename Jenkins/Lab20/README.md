@@ -1,4 +1,4 @@
-# Lab 20 — Role-based authorization in Jenkins
+# Lab 20: Role-based authorization in Jenkins
 
 **Track:** CI/CD · **Controller:** Jenkins LTS in Docker (`127.0.0.1:8081`) ·
 **Config:** JCasC · **Image:** `ivolve-jenkins:lab20`
@@ -6,22 +6,22 @@
 > Deck Lab 20 asks for `user1` and `user2` in Jenkins, with an **admin** role for
 > `user1` and a **read-only** role for `user2`, and proof the distinction holds.
 
-## Requirements
+## The ask
 
 - [x] users `user1` and `user2` declared as code (JCasC, no setup wizard)
-- [x] `user1` — administer Jenkins (can trigger builds)
-- [x] `user2` — read-only (can see jobs, cannot trigger them)
+- [x] `user1`, administer Jenkins (can trigger builds)
+- [x] `user2`, read-only (can see jobs, cannot trigger them)
 - [x] anonymous users have no access
 - [x] verified by HTTP status codes, not by clicking around
 
-## Results
+## What happened
 
 | Check | admin | user1 | user2 | anonymous |
 |---|:-:|:-:|:-:|:-:|
 | `GET /api/json` | 200 | 200 | 200 | **403** |
-| `GET /job/lab20-job/api/json` | 200 | 200 | 200 | — |
-| `POST /job/lab20-job/build` | 201 | **201** | **403** | — |
-| `GET /pluginManager/api/json` | 200 | 200 | **403** | — |
+| `GET /job/lab20-job/api/json` | 200 | 200 | 200 |, |
+| `POST /job/lab20-job/build` | 201 | **201** | **403** |, |
+| `GET /pluginManager/api/json` | 200 | 200 | **403** |, |
 
 `user1` triggered build **#1 → `SUCCESS`**; `user2` got `403` for the same
 request. That is the admin/read-only split in one table.
@@ -39,14 +39,14 @@ ConfiguratorException: authorizationStrategy: Failed to configure
 ```
 
 So this lab uses **Matrix Authorization** (`matrix-auth`), which expresses the
-same two permission sets per user: admin (`Overall/Administer`) for `user1`,
+same two permission sets per user: admin (`Overall/Administer`) for `user1`
 read-only (`Overall/Read`, `Job/Read`, `View/Read`) for `user2`. The outcome the
 deck asks for is identical; only the mechanism differs, and the deviation is
 recorded here rather than hidden.
 
-## Steps
+## Walkthrough
 
-### 1 — A minimal Jenkins image
+### 1. A minimal Jenkins image
 
 ```dockerfile
 FROM jenkins/jenkins:lts
@@ -55,10 +55,10 @@ COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
 RUN jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.txt
 ```
 
-`plugins.txt` holds `configuration-as-code` and `matrix-auth` — the setup
+`plugins.txt` holds `configuration-as-code` and `matrix-auth`, the setup
 wizard never runs.
 
-### 2 — Users and permissions as code
+### 2. Users and permissions as code
 
 ```yaml
 jenkins:
@@ -83,7 +83,7 @@ Passwords arrive as environment variables at `docker run`; nothing secret is
 in the repository. The file is mounted read-only at
 `/var/jenkins_home/casc/jenkins.yaml`.
 
-### 3 — Start it
+### 3. Start it
 
 ```console
 $ docker run -d --name jenkins-lab20 -p 127.0.0.1:8081:8080 \
@@ -94,7 +94,7 @@ $ docker run -d --name jenkins-lab20 -p 127.0.0.1:8081:8080 \
     ivolve-jenkins:lab20
 ```
 
-### 4 — A job to protect
+### 4. A job to protect
 
 Created through the API as admin (Jenkins requires a CSRF crumb for POSTs):
 
@@ -105,7 +105,7 @@ $ curl -b jar -u admin:... -H "Jenkins-Crumb:..." -H 'Content-Type: application/
 createItem HTTP 200
 ```
 
-### 5 — Prove the boundary
+### 5. Prove the boundary
 
 ```console
 $ curl -s -o /dev/null -w '%{http_code}' -u user1:... -X POST .../job/lab20-job/build
@@ -119,7 +119,7 @@ $ curl -s -o /dev/null -w '%{http_code}' -u user2:... .../pluginManager/api/json
 `201` means "queued"; the build finished `SUCCESS`. `403` means the permission
 check refused before anything ran.
 
-## Things worth knowing
+## Gotchas
 
 1. **Matrix vs role-strategy.** Matrix assigns permissions per user; role-strategy
    creates named roles and assigns users to them. Both can express admin vs
@@ -128,7 +128,7 @@ check refused before anything ran.
 2. **`Overall/Read` alone is not "read-only".** Without `Job/Read` the user sees
    an empty controller; the read-only set needs both.
 3. **Jenkins POSTs need a CSRF crumb.** A bare `curl -X POST` gets `403` even
-   for an admin — a crumb defect looks exactly like a permission defect, so
+ for an admin, a crumb defect looks exactly like a permission defect, so
    always fetch the crumb first.
 4. **Permissions are checked before the request body.** `user2`'s build POST is
    rejected without Jenkins touching the job, which is why `403` (not `404`) is
@@ -136,7 +136,7 @@ check refused before anything ran.
 5. **Passwords never enter git.** JCasC reads them from the container's
    environment; the manifest only references the variables.
 
-## Cleanup
+## Tidy up
 
 The controller is left running for evidence. Remove it with:
 
@@ -146,7 +146,7 @@ docker rmi ivolve-jenkins:lab20
 rm -rf ~/jenkins-home-lab20
 ```
 
-## Commit this lab
+## Save it
 
 ```bash
 cd ~/iVolve-Tasks

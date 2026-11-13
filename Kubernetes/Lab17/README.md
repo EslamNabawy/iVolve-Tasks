@@ -1,12 +1,12 @@
-# Lab 17 — NetworkPolicy: only the app may reach MySQL
+# Lab 17: Only the app may reach MySQL
 
 **Track:** Container Orchestration · **Cluster:** kind `ivolve` ·
 **Namespace:** `ivolve` · **CNI:** Calico v3.33.0 · **Context:** `kind-ivolve`
 
-> Deck Lab 17 asks for `ivolveNP` targeting the MySQL pod, `Ingress` only,
+> Deck Lab 17 asks for `ivolveNP` targeting the MySQL pod, `Ingress` only
 > allowing traffic only from the application pods on port 3306.
 
-## Requirements
+## What it asks for
 
 - [x] policy `ivolvenp` (lowercased from `ivolveNP`) selecting `app=ivolvedb`
 - [x] `policyTypes: [Ingress]`
@@ -14,7 +14,7 @@
 - [x] an unrelated pod is **blocked** from 3306
 - [x] the app keeps working (health check still 200)
 
-## Results
+## What happened
 
 | Test | Before policy | After policy |
 |---|---|---|
@@ -58,11 +58,11 @@ Spec:
   Policy Types: Ingress
 ```
 
-## Steps
+## Step by step
 
-### 1 — Prove the hole exists first
+### 1. Prove the hole exists first
 
-The test pods come from Lab 9 (`default` namespace, label `app=nettest`) — a
+The test pods come from Lab 9 (`default` namespace, label `app=nettest`), a
 namespace outside `ivolve`, and not the app label, so the policy must stop them:
 
 ```console
@@ -71,7 +71,7 @@ $ kubectl --context kind-ivolve -n default exec nettest-worker -- \
 TCP connect OK
 ```
 
-### 2 — Apply and re-test
+### 2. Apply and re-test
 
 ```console
 $ kubectl --context kind-ivolve apply -f Kubernetes/Lab17/networkpolicy.yaml
@@ -87,7 +87,7 @@ few seconds to program the rules on the node; **the policy had applied but not
 propagated**. Re-checking after a pause gave `BLOCKED`. Evidence capture should
 sleep a few seconds after applying a NetworkPolicy.
 
-### 3 — The app keeps working
+### 3. The app keeps working
 
 ```console
 $ curl -s http://127.0.0.1:3000/health   # through a port-forward of ivolvaappsvc
@@ -97,7 +97,7 @@ $ curl -s http://127.0.0.1:3000/health   # through a port-forward of ivolvaappsv
 That request runs `SELECT 1` against MySQL from an `app=ivolveapp` pod, so the
 allowed path is proven, not just the blocked one.
 
-## Things worth knowing
+## What I'd do differently
 
 1. **NetworkPolicy is enforced by the CNI, not by kube-proxy.** kind's default
    CNI ignores NetworkPolicy; Calico (Lab 9) is what makes this lab real.
@@ -107,7 +107,7 @@ allowed path is proven, not just the blocked one.
    applies; traffic must be allowed by at least one rule. Other pods in
    `ivolve` are blocked by this policy even though they are in the same
    namespace.
-4. **Ingress-only leaves egress alone.** MySQL can still reach out (for DNS,
+4. **Ingress-only leaves egress alone.** MySQL can still reach out (for DNS
    replication, etc.); the deck only asked to protect the ingress side.
 5. **Propagation is asynchronous.** Apply → wait → test. A same-second check
    can report a false pass.
@@ -118,7 +118,7 @@ allowed path is proven, not just the blocked one.
 
 The policy stays in place; it is part of the final lab state.
 
-## Commit this lab
+## Commit
 
 ```bash
 cd ~/iVolve-Tasks

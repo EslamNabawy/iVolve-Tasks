@@ -1,13 +1,13 @@
-# Lab 28 — Automated host discovery with Ansible dynamic inventory
+# Lab 28: Automated host discovery with Ansible dynamic inventory
 
 > **Deck task:** create an AWS EC2 instance tagged `server:ivolve`, set up a
 > dynamic inventory that discovers running EC2 instances with that tag, list the
 > hosts with the `ansible-inventory` command, run a playbook on the instance and
 > verify the configuration.
 
-## Requirements
+## What the lab asks for
 
-- [ ] EC2 instance tagged `server:ivolve` — **not possible here** (no AWS
+- [ ] EC2 instance tagged `server:ivolve`, **not possible here** (no AWS
       account or credential). See "The honest gap" below.
 - [x] A dynamic-inventory configuration that discovers hosts by tag
       (`inventory.aws_ec2.yml`, ready to use)
@@ -65,7 +65,7 @@ Four things matter in that file:
   instances carrying the deck's tag; the state filter keeps stopped ones out of
   a play that would otherwise wait for an IP that is not there.
 - **`keyed_groups` turns the tag into a group.** `tag_server_ivolve` is the
-  group a play can target without knowing a single instance id — that is the
+ group a play can target without knowing a single instance id. That is the
   whole point of a dynamic inventory.
 - **`compose` decides what "the host" is.** By default the plugin hands Ansible
   the private IP of a VPC instance, which is not reachable from outside; mapping
@@ -79,7 +79,7 @@ $ ansible-galaxy collection list | grep amazon.aws
 amazon.aws   7.2.0
 ```
 
-and `boto3`/`botocore` on the **control node** — the plugin is a Python client
+and `boto3`/`botocore` on the **control node**, the plugin is a Python client
 of the EC2 API:
 
 ```
@@ -101,7 +101,7 @@ instances: Unable to locate credentials
 
 What *is* proven below is the mechanism itself: a plugin queries a live API for
 hosts that no file lists, builds groups from the response, and a play runs
-against the result. The Docker daemon on this host plays the part of EC2,
+against the result. The Docker daemon on this host plays the part of EC2
 because it is the one API here that really returns hosts.
 
 ## The same mechanism, with hosts that exist
@@ -120,9 +120,9 @@ compose:
 ```
 
 - `groups:` is the tag filter's equivalent: whatever the daemon returns, only
-  the `managed*` containers join the `managed` group. That matters on this host,
+ the `managed*` containers join the `managed` group. That matters on this host
   which also runs the three kind nodes, the registry and another project's
-  `aiops-*` containers — a play run against "everything the daemon knows" would
+ `aiops-*` containers, a play run against "everything the daemon knows" would
   have touched all of them.
 - `ansible_connection: community.docker.docker` replaces SSH entirely: the
   container is the transport, so no port and no key has to appear anywhere.
@@ -134,17 +134,17 @@ compose:
   hosts: "{{ lab28_group | default('managed') }}"
 ```
 
-That one line is the point of the lab: the target set is not written down, it is
+That one line is the point of the lab: the target set is not written down. It is
 whatever the inventory discovered. The tasks print the facts that prove the run
 landed on a real host (distribution, kernel, python, memory, group membership)
 and write `/etc/ivolve-lab28.txt` as evidence that survives the play.
 
 ---
 
-## Result
+## How it went
 
 The daemon knows about more containers than this lab may touch, and `--graph`
-shows the split — everything else stays outside the group:
+shows the split, everything else stays outside the group:
 
 ```
   |  |--jenkins
@@ -179,7 +179,7 @@ $ ansible-inventory -i inventory.docker.yml --host managed1
 
 `ansible_connection` there is `community.docker.docker_api`, not the
 `community.docker.docker` a `compose:` entry asked for: the plugin's
-`connection_type` option wins, and it has to — that is how the host becomes
+`connection_type` option wins, and it has to. That is how the host becomes
 reachable without an address. (The compose line was removed after this output
 showed it was being overridden.)
 
@@ -207,14 +207,14 @@ managed2 | CHANGED | rc=0 | (stdout) written by Lab 28\nhost=managed2\nos=Ubuntu
 
 ---
 
-## Things worth knowing
+## Loose ends
 
-1. **The filename selects the plugin.** `*.aws_ec2.yml`, `*.docker.yml`,
-   `*.gcp.yml` — a plugin that does not match its suffix pattern never even
+1. **The filename selects the plugin.** `*.aws_ec2.yml`, `*.docker.yml`
+ `*.gcp.yml`, a plugin that does not match its suffix pattern never even
    runs, and the error you get (`not YAML inventory`) points at the file, not at
    the cause.
 2. **`ansible-inventory --graph` is the debugging tool.** It shows the groups
-   the plugin built *before* any play runs; when a play "does nothing", this is
+ the plugin built *before* any play runs; when a play "does nothing". This is
    the first command to run.
 3. **`compose: ansible_host` is not optional in a cloud.** Private IPs are the
    default and are usually unreachable from the control node.
@@ -226,13 +226,13 @@ managed2 | CHANGED | rc=0 | (stdout) written by Lab 28\nhost=managed2\nos=Ubuntu
    expression is what keeps the play scoped.
 6. **Credentials never go in the inventory file.** `aws_ec2` reads
    `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`, `~/.aws/credentials` or
-   `profile:` — the file only says *what* to look for.
+ `profile:`, the file only says *what* to look for.
 7. **A second run must change nothing.** The marker file is rewritten only when
    its content differs, which is what makes `changed=0` on run 2 meaningful.
 
 ---
 
-## Reproduce
+## To replay this
 
 ```bash
 cd ~/iVolve-Tasks/Ansible/Lab28
@@ -246,7 +246,7 @@ ansible-inventory -i inventory.aws_ec2.yml --graph
 ansible-playbook -i inventory.aws_ec2.yml verify.yml -e lab28_group=tag_server_ivolve
 ```
 
-## Commit
+## Git time
 
 ```bash
 git add Ansible/Lab28

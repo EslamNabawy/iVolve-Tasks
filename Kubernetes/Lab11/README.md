@@ -1,13 +1,13 @@
-# Lab 11 — Namespace management and ResourceQuota enforcement
+# Lab 11: Namespace management and ResourceQuota enforcement
 
 **Track:** Container Orchestration · **Cluster:** kind `ivolve` (Lab 9) ·
 **Namespace:** `ivolve` · **Context:** `kind-ivolve`
 
 > Deck Lab 11 asks for a namespace `ivolve`, a ResourceQuota `ivolveQuota`
-> limiting the namespace to **3 pods**, verification that the quota is applied,
+> limiting the namespace to **3 pods**, verification that the quota is applied
 > and proof that Kubernetes refuses a fourth pod.
 
-## Requirements
+## What the lab asks for
 
 - [x] namespace `ivolve` created (it is reused by Labs 12–17)
 - [x] ResourceQuota limiting total pods to 3
@@ -16,20 +16,20 @@
 - [x] the counter is live: freeing a slot lets the fourth pod in
 - [x] the deck's name `ivolveQuota` documented as invalid Kubernetes syntax
 
-## Results
+## What I got
 
 | Check | Result |
 |---|---|
-| Namespace | `ivolve` — `Active` |
-| Quota | `ivolvequota` — `pods: 3/3` |
+| Namespace | `ivolve`, `Active` |
+| Quota | `ivolvequota`, `pods: 3/3` |
 | Pods running | `quota-demo-1`, `-2`, `-3` (all on `ivolve-worker2`) |
 | Fourth pod | `Forbidden: exceeded quota: ivolvequota, requested: pods=1, used: pods=3, limited: pods=3` |
-| Object after refusal | `NotFound` — the pod was never created |
+| Object after refusal | `NotFound`, the pod was never created |
 | Counter test | delete one → `2/3` → fourth pod starts → `3/3` again |
 
-## Steps
+## Step by step
 
-### 1 — Create the namespace
+### 1. Create the namespace
 
 ```console
 $ kubectl --context kind-ivolve apply -f Kubernetes/Lab11/namespace.yaml
@@ -40,7 +40,7 @@ NAME     STATUS   AGE
 ivolve   Active   0s
 ```
 
-### 2 — The deck's quota name is not a legal Kubernetes name
+### 2. The deck's quota name is not a legal Kubernetes name
 
 The slide says "a ResourceQuota named `ivolveQuota`". Kubernetes object names
 are lowercase RFC 1123 subdomains, so the API server rejects it outright:
@@ -54,11 +54,11 @@ character (e.g. 'example.com', regex used for validation is
 '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')
 ```
 
-The manifest therefore uses **`ivolvequota`**. The intent of the slide — one
-quota on the `ivolve` namespace capping pods — is unchanged; only the casing
+The manifest therefore uses **`ivolvequota`**. The intent of the slide, one
+quota on the `ivolve` namespace capping pods, is unchanged; only the casing
 that the API accepts is.
 
-### 3 — Create the quota
+### 3. Create the quota
 
 ```yaml
 apiVersion: v1
@@ -86,7 +86,7 @@ pods        0     3
 `pods: "3"` is a **count** quota, not a compute quota: it limits how many pod
 objects may exist, so the demo pods need no `resources:` block.
 
-### 4 — Fill it: three pods
+### 4. Fill it: three pods
 
 ```console
 $ kubectl --context kind-ivolve apply -f Kubernetes/Lab11/demo-pods.yaml
@@ -109,10 +109,10 @@ Resource    Used  Hard
 pods        3     3
 ```
 
-All three landed on `ivolve-worker2` — a side effect of Lab 10, whose
+All three landed on `ivolve-worker2`, a side effect of Lab 10, whose
 `NoSchedule` taint keeps ordinary pods off `ivolve-worker`. The labs compose.
 
-### 5 — The fourth pod is refused
+### 5. The fourth pod is refused
 
 ```console
 $ kubectl --context kind-ivolve apply -f Kubernetes/Lab11/extra-pod.yaml
@@ -125,10 +125,10 @@ Error from server (NotFound): pods "quota-demo-4" not found
 ```
 
 `Forbidden` and `NotFound` together are the point: this is **admission
-control**, so the object never enters etcd. It is not a pod sitting `Pending` —
+control**, so the object never enters etcd. It is not a pod sitting `Pending` 
 the API server rejected the write.
 
-### 6 — The counter is live
+### 6. The counter is live
 
 A quota is not a one-time gate. Deleting one pod frees a slot immediately:
 
@@ -148,7 +148,7 @@ pod/quota-demo-4 created
 The lab state was then restored: `quota-demo-4` deleted, `quota-demo-3`
 re-created, quota back to `3/3`.
 
-## Things worth knowing
+## Notes from this one
 
 1. **Quota rejection happens at admission, not scheduling.** A scheduler
    problem leaves a pod `Pending`; a quota problem means the pod object is
@@ -165,7 +165,7 @@ re-created, quota back to `3/3`.
 5. **The counter is live.** Deleting a pod frees its slot right away, so a
    failed deploy can succeed after a cleanup without touching the quota.
 6. **A quota does not reserve capacity.** Three pods are allowed, but whether
-   they can run still depends on nodes — Lab 10's taint is why all three are on
+ they can run still depends on nodes, Lab 10's taint is why all three are on
    `ivolve-worker2`.
 
 ## Cleanup
@@ -177,7 +177,7 @@ the `ivolve` namespace and this quota. To undo only this lab:
 kubectl --context kind-ivolve delete namespace ivolve   # also deletes the quota and pods
 ```
 
-## Commit this lab
+## Putting it in git
 
 ```bash
 cd ~/iVolve-Tasks

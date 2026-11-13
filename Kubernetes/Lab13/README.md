@@ -1,4 +1,4 @@
-# Lab 13 — Persistent storage for application logging
+# Lab 13: Persistent storage for application logging
 
 **Track:** Container Orchestration · **Cluster:** kind `ivolve` (Lab 9) ·
 **Namespace:** `ivolve` · **Context:** `kind-ivolve`
@@ -7,10 +7,10 @@
 > `/mnt/app-logs`, access mode `ReadWriteMany`, reclaim policy `Retain`; a
 > `ivolvePVC` claim of 1Gi with the same access mode; and **no StorageClass**.
 
-## Requirements
+## What it asks for
 
-- [x] PV `ivolvepv` — 1Gi, `hostPath: /mnt/app-logs`, `ReadWriteMany`, `Retain`
-- [x] PVC `ivolvepvc` — 1Gi, `ReadWriteMany`
+- [x] PV `ivolvepv`, 1Gi, `hostPath: /mnt/app-logs`, `ReadWriteMany`, `Retain`
+- [x] PVC `ivolvepvc`, 1Gi, `ReadWriteMany`
 - [x] neither object names a StorageClass (`storageClassName: ""` on both)
 - [x] claim **Bound** to the volume, `1Gi` / `RWX`
 - [x] data written through the claim is visible at the node path
@@ -20,21 +20,21 @@
 
 The deck's `ivolvePV` / `ivolvePVC` are lowercased to **`ivolvepv`** /
 **`ivolvepvc`**: Kubernetes object names are RFC 1123 subdomains, so capitals are
-rejected — the same rule as Labs 11 and 12.
+rejected, the same rule as Labs 11 and 12.
 
 ## Results
 
 | Check | Result |
 |---|---|
-| PV | `ivolvepv` — `1Gi`, `RWX`, `Retain`, `Bound` |
-| PVC | `ivolvepvc` — `Bound` to `ivolvepv`, `1Gi`, `RWX` |
+| PV | `ivolvepv`, `1Gi`, `RWX`, `Retain`, `Bound` |
+| PVC | `ivolvepvc`, `Bound` to `ivolvepv`, `1Gi`, `RWX` |
 | StorageClass | empty on both objects |
 | Write test | pod mounted the claim at `/logs`, wrote `lab13.txt` |
 | Read-back | `docker exec ivolve-worker cat /mnt/app-logs/lab13.txt` printed the same line |
 
-## Steps
+## Walkthrough
 
-### 1 — Give the node the directory
+### 1. Give the node the directory
 
 A `hostPath` volume is a path on **one node**, so the directory has to exist
 there. `DirectoryOrCreate` would make it on first mount; creating it explicitly
@@ -45,7 +45,7 @@ $ docker exec ivolve-worker sh -c 'mkdir -p /mnt/app-logs && ls -ld /mnt/app-log
 drwxr-xr-x 2 root root 4096 Nov  4 23:19 /mnt/app-logs
 ```
 
-### 2 — The PersistentVolume
+### 2. The PersistentVolume
 
 ```yaml
 apiVersion: v1
@@ -81,7 +81,7 @@ StorageClass (`local-path`, installed by kind); a claim that omits the field
 would be dynamically provisioned instead of binding to this volume, and the PV
 would sit `Available` forever.
 
-### 3 — The claim
+### 3. The claim
 
 ```yaml
 apiVersion: v1
@@ -108,11 +108,11 @@ ivolvepvc   Bound    ivolvepv   1Gi        RWX                          49s
 
 Bidirectional binding: the PV now shows `CLAIM ivolve/ivolvepvc`.
 
-### 4 — Prove the data really lands on the host path
+### 4. Prove the data really lands on the host path
 
 `writer-pod.yaml` mounts the claim at `/logs`, writes a line, and exits. It is
 pinned to `ivolve-worker` with `nodeSelector: project=ivolve` and tolerates
-Lab 10's taint — exactly what Lab 14's StatefulSet will need, because the
+Lab 10's taint, exactly what Lab 14's StatefulSet will need, because the
 `hostPath` only exists on that node.
 
 ```console
@@ -135,7 +135,7 @@ lab13 was here: 2026-11-04T23:20:22Z
 That is the whole point of the lab: the claim is backed by a real directory on
 the node, and a pod's write survives the pod.
 
-### 5 — Quota housekeeping
+### 5. Quota housekeeping
 
 The namespace is capped at three pods, so the writer required freeing a slot;
 `quota-demo-3` was removed and re-created afterwards:
@@ -146,7 +146,7 @@ NAME          REQUEST     LIMIT
 ivolvequota   pods: 3/3
 ```
 
-## Things worth knowing
+## Worth remembering
 
 1. **`storageClassName: ""` is not the same as omitting the field.** Omitted
    means "use the default class"; `""` means "no class, bind me to a static
@@ -162,9 +162,9 @@ ivolvequota   pods: 3/3
    `Released` with its contents intact instead of wiping them (`Delete` would
    remove the backing directory for dynamic volumes).
 5. **Inside kind, `/mnt/app-logs` lives in the node container.** It survives
-   pod restarts, not `kind delete cluster` — kind would need an `extraMounts`
+ pod restarts, not `kind delete cluster`, kind would need an `extraMounts`
    entry to put it on the Windows/WSL filesystem.
-6. **The quota and the volume interact.** Nothing in the PV/PVC needs a pod,
+6. **The quota and the volume interact.** Nothing in the PV/PVC needs a pod
    but proving the write did; freeing a demo pod and restoring it keeps both
    labs' evidence valid.
 
@@ -173,7 +173,7 @@ ivolvequota   pods: 3/3
 The PV and PVC stay: Lab 14 mounts this claim at `/var/lib/mysql`, and Lab 15
 mounts it for logs.
 
-## Commit this lab
+## Commit
 
 ```bash
 cd ~/iVolve-Tasks

@@ -1,4 +1,4 @@
-# Lab 19 — RBAC: a service account that may only deploy
+# Lab 19: A service account that may only deploy
 
 **Track:** Security · **Cluster:** kind `ivolve` · **Namespace:** `ivolve` ·
 **Context:** `kind-ivolve`
@@ -8,31 +8,31 @@
 > RoleBinding `ivolveDeployRoleBinding`, and proof that this is **all** it can
 > do.
 
-## Requirements
+## What the lab asks for
 
 - [x] ServiceAccount `jenkinssa` in `ivolve`
 - [x] short-lived token issued for it (TokenRequest API)
-- [x] Role `ivolvdeployrole` — `apps/deployments`, verbs `create`, `update`
+- [x] Role `ivolvdeployrole`, `apps/deployments`, verbs `create`, `update`
 - [x] RoleBinding `ivolvdeployrolebinding` to that ServiceAccount
 - [x] create/update allowed in `ivolve`
 - [x] patch/list/delete denied; other namespaces denied; pods/services denied
 
 ## Names
 
-`jenkinsSA` → **`jenkinssa`**, `ivolveDeployRole` → **`ivolvdeployrole`**,
-`ivolveDeployRoleBinding` → **`ivolvdeployrolebinding`** — Kubernetes names are
+`jenkinsSA` → **`jenkinssa`**, `ivolveDeployRole` → **`ivolvdeployrole`**
+`ivolveDeployRoleBinding` → **`ivolvdeployrolebinding`**, Kubernetes names are
 lowercase RFC 1123 subdomains.
 
-## Results
+## How it went
 
 | Check (as `system:serviceaccount:ivolve:jenkinssa`) | Result |
 |---|---|
-| `create deployments` in `ivolve` | **yes** — `deployment.apps/rbac-demo created (server dry run)` |
-| `update deployments` in `ivolve` | **yes** — `deployment.apps/ivolveapp replaced` |
+| `create deployments` in `ivolve` | **yes**, `deployment.apps/rbac-demo created (server dry run)` |
+| `update deployments` in `ivolve` | **yes**, `deployment.apps/ivolveapp replaced` |
 | `patch` deployments in `ivolve` | **no** |
 | `list` deployments in `ivolve` | **no** |
 | `delete` deployments in `ivolve` | **no** |
-| `create deployments` in `default` | **no** — `... cannot create resource "deployments" ... in the namespace "default"` |
+| `create deployments` in `default` | **no**, `... cannot create resource "deployments" ... in the namespace "default"` |
 | `list pods` / `create services` in `ivolve` | **no** |
 
 ## The three objects
@@ -43,7 +43,7 @@ kind: ServiceAccount
 metadata: { name: jenkinssa, namespace: ivolve }
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+  kind: Role
 metadata: { name: ivolvdeployrole, namespace: ivolve }
 rules:
   - apiGroups: ["apps"]
@@ -86,7 +86,7 @@ $ TOKEN=$(kubectl --context kind-ivolve -n ivolve create token jenkinssa --durat
 That is a **TokenRequest**-issued JWT with a two-hour life, not a legacy
 Secret-based token: nothing long-lived is stored in the cluster. The tests
 below use it through a throwaway kubeconfig, so they run as the ServiceAccount
-for real — not with `--as` impersonation.
+for real, not with `--as` impersonation.
 
 ## What it can and cannot do
 
@@ -120,17 +120,17 @@ User "system:serviceaccount:ivolve:jenkinssa" cannot create resource
 ```
 
 The replace added an annotation (`rbac-test: jenkinssa-updated`) to the live
-Deployment, which is a genuine update — no rollout, because only metadata
+Deployment, which is a genuine update, no rollout, because only metadata
 changed.
 
-## Things worth knowing
+## Notes from this one
 
 1. **A Role is namespaced; a ClusterRole is not.** `ivolvdeployrole` only
    exists in `ivolve`, so even with the right verbs it cannot touch another
    namespace. That is the "only in this namespace" half of the lab.
 2. **`patch` is a separate verb from `update`.** `kubectl apply`, `annotate`
    and `label` all need `patch`; `replace` needs `update`. This role can
-   replace but not apply — a subtle difference worth knowing before writing a
+ replace but not apply, a subtle difference worth knowing before writing a
    Jenkins deploy step.
 3. **`create` and `update` do not imply `get` or `list`.** The account can push
    a Deployment but cannot read it back; `kubectl rollout status` would fail
@@ -146,7 +146,7 @@ changed.
 The ServiceAccount, Role, RoleBinding and token stay for the Jenkins deployment
 labs (20–22).
 
-## Commit this lab
+## Putting it in git
 
 ```bash
 cd ~/iVolve-Tasks

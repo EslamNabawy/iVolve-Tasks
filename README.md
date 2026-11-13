@@ -1,12 +1,8 @@
 <div align="center">
 
-# DevOps Labs — iVolve Training
+# DevOps Labs: iVolve Training
 
-**From source code to a scanned, running, monitored workload**
-
-Hands-on labs from the iVolve DevOps track — building, testing, packaging,
-containerizing, optimizing, scanning, deploying, securing, monitoring and
-provisioning a small set of applications, one tool at a time. **28 labs.**
+**One small app, taken from source code to a scanned image running on a cluster**
 
 <br>
 
@@ -24,362 +20,325 @@ provisioning a small set of applications, one tool at a time. **28 labs.**
 
 ---
 
-## 👤 About
+## About
 
 | | |
 |---|---|
 | **Name** | Eslam Nabawy |
-| **Program** | iVolve Technologies — DevOps Training |
+| **Program** | iVolve Technologies, DevOps Training |
 | **GitHub** | [@EslamNabawy](https://github.com/EslamNabawy) |
 | **Email** | eslamtarek.dev@gmail.com |
 | **Repository** | [iVolve-Tasks](https://github.com/EslamNabawy/iVolve-Tasks) |
-| **Environment** | Ubuntu 24.04 LTS on WSL2 · Java 17 · Maven · Gradle · Docker · Trivy · kind · kubectl · Jenkins · Prometheus · Grafana · Ansible |
+| **Environment** | Ubuntu 24.04 on WSL2, with Java 17, Maven, Gradle, Docker, Trivy, kind, kubectl, Jenkins, Prometheus, Grafana and Ansible |
 
----
+## What this repo is
 
-## 🎯 What this repository is
+This is my work through the Cloud DevOps Accelerator deck from iVolve: 28 labs,
+one tool at a time, all of them run on my own machine.
 
-Every lab answers one question: **how does source code become something you can
-actually ship — and trust?**
+The idea is simple enough. Take a small Java calculator, build it, put it in a
+container, shrink the container, scan it, run it on a cluster, wire up storage
+and networking and monitoring, and then put the whole thing behind a pipeline so
+I never do those steps by hand again. The last block flips it around: instead of
+configuring servers, I describe them in a playbook and let Ansible do it.
 
-```
-📄 Source      →  🔧 Build      →  📦 Artifact    →  🐳 Image     →  🔍 Scan     →  ☸️ Cluster     →  🤖 CI/CD     →  📊 Monitor
-.java files       Maven/Gradle     calculator.jar    Docker          Trivy          kind + Calico     Jenkins        Prometheus
-Labs 1–2          Labs 1–2         Labs 1–3          Labs 3–6        Lab 5          Labs 9–14         Lab 8          Lab 18
-```
+I kept every lab folder to two things: the files I actually wrote, and a
+`README.md` that shows the terminal output from the run that produced them.
+If a command failed, the failure is in there too, because half of what I learned
+came from output that refused to work the first time.
 
-The chain starts one step earlier and ends one step later: **Ansible
-provisions the machines themselves** (Labs 24–28) and **Argo CD keeps the
-cluster in sync with the repository** (Lab 23).
+## A note on numbering
 
-**Labs 1 and 2 build the same application with two different tools** so the app
-is held constant and the *tooling* is the only variable. **Lab 3** packages
-Lab 1's jar with its own Java runtime. **Labs 4–6** work on a Spring Boot, an
-Express and a Flask app to cover image size, non-root users, vulnerability
-scanning, environment variables and resource limits.
+The deck and this repository do not agree on every number, and I did not
+renumber anything to hide it. Labs 1 to 6 are the graded ones and share their
+numbers with the deck. `Docker/Lab7` and `Docker/Lab8` are the deck's Docker labs
+7 and 8, kept as D7 and D8 in the table below. The deck's Kubernetes block runs
+as Labs 9 to 18, its Jenkins block as 20 to 22, Argo CD is 23, and Ansible takes
+24 to 28.
 
-**Lab 7** deploys the app to a kind cluster, and **Lab 8** replays Labs 1–6 as
-one Jenkins pipeline. Those two are additional tracks beyond the graded
-reports.
+Kubernetes Lab 7 and Jenkins Lab 8 are mine, not the deck's. I wanted the chain
+to reach a running cluster and a real pipeline before the graded work was over,
+so I added those two tracks and labelled them as additions.
 
-**Labs 9–18** are the deck's Kubernetes block, end to end: a three-node cluster
-built by kubeadm (via kind) with Calico, node isolation, quotas, config and
-secrets, static storage, a MySQL StatefulSet, the Node application with its
-ClusterIP Service, CPU/memory limits, a NetworkPolicy, and a full Prometheus /
-Alertmanager / Grafana monitoring stack.
+## Progress
 
-**Lab 19** adds the security layer — a ServiceAccount and Role that may only
-create/update Deployments in `ivolve`. **Lab 20** moves to Jenkins and gives
-`user1` admin rights and `user2` read-only access.
-
-**Labs 21–23** close the CI/CD arc: a pipeline that builds, scans, pushes and
-deploys; a shared library with a dedicated build agent; and Argo CD, where the
-pipeline writes a commit and the cluster does the applying.
-
-**Labs 24–28** drop one layer down — Ansible provisions the machines
-themselves: a control node and an inventory of two managed nodes, one playbook
-that installs Docker, kubectl and Jenkins, the same installs packaged as three
-reusable roles, a MySQL role whose password exists only as encrypted vault data,
-and finally an inventory that discovers its hosts from an API instead of a file.
-
-### A note on numbering
-
-This repository numbers labs **in the order they were delivered**. The deck's
-Docker labs 7–8 arrived later, so their folders are `Docker/Lab7` and
-`Docker/Lab8` while the table lists them as **D7** and **D8** — the repo's own
-Lab 7 (Kubernetes) and Lab 8 (Jenkins) keep their numbers. The deck's Kubernetes
-block maps to Labs 9–18, the deck's Jenkins labs continue the repo's sequence as
-Labs 21–22, Argo CD is Lab 23, and the deck's Ansible block runs 24–28.
-
-Every lab folder holds the files I authored plus a write-up with the **real
-terminal output** and an explanation of *why*, not just *what*.
-
----
-
-## 📋 Progress
-
-| # | Track | Lab | Deliverable | Status |
+| # | Track | Lab | What it leaves behind | |
 |:-:|---|---|---|:-:|
-| 1 | Build Tools | [Packaging with **Maven**](Build%20Tools/Lab1/README.md) | `target/calculator.jar` | ✅ |
-| 2 | Build Tools | [Packaging with **Gradle**](Build%20Tools/Lab2/README.md) | `build/libs/calculator.jar` | ✅ |
-| 3 | Docker | [**Containerizing** the app](Docker/Lab3/README.md) | `app1` · `app2` · `app3` | ✅ |
-| 4 | Docker | [**Image optimization** + export/load](Docker/Lab4/README.md) | `image1` 671 MB → `image2` 294 MB | ✅ |
-| 5 | Docker | [**Vulnerability scanning** with Trivy](Docker/Lab5/README.md) | 2,343 HIGH/CRITICAL → **0** | ✅ |
-| 6 | Docker | [**Env vars** + resource limits](Docker/Lab6/README.md) | 3 runs · 1 CPU / 256 MB | ✅ |
-| D7 | Docker | [**Multi-network microservices**](Docker/Lab7/README.md) | 3 images · 2 bridge networks · 2 volumes | ✅ |
-| D8 | Docker | [**Compose stack** with MySQL](Docker/Lab8/README.md) | `compose up` · data and logs survive `down`/`up` | ✅ |
-| 7 | Kubernetes | [**Deploying to a cluster** with kind](Kubernetes/Lab7/README.md) | cluster `ivolve` · `app3` 1/1 Running | ✅ |
-| 8 | CI/CD | [**Jenkins pipeline** replaying Labs 1–6](Jenkins/Lab8/README.md) | `ivolve-labs-1-6` — build 11 `SUCCESS` | ✅ |
-| 9 | Kubernetes | [**Three-node cluster + Calico**](Kubernetes/Lab9/README.md) | 3 nodes `Ready` · cross-node pod network | ✅ |
-| 10 | Kubernetes | [**Node isolation** with taints and labels](Kubernetes/Lab10/README.md) | taint + label · Pending vs Running | ✅ |
-| 11 | Kubernetes | [**Namespace + ResourceQuota**](Kubernetes/Lab11/README.md) | `ivolve` ns · 3 pods max · 4th refused | ✅ |
-| 12 | Kubernetes | [**ConfigMap + Secret**](Kubernetes/Lab12/README.md) | MySQL config + base64 Secret | ✅ |
-| 13 | Kubernetes | [**Persistent storage** with hostPath PV/PVC](Kubernetes/Lab13/README.md) | 1Gi `RWX` `Retain` · PVC Bound | ✅ |
-| 14 | Kubernetes | [**MySQL StatefulSet** + headless Service](Kubernetes/Lab14/README.md) | `ivolvedb-0` · headless DNS · data persists | ✅ |
-| 15 | Kubernetes | [**Node app + ClusterIP Service**](Kubernetes/Lab15/README.md) | 2 replicas · init DB · `/health` 200 | ✅ |
-| 16 | Kubernetes | [**CPU/memory requests & limits**](Kubernetes/Lab16/README.md) | 1 CPU / 1Gi · 2 CPU / 2Gi · `kubectl top` | ✅ |
-| 17 | Kubernetes | [**NetworkPolicy** for MySQL](Kubernetes/Lab17/README.md) | only app pods → 3306 | ✅ |
-| 18 | Kubernetes | [**Monitoring stack**](Kubernetes/Lab18/README.md) | Prometheus · Alertmanager · Grafana · node-exporter | ✅ |
-| 19 | Security | [**RBAC + service account**](Kubernetes/Lab19/README.md) | `jenkinssa` · create/update Deployments only | ✅ |
-| 20 | CI/CD | [**Role-based authorization**](Jenkins/Lab20/README.md) | `user1` admin · `user2` read-only · build 403 | ✅ |
-| 21 | CI/CD | [**Deployment pipeline**](Jenkins/Lab21/README.md) | build → scan → push → deploy, build #1 `SUCCESS` | ✅ |
-| 22 | CI/CD | [**Shared libraries + build agent**](Jenkins/Lab22/README.md) | `ivolve-lib` · pipeline ran on `docker-agent` | ✅ |
-| 23 | GitOps | [**Argo CD** watching the repository](Jenkins/Lab23/README.md) | pipeline pushes a commit · Argo CD syncs it | ✅ |
-| 24 | Ansible | [**Control node, keys and inventory**](Ansible/Lab24/README.md) | `ssh-copy-id` · 2 managed nodes · Docker via ad-hoc | ✅ |
-| 25 | Ansible | [**One playbook, three installs**](Ansible/Lab25/README.md) | Docker · kubectl · Jenkins · `changed=6` → `changed=0` | ✅ |
-| 26 | Ansible | [**The same installs as roles**](Ansible/Lab26/README.md) | 3 roles · `changed=7` → `changed=0` · same versions | ✅ |
-| 27 | Ansible | [**MySQL role + Ansible Vault**](Ansible/Lab27/README.md) | `ivolve` DB · `ivolveuser` · AES-256 secret · `changed=6` → `changed=0` | ✅ |
-| 28 | Ansible | [**Dynamic inventory**](Ansible/Lab28/README.md) | EC2 tag config · Docker API discovery · `changed=1` → `changed=0` | ✅ |
+| 1 | Build Tools | [Packaging with **Maven**](Build%20Tools/Lab1/README.md) | `target/calculator.jar` | done |
+| 2 | Build Tools | [Packaging with **Gradle**](Build%20Tools/Lab2/README.md) | `build/libs/calculator.jar` | done |
+| 3 | Docker | [**Containerizing** the app](Docker/Lab3/README.md) | `app1`, `app2`, `app3` | done |
+| 4 | Docker | [**Image optimization** and save/load](Docker/Lab4/README.md) | 671 MB down to 294 MB | done |
+| 5 | Docker | [**Vulnerability scanning** with Trivy](Docker/Lab5/README.md) | 2,343 HIGH/CRITICAL down to 0 | done |
+| 6 | Docker | [**Env vars** and resource limits](Docker/Lab6/README.md) | 3 runs, 1 CPU / 256 MB | done |
+| D7 | Docker | [**Multi-network microservices**](Docker/Lab7/README.md) | 3 images, 2 bridge networks, 2 volumes | done |
+| D8 | Docker | [**Compose stack** with MySQL](Docker/Lab8/README.md) | data and logs survive `down` then `up` | done |
+| 7 | Kubernetes | [**Deploying to a cluster** with kind](Kubernetes/Lab7/README.md) | cluster `ivolve`, `app3` 1/1 Running | done |
+| 8 | CI/CD | [**Jenkins pipeline** replaying Labs 1-6](Jenkins/Lab8/README.md) | `ivolve-labs-1-6`, build 11 `SUCCESS` | done |
+| 9 | Kubernetes | [**Three-node cluster** and Calico](Kubernetes/Lab9/README.md) | 3 nodes Ready, pods talking across nodes | done |
+| 10 | Kubernetes | [**Node isolation** with taints and labels](Kubernetes/Lab10/README.md) | Pending vs Running, on purpose | done |
+| 11 | Kubernetes | [**Namespace and ResourceQuota**](Kubernetes/Lab11/README.md) | 3 pods max, the 4th refused | done |
+| 12 | Kubernetes | [**ConfigMap and Secret**](Kubernetes/Lab12/README.md) | MySQL config plus a base64 Secret | done |
+| 13 | Kubernetes | [**Persistent storage** with a hostPath PV](Kubernetes/Lab13/README.md) | 1Gi RWX Retain, PVC Bound | done |
+| 14 | Kubernetes | [**MySQL StatefulSet** and headless Service](Kubernetes/Lab14/README.md) | `ivolvedb-0`, data survives the pod | done |
+| 15 | Kubernetes | [**Node app and ClusterIP Service**](Kubernetes/Lab15/README.md) | 2 replicas, `/health` returns 200 | done |
+| 16 | Kubernetes | [**CPU and memory requests/limits**](Kubernetes/Lab16/README.md) | `kubectl top` with real numbers | done |
+| 17 | Kubernetes | [**NetworkPolicy** for MySQL](Kubernetes/Lab17/README.md) | only the app pods reach 3306 | done |
+| 18 | Kubernetes | [**Monitoring stack**](Kubernetes/Lab18/README.md) | Prometheus, Alertmanager, Grafana, node-exporter | done |
+| 19 | Security | [**RBAC and a service account**](Kubernetes/Lab19/README.md) | `jenkinssa`, Deployments only | done |
+| 20 | CI/CD | [**Role-based authorization**](Jenkins/Lab20/README.md) | `user1` admin, `user2` read-only, 403 | done |
+| 21 | CI/CD | [**Deployment pipeline**](Jenkins/Lab21/README.md) | build, scan, push, deploy, build #1 `SUCCESS` | done |
+| 22 | CI/CD | [**Shared libraries and a build agent**](Jenkins/Lab22/README.md) | `ivolve-lib` on `docker-agent` | done |
+| 23 | GitOps | [**Argo CD** watching the repository](Jenkins/Lab23/README.md) | the pipeline pushes, Argo CD syncs | done |
+| 24 | Ansible | [**Control node, keys and inventory**](Ansible/Lab24/README.md) | 2 managed nodes, Docker by ad-hoc task | done |
+| 25 | Ansible | [**One playbook, three installs**](Ansible/Lab25/README.md) | Docker, kubectl, Jenkins, `changed=6` then `changed=0` | done |
+| 26 | Ansible | [**The same installs as roles**](Ansible/Lab26/README.md) | 3 roles, `changed=7` then `changed=0` | done |
+| 27 | Ansible | [**MySQL role and Ansible Vault**](Ansible/Lab27/README.md) | `ivolve` DB, password as ciphertext | done |
+| 28 | Ansible | [**Dynamic inventory**](Ansible/Lab28/README.md) | hosts discovered from a live API | done |
 
-### ✅ Done
+### What's done
 
-- [x] **Build tools** — the same calculator with Maven and Gradle, both test
-      suites green, jars compared honestly.
-- [x] **Containerization** — three Dockerfile strategies, sizes measured, the
-      stdin CLI proven with `docker run -i`.
-- [x] **Optimization** — 671 MB → 294 MB, non-root user, `save`/`load` round trip.
-- [x] **Scanning** — Trivy's 2,343 HIGH/CRITICAL findings remediated to **0**,
-      with the ignored-count caveat stated.
-- [x] **Configuration** — env vars, precedence and 1 CPU / 256 MB limits enforced.
-- [x] **Kubernetes** — a real three-node cluster, scheduling controls, storage,
-      MySQL, the app, policy and monitoring, all verified.
-- [x] **Security** — a ServiceAccount that can create/update Deployments and
-      nothing else, proven with a real token.
-- [x] **Jenkins access control** — two users, admin vs read-only, verified by
-      HTTP status codes (201 vs 403).
-- [x] **CI/CD** — one Jenkins pipeline that rebuilds Labs 1–6 end to end.
-- [x] **Microservices** — three services, two networks, two log volumes and a
-      bind mount, with the traffic path proven at both network boundaries.
-- [x] **Compose** — app + MySQL in one file, named volumes, a custom network
-      and a health check; the data outlived `docker compose down`.
-- [x] **Deployment pipeline** — build, Trivy gate, push, local delete, manifest
-      rewrite and rollout, with a real pod serving HTTP 200 at the end.
-- [x] **Shared libraries** — `BuildApp`, `BuildImage`, `DeployOnK8s` as global
-      steps, executed on a dedicated agent while the controller ran zero
-      executors.
-- [x] **GitOps** — Argo CD watches a branch; the pipeline pushes a commit and
-      never touches the cluster, and a manual `kubectl set image` is reverted in
-      six seconds.
-- [x] **Ansible** — a control node, a dedicated key, an inventory of two
-      managed nodes, and one idempotent playbook that installs Docker, kubectl
-      and Jenkins and proves it on every host.
-- [x] **Roles** — the same three installs packaged as `docker`, `kubectl` and
-      `jenkins`, with every version and URL in `defaults/` and a `site.yml` that
-      is three words long.
-- [x] **Secrets** — a MySQL role whose application password lives in an
-      AES-256 vault file, with the key kept out of git, and a login test run
-      **as the created user** rather than as root.
-- [x] **Dynamic inventory** — hosts discovered from an API instead of a file,
-      grouped by tag, targeted by a playbook that names no host at all.
+- **Build tools.** The same calculator built twice, with Maven and with Gradle.
+  Both test suites green and the two jars compared honestly.
+- **Containers.** Three Dockerfile strategies with the sizes measured, and the
+  stdin-only CLI proven with `docker run -i`.
+- **Optimization.** 671 MB down to 294 MB, a non-root user, and a `save`/`load`
+  round trip so the image can leave the machine.
+- **Scanning.** Trivy's 2,343 HIGH/CRITICAL findings brought to zero, with the
+  `--ignore-unfixed` caveat spelled out rather than quietly applied.
+- **Configuration.** Environment variables, their precedence, and 1 CPU / 256 MB
+  limits that the container really obeys.
+- **Kubernetes.** A three-node cluster carrying scheduling controls, storage,
+  MySQL, the app itself, a network policy and a monitoring stack.
+- **Security.** A ServiceAccount that can create and update Deployments in one
+  namespace and nothing else, proven with a real token rather than a `kubectl
+  auth can-i` alone.
+- **Jenkins access control.** Two users, one admin and one read-only, checked by
+  HTTP status code: 201 for the admin, 403 for the other.
+- **CI/CD.** A pipeline that rebuilds Labs 1-6 end to end, and a second one that
+  takes the app all the way to a pod answering HTTP 200.
+- **Microservices.** Three services, two networks, two log volumes and a bind
+  mount, with the traffic path proven at both network boundaries.
+- **Compose.** The app and MySQL in one file, with named volumes and a health
+  check, and data that outlived `docker compose down`.
+- **Shared libraries.** `BuildApp`, `BuildImage` and `DeployOnK8s` as global
+  steps, running on a dedicated agent while the controller had zero executors.
+- **GitOps.** Argo CD watching a branch that the pipeline writes to. When I
+  changed a Deployment by hand, it was put back in six seconds.
+- **Ansible.** A control node, its own key, an inventory of two hosts, and one
+  idempotent playbook installing Docker, kubectl and Jenkins.
+- **Roles.** The same three installs as `docker`, `kubectl` and `jenkins`, with
+  versions and URLs in each role's `defaults/`.
+- **Secrets.** A MySQL role whose application password exists only as vault
+  ciphertext in the repository.
+- **Dynamic inventory.** Hosts that came from an API query instead of a file,
+  grouped, scoped and then targeted by a playbook.
 
-### 🏁 The deck, complete
+### The deck, complete
 
-All **28** labs in the Cloud DevOps Accelerator deck are done, each with a
-write-up, a `commands.sh` that replays it, and its real terminal output.
+All 28 labs are done. Each one has a write-up, a `commands.sh` that replays it,
+and the terminal output that came out of the run.
 
----
-
-## 📊 Headline results
+## Headline results
 
 <div align="center">
 
-| | Lab 1 · Maven | Lab 2 · Gradle |
+| | Lab 1, Maven | Lab 2, Gradle |
 |---|:-:|:-:|
 | Tests | **5 passed** | **5 passed** |
 | Artifact | `target/calculator.jar` | `build/libs/calculator.jar` |
 | Size | 3.7 KB | 2.3 KB |
 | Rebuild | redoes everything | **7 of 8 tasks `UP-TO-DATE`** |
 
-| Lab 3–6 · Image | Size | Note |
-|---|:-:|---|
-| `app1` | **861 MB** | Maven builds inside the image |
-| `app2` | **265 MB** | jar built on the host |
-| `app3` 🏆 | **265 MB** | multi-stage, JRE, non-root |
-| `image1` | **671 MB** | single stage |
-| `image2` 🏆 | **294 MB** | multi-stage (2.28× smaller) |
-| `trivy-lab:v1` | **1.46 GB** | 2,122 HIGH · 221 CRITICAL |
-| `ivolve-app:v2` 🏆 | **252 MB** | **0** HIGH/CRITICAL |
-
 </div>
 
-| Area | Verified result |
+| Image | Size | Note |
+|---|:-:|---|
+| `app1` | **861 MB** | Maven builds inside the image |
+| `app2` | **265 MB** | jar built on the host first |
+| `app3` | **265 MB** | multi-stage, JRE, non-root |
+| `image1` | **671 MB** | single stage |
+| `image2` | **294 MB** | multi-stage, 2.28x smaller |
+| `trivy-lab:v1` | **1.46 GB** | 2,122 HIGH, 221 CRITICAL |
+| `ivolve-app:v2` | **252 MB** | **0** HIGH/CRITICAL |
+
+| Area | What the run reported |
 |---|---|
-| Lab 6 · limits | `NanoCpus=1000000000`, `Memory=268435456`, 24.67 MiB / 256 MiB used |
-| Lab 7 · cluster | `app3` 256 MB loaded, never pulled · 1/1 Running as uid 1000 · CLI via `kubectl exec -i` |
-| Lab 8 · Jenkins | build 11 **`SUCCESS`** in 194.8 s · junit 10 tests, 0 failures · six images built, scanned, gated, cleaned |
-| Lab 9 · network | 3 nodes + Calico 3/3 · cross-node ping **0% loss** both directions |
-| Lab 10 · isolation | untolerated pod **Pending** · tolerated pod running on the tainted node |
-| Lab 11 · quota | 3/3 pods · fourth **refused at admission** · live counter proven |
-| Lab 14 · MySQL | 8.4.13 · headless `ivolvedbsvc` resolves · data survived pod recreation |
-| Lab 15 · app | 2/2 replicas · init container created DB + grants · `/health` 200 through the Service |
-| Lab 16 · limits | requests 1 CPU/1Gi · limits 2 CPU/2Gi · `kubectl top` live |
-| Lab 17 · policy | unrelated pods **blocked** on 3306 · app traffic untouched |
-| Lab 18 · monitoring | node-exporter **3/3** · all targets `up` · Grafana 11.2.0 with a provisioned dashboard |
-| Lab 19 · RBAC | `jenkinssa` create/update **yes**, patch/list/delete **no**, other namespaces **no** |
-| Lab 20 · Jenkins | `user1` build **201**, `user2` build **403**, anonymous **403** |
-| D7 · networks | 3 images (198–202 MB) · subnets `172.28.0.0/24` + `172.29.0.0/24` · notification log shows source `172.29.0.3`, backend request `172.28.0.3` |
-| D8 · compose | app 221 MB · `db` healthy · products survived `compose down` + `up` · push to a local `registry:2` on `:5000` |
-| Lab 21 · pipeline | build #1 **`SUCCESS`** · 725 MB image pushed · CRITICAL gate with 9 triaged CVEs · pod `Running`, HTTP **200** |
-| Lab 22 · libraries | 3 library steps · `Running on docker-agent` · controller `numExecutors: 0` |
-| Lab 23 · GitOps | Argo CD **v3.6.1** · commit `2e0a472` pushed → `Synced`/`Healthy` at that revision · `selfHeal` reverted a manual edit in **6 s** |
-| Lab 24 · Ansible | `ansible-core 2.16.3` · 2 managed nodes · `ping` **SUCCESS** · Docker installed by one ad-hoc task on both |
-| Lab 25 · playbook | `changed=6` per node on the first run, **`changed=0`** on the second · Docker 29.1.3 · kubectl v1.37.1 (sha256 verified) · Jenkins 2.580.2 |
-| Lab 26 · roles | first run `changed=7` per node, second run **`changed=0`** · `site.yml` is three role names · every URL and version in `roles/*/defaults/` · Docker 29.1.3, kubectl v1.37.1, Jenkins 2.580.2 on both nodes |
-| Lab 27 · vault | `changed=6` per node → **`changed=0`** · `ivolve` DB + `ivolveuser@%` · password only as `$ANSIBLE_VAULT;1.1;AES256` ciphertext · login as the user shows `ivolve` |
-| Lab 28 · inventory | inventory built from a live API, not a file · `@managed: managed1, managed2` discovered and scoped by name · run 1 `changed=1`, run 2 **`changed=0`** · EC2 config ready for `tag:server=ivolve` |
+| Lab 6, limits | `NanoCpus=1000000000`, `Memory=268435456`, 24.67 MiB of 256 MiB used |
+| Lab 7, cluster | `app3` 256 MB, loaded not pulled, 1/1 Running as uid 1000, CLI through `kubectl exec -i` |
+| Lab 8, Jenkins | build 11 **`SUCCESS`** in 194.8 s, junit 10 tests 0 failures, six images built, scanned, gated and cleaned |
+| Lab 9, network | 3 nodes plus Calico 3/3, cross-node ping 0% loss in both directions |
+| Lab 10, isolation | untolerated pod **Pending**, tolerated pod running on the tainted node |
+| Lab 11, quota | 3/3 pods, the fourth **refused at admission**, live counter proven |
+| Lab 14, MySQL | 8.4.13, headless `ivolvedbsvc` resolves, data survived pod recreation |
+| Lab 15, app | 2/2 replicas, init container created the DB and grants, `/health` 200 through the Service |
+| Lab 16, limits | requests 1 CPU/1Gi, limits 2 CPU/2Gi, `kubectl top` live |
+| Lab 17, policy | unrelated pods **blocked** on 3306, app traffic untouched |
+| Lab 18, monitoring | node-exporter **3/3**, all targets `up`, Grafana 11.2.0 with a provisioned dashboard |
+| Lab 19, RBAC | `jenkinssa`: create/update **yes**, patch/list/delete **no**, other namespaces **no** |
+| Lab 20, Jenkins | `user1` build **201**, `user2` build **403**, anonymous **403** |
+| D7, networks | 3 images at 198-202 MB, subnets `172.28.0.0/24` and `172.29.0.0/24`, notification log shows source `172.29.0.3` and backend request `172.28.0.3` |
+| D8, compose | app 221 MB, `db` healthy, products survived `compose down` and `up`, image pushed to a local `registry:2` on `:5000` |
+| Lab 21, pipeline | build #1 **`SUCCESS`**, 725 MB image pushed, CRITICAL gate with 9 triaged CVEs, pod `Running` and serving HTTP **200** |
+| Lab 22, libraries | 3 library steps, `Running on docker-agent`, controller `numExecutors: 0` |
+| Lab 23, GitOps | Argo CD **v3.6.1**, commit `2e0a472` pushed and reported `Synced`/`Healthy`, `selfHeal` reverted a manual edit in **6 s** |
+| Lab 24, Ansible | `ansible-core 2.16.3`, 2 managed nodes, `ping` **SUCCESS**, Docker installed on both by one ad-hoc task |
+| Lab 25, playbook | `changed=6` per node on the first run, **`changed=0`** on the second, Docker 29.1.3, kubectl v1.37.1 with a verified sha256, Jenkins 2.580.2 |
+| Lab 26, roles | `changed=7` then **`changed=0`**, `site.yml` is three role names, every URL and version in `roles/*/defaults/`, same three versions on both nodes |
+| Lab 27, vault | `changed=6` then **`changed=0`**, `ivolve` DB and `ivolveuser@%`, password only as `$ANSIBLE_VAULT;1.1;AES256`, logging in as the user shows `ivolve` |
+| Lab 28, inventory | inventory built from a live API, `@managed: managed1, managed2` discovered and scoped by name, run 1 `changed=1`, run 2 **`changed=0`**, EC2 config ready for `tag:server=ivolve` |
 
----
-
-## 📁 Repository layout
+## Repository layout
 
 ```
 iVolve-Tasks
-├── 📁 Build Tools
-│   ├── 📁 Lab1          README · commands.sh · evidence/
-│   └── 📁 Lab2          README · commands.sh · evidence/
-├── 📁 Docker
-│   ├── 📁 Lab3          Dockerfile.app1 · Dockerfile.app2 · Dockerfile.multistage
+├── Build Tools
+│   ├── Lab1          README · commands.sh · evidence/
+│   └── Lab2          README · commands.sh · evidence/
+├── Docker
+│   ├── Lab3          Dockerfile.app1 · Dockerfile.app2 · Dockerfile.multistage
 │   │                    .dockerignore · README
-│   ├── 📁 Lab4          Dockerfile · Dockerfile.multistage · .dockerignore
+│   ├── Lab4          Dockerfile · Dockerfile.multistage · .dockerignore
 │   │                    commands.sh · README
-│   ├── 📁 Lab5          Dockerfile · Dockerfile.v2 · .dockerignore · package-lock.json
+│   ├── Lab5          Dockerfile · Dockerfile.v2 · .dockerignore · package-lock.json
 │   │                    commands.sh · README · reports/
-│   ├── 📁 Lab6          Dockerfile · Dockerfile.env · env.txt · commands.sh · README
-│   ├── 📁 Lab7          frontend/ backend/ notification/ (Dockerfiles) · commands.sh · README
-│   └── 📁 Lab8          docker-compose.yml · commands.sh · README
-├── 📁 Kubernetes
-│   ├── 📁 Lab7          deployment.yaml · service.yaml · commands.sh · README
-│   ├── 📁 Lab9          kind-config.yaml · nettest.yaml · nettest2.yaml
+│   ├── Lab6          Dockerfile · Dockerfile.env · env.txt · commands.sh · README
+│   ├── Lab7          frontend/ backend/ notification/ (Dockerfiles) · commands.sh · README
+│   └── Lab8          docker-compose.yml · commands.sh · README
+├── Kubernetes
+│   ├── Lab7          deployment.yaml · service.yaml · commands.sh · README
+│   ├── Lab9          kind-config.yaml · nettest.yaml · nettest2.yaml
 │   │                    commands.sh · README
-│   ├── 📁 Lab10         pod-blocked.yaml · pod-allowed.yaml · commands.sh · README
-│   ├── 📁 Lab11         namespace.yaml · quota.yaml · demo-pods.yaml
+│   ├── Lab10         pod-blocked.yaml · pod-allowed.yaml · commands.sh · README
+│   ├── Lab11         namespace.yaml · quota.yaml · demo-pods.yaml
 │   │                    extra-pod.yaml · commands.sh · README
-│   ├── 📁 Lab12         configmap.yaml · secret.yaml · demo-pod.yaml
+│   ├── Lab12         configmap.yaml · secret.yaml · demo-pod.yaml
 │   │                    commands.sh · README
-│   ├── 📁 Lab13         pv.yaml · pvc.yaml · writer-pod.yaml · commands.sh · README
-│   ├── 📁 Lab14         service.yaml · statefulset.yaml · commands.sh · README
-│   ├── 📁 Lab15         deployment.yaml · service.yaml · commands.sh · README
-│   ├── 📁 Lab16         resources-patch.yaml · commands.sh · README
-│   ├── 📁 Lab17         networkpolicy.yaml · commands.sh · README
-│   ├── 📁 Lab18         namespace.yaml · node-exporter.yaml · prometheus.yaml
+│   ├── Lab13         pv.yaml · pvc.yaml · writer-pod.yaml · commands.sh · README
+│   ├── Lab14         service.yaml · statefulset.yaml · commands.sh · README
+│   ├── Lab15         deployment.yaml · service.yaml · commands.sh · README
+│   ├── Lab16         resources-patch.yaml · commands.sh · README
+│   ├── Lab17         networkpolicy.yaml · commands.sh · README
+│   ├── Lab18         namespace.yaml · node-exporter.yaml · prometheus.yaml
 │   │                    alertmanager.yaml · grafana.yaml · commands.sh · README
-│   └── 📁 Lab19         serviceaccount.yaml · role.yaml · rolebinding.yaml
+│   └── Lab19         serviceaccount.yaml · role.yaml · rolebinding.yaml
 │                        commands.sh · README
-├── 📁 Jenkins
-│   ├── 📁 Lab8          Dockerfile · Jenkinsfile · jenkins.yaml · plugins.txt
+├── Jenkins
+│   ├── Lab8          Dockerfile · Jenkinsfile · jenkins.yaml · plugins.txt
 │   │                    html.tpl · commands.sh · README
-│   ├── 📁 Lab20         Dockerfile · plugins.txt · jenkins.yaml · job.xml
+│   ├── Lab20         Dockerfile · plugins.txt · jenkins.yaml · job.xml
 │   │                    commands.sh · README
-│   ├── 📁 Lab21         Dockerfile · Jenkinsfile · jenkins.yaml · plugins.txt
+│   ├── Lab21         Dockerfile · Jenkinsfile · jenkins.yaml · plugins.txt
 │   │                    namespace/deployment/service.yaml · .trivyignore
 │   │                    commands.sh · README
-│   ├── 📁 Lab22         Dockerfile.agent · Jenkinsfile · jenkins.yaml
-│                        namespace/deployment/service.yaml · .trivyignore
-│                        shared-library/vars/  (buildApp · buildImage · deployOnK8s)
-│                        commands.sh · README
-│   └── 📁 Lab23         Jenkinsfile · jenkins.yaml · application.yaml
+│   ├── Lab22         Dockerfile.agent · Jenkinsfile · jenkins.yaml
+│   │                    namespace/deployment/service.yaml · .trivyignore
+│   │                    shared-library/vars/  (buildApp · buildImage · deployOnK8s)
+│   │                    commands.sh · README
+│   └── Lab23         Jenkinsfile · jenkins.yaml · application.yaml
 │                        manifests/deployment.yaml · manifests/service.yaml
 │                        .trivyignore · commands.sh · README
-├── 📁 Ansible
-│   ├── 📁 Lab24         Dockerfile.node · inventory.ini · commands.sh · README
-│   ├── 📁 Lab25         playbook.yml · commands.sh · README
-│   ├── 📁 Lab26         site.yml · commands.sh · README
+├── Ansible
+│   ├── Lab24         Dockerfile.node · inventory.ini · commands.sh · README
+│   ├── Lab25         playbook.yml · commands.sh · README
+│   ├── Lab26         site.yml · commands.sh · README
 │   │                    roles/{docker,kubectl,jenkins}/{defaults,tasks}/main.yml
-│   ├── 📁 Lab27         site.yml · commands.sh · README
+│   ├── Lab27         site.yml · commands.sh · README
 │   │                    roles/mysql/{defaults,tasks}/main.yml
 │   │                    group_vars/managed/vault.yml (AES-256) · .gitignore
-│   └── 📁 Lab28         inventory.aws_ec2.yml · inventory.docker.yml
+│   └── Lab28         inventory.aws_ec2.yml · inventory.docker.yml
 │                        verify.yml · commands.sh · README
-└── 📄 README.md
+└── README.md
 ```
 
-Upstream application source is cloned to `~/labs-workspace/` and **never
-committed** — this repository contains only work I authored.
+The applications themselves are not in here. They get cloned into
+`~/labs-workspace/` and gitignored, so what you see above is only the part I
+wrote.
 
----
+## How the labs run
 
-## ⚙️ How the labs run
+Everything runs on WSL2 with Ubuntu 24.04, and every build happens inside the
+Linux filesystem under `~`. Building under `/mnt/c` costs 5 to 20 times the time,
+which I stopped doing after the first Maven build.
 
-- **Everything runs on WSL2 (Ubuntu 24.04), builds inside the Linux filesystem**
-  (`~/…`), never under `/mnt/c` — the 9p mount is 5–20× slower.
-- **Each lab has a `commands.sh`** that replays it from a clean state, plus a
-  `README.md` with the requirements, the real output and the reasoning.
-- **The Kubernetes labs share one cluster.** Lab 9 creates `kind` cluster
-  `ivolve` (1 control plane + 2 workers, Calico); Labs 10–18 build on it, and
-  it is removed with `kind delete cluster --name ivolve` when the work is done.
-- **The unrelated `aiops` cluster and containers belong to another project** and
-  are never touched.
-- **The Ansible labs use two managed nodes that are containers** (`managed1` on
-  `:2222`, `managed2` on `:2223`), reached with a dedicated key. Each
-  `commands.sh` rebuilds them first, because a playbook run against an
-  already-provisioned host reports `changed=0` and proves nothing.
-- **No fabricated output.** Every console block is a real run. The two
-  exceptions are flagged where they appear: the rendered terminal images in
-  Labs 1–2, and the one `sudo` line in Lab 1 that was never executed.
+Each lab has a `commands.sh` that replays it from a clean state. Most of them
+also rebuild their own starting point: Docker Labs 7 and 8 remove their
+containers and volumes, and the Ansible labs recreate the managed nodes, because
+a playbook that finds everything already installed just prints `changed=0` and
+teaches nothing.
 
-## 🧭 Known deviations and limits
+The Kubernetes labs share one cluster. Lab 9 creates `kind` cluster `ivolve` with
+one control plane and two workers, Labs 10 to 18 build on it, and
+`kind delete cluster --name ivolve` removes it at the end.
 
-1. **Lab 9 uses kind instead of hand-run kubeadm.** This host has no second
-   machine and no passwordless sudo; kind still bootstraps each node with
-   kubeadm and containerd, so the control-plane/worker split and Calico are
-   real. The README says exactly what is and is not proven.
-2. **Lab 15's image is built locally and `kind load`ed.** The deck asks for a
-   Docker Hub image from Lab 8, which was not run, and this session had no Hub
-   credentials. `imagePullPolicy: IfNotPresent` makes the loaded image work;
-   the deviation is documented in that lab.
-3. **Kubernetes names are lowercased** where the deck capitalises them
-   (`ivolveQuota` → `ivolvequota`, `ivolveCM` → `ivolvecm`, `ivolveDBSvc` →
-   `ivolvedbsvc`, `ivolveNP` → `ivolvenp`, …). The API rejects uppercase names.
-4. **Labs 1–2's evidence images are rendered** from real captured output, not
-   raw screenshots. Both READMEs say so.
-5. **The Lab 14 MySQL data directory was re-initialised** after a full Windows
-   host disk caused WSL I/O errors during the first deployment; the incident and
-   the recovery are recorded in that README.
-6. **The Kubernetes labs share one kernel.** "Three nodes" is three
-   containerised kubelets, not three machines.
-7. **Labs 21–22 push to a local registry, not Docker Hub.** This session has no
-   Docker Hub credentials, so the image goes to a `registry:2` container on
-   `:5000`. The push/delete/pull cycle is real; only the destination differs, and
-   each README says so where the deck says "Docker Hub".
+There is a second, unrelated `aiops` cluster and a set of `aiops-*` containers on
+this machine that belong to another project. I stayed out of them.
+
+The Ansible labs run against two containers acting as managed nodes, `managed1`
+on `:2222` and `managed2` on `:2223`, reached with a dedicated key.
+
+One last thing, because it explains most of the odd-looking output in these
+write-ups: nothing here is transcribed from memory. Every console block is
+copied from a run. Two exceptions exist and both are labelled in place, the
+rendered terminal images in Labs 1 and 2, and one `sudo` line in Lab 1 that I
+never actually executed.
+
+## Where I deviated, and why
+
+1. **Lab 9 uses kind, not kubeadm by hand.** I have one machine and no
+   passwordless sudo. kind still bootstraps each node with kubeadm and
+   containerd, so the control-plane/worker split and Calico are real; what is
+   missing is the hand-typed `kubeadm init` that the deck describes. The README
+   says which parts are proven and which are not.
+2. **Lab 15's image was built locally and loaded into kind.** The deck wants the
+   Docker Hub image from Lab 8, which I did not run, and I had no Hub
+   credentials. `imagePullPolicy: IfNotPresent` makes the loaded image work.
+3. **Kubernetes names are lowercase** where the deck capitalises them
+   (`ivolveQuota` became `ivolvequota`, and the same for `ivolveCM`, `ivolveDBSvc`
+   and `ivolveNP`). The API rejects uppercase in object names, so there was no
+   choice.
+4. **The evidence images in Labs 1 and 2 are rendered** from real captured
+   output rather than being screenshots of a terminal. Both READMEs say so.
+5. **Lab 14's MySQL data directory was re-initialised** after a full Windows disk
+   caused WSL I/O errors in the middle of the first deployment. The incident and
+   the recovery are recorded in that README rather than tidied away.
+6. **"Three nodes" means three containerised kubelets** sharing one kernel, not
+   three machines.
+7. **Labs 21 and 22 push to a local registry, not Docker Hub.** No credentials,
+   so the image goes to a `registry:2` container on `:5000`. The push, delete and
+   pull cycle is real; only the destination differs from the deck.
 8. **Lab 23's CI commits land on a `gitops` branch.** Argo CD watches that
-   branch so the authored history on `main` stays human-written; every pipeline
-   run adds one commit there, and the branch is real evidence of the loop.
+   branch, so the history on `main` stays the work I wrote by hand.
 9. **The Ansible managed nodes are containers with `sshd` in the foreground.**
-   There is no systemd inside them, so `docker.io` and `jenkins` are installed
-   but their services are not started — the labs verify the packages and the
-   binaries, not a running daemon. On a VM the same playbook would add one
-   `service` task. Lab 27 needs MySQL *running*, so its role starts `mysqld
-   --daemonize` directly, creates the socket directory itself and guards the
-   start with `pgrep` to stay idempotent.
-10. **Labs 25–26 fetch large artefacts on the control node.** This network
-   cannot complete a 59 MB kubectl download inside `get_url`'s socket timeout,
-   and the Jenkins mirror assigned to apt drops the 53 MB `.deb`. Both are
-   fetched once with `curl --retry-all-errors`, verified, and copied — the
-   install is real, only the transport differs from the textbook task.
+   There is no systemd in them, so `docker.io` and `jenkins` are installed and
+   verified, not started as services. On a VM the same playbook would need one
+   more `service` task. Lab 27 needs MySQL running, so that role starts `mysqld
+   --daemonize` itself, creates the socket directory and guards the start with
+   `pgrep` to keep the second run clean.
+10. **Labs 25 and 26 fetch large files on the control node.** A 59 MB kubectl
+    download does not fit inside `get_url`'s socket timeout on this connection,
+    and the Jenkins mirror apt picks drops the 53 MB `.deb`. Both are fetched
+    once with `curl --retry-all-errors`, verified and copied out. The installs are
+    real; the transport is not the textbook one.
 11. **The Docker role retries a slow mirror.** `docker.io` is 93 MB across 46
-   packages, and `archive.ubuntu.com` served it at 73–113 kB/s; the first
-   attempt of Lab 26 died mid-download. The role sets `Acquire::Retries "10"`
-   in `/etc/apt/apt.conf.d` and retries the task, so the run takes ~20 minutes
-   instead of failing.
-12. **Lab 28 discovers hosts from the Docker API, not from EC2.** There is no
-   AWS account or credential in this environment, so `aws_ec2` stops at
-   `Unable to locate credentials`. The EC2 inventory file is the deck's, ready
-   as written; the run that produced the evidence uses the same mechanism
-   against the Docker daemon — a plugin querying a live API, building groups
-   from the response, and a playbook targeting the result.
+    packages and `archive.ubuntu.com` served it at 73 to 113 kB/s. Lab 26's first
+    attempt died halfway through. The role sets `Acquire::Retries "10"` and
+    retries the task, which turns a failure into a 20-minute run.
+12. **Lab 28 discovers hosts from the Docker API, not from EC2.** There is no AWS
+    account here, so `aws_ec2` stops at `Unable to locate credentials`. The EC2
+    inventory file is the deck's, ready as written; the evidence comes from the
+    same mechanism pointed at the Docker daemon, a plugin querying a live API and
+    a playbook targeting whatever it returns.
 13. **Lab 27's vault key is generated, not committed.** `commands.sh` writes
-   `.vault-pass` (gitignored) with a throwaway string so the lab reproduces from
-   a clone. That is honest for lab data and would be wrong for a real secret:
-   the value protected by a committed ciphertext plus a discoverable key is
-   obfuscation, and the README says so.
+    `.vault-pass` with a throwaway string so the lab reproduces from a clone. That
+    is fine for lab data and wrong for a real secret. A committed ciphertext
+    sitting next to a discoverable key is obfuscation, and the README says that
+    out loud.
 
----
+## Quick start
 
-## 🚀 Quick start
-
-> **These labs require Linux.** Docker and kind need a Linux kernel; Windows
-> CMD or PowerShell alone cannot run them. Use **WSL2** (`wsl --install`), a
-> native Linux install, or a VM. On WSL keep projects under `/home/<you>`.
+These labs need Linux. Docker and kind want a Linux kernel, so Windows CMD or
+PowerShell alone will not get you through them. Use WSL2 (`wsl --install`), a
+native install, or a VM, and keep the project under `/home/<you>`.
 
 ```bash
 sudo apt update && sudo apt install -y openjdk-17-jdk maven
@@ -389,13 +348,11 @@ sudo apt update && sudo apt install -y openjdk-17-jdk maven
 git clone https://github.com/EslamNabawy/iVolve-Tasks.git && cd iVolve-Tasks
 ```
 
-Then open any lab's `README.md` and run its `commands.sh`. The labs build on
-each other, so the order matters for the Kubernetes track (9 → 18).
-
----
+Pick a lab, open its `README.md`, run its `commands.sh`. The Kubernetes track
+does have an order (9 through 18); the rest can be read on their own.
 
 <div align="center">
 
-**Eslam Nabawy** · iVolve DevOps Training · October–November 2026
+**Eslam Nabawy**, iVolve DevOps Training, October and November 2026
 
 </div>

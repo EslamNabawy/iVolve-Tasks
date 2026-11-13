@@ -1,4 +1,4 @@
-# Lab 23 — GitOps with Argo CD
+# Lab 23: GitOps with Argo CD
 
 > **Deck task:** install Argo CD in the cluster, log in to its UI, connect it to
 > the GitHub repository, create an Application that watches the repository and a
@@ -6,7 +6,7 @@
 > step so it pushes the edited deployment file back to GitHub, then run the
 > pipeline and confirm that Argo CD notices and syncs the change.
 
-## Requirements
+## What it asks for
 
 - [x] Argo CD installed **in the cluster** (`kind-ivolve`), not on the host
 - [x] UI reachable and a login obtained
@@ -20,10 +20,10 @@
 
 Lab 22's pipeline ended with `kubectl apply`. That works, but it means the
 pipeline holds cluster credentials, and the cluster's real state lives in
-Jenkins' memory of what it once applied — the repository does not describe the
+Jenkins' memory of what it once applied, the repository does not describe the
 cluster. Lab 23 removes `kubectl` from the pipeline completely. Jenkins builds
 and pushes the image, writes the new tag into a manifest that is **in Git**, and
-pushes a commit. Argo CD watches that branch, compares it with the live cluster,
+pushes a commit. Argo CD watches that branch, compares it with the live cluster
 and applies the difference. The cluster's desired state is now a file with a
 commit hash behind it, and the pipeline needs no cluster credentials at all.
 
@@ -74,7 +74,7 @@ argocd-server                      quay.io/argoproj/argocd:v3.6.1
 ```
 
 The `RESTARTS` counts are from the WSL crash recorded in this session, not from
-the installation — the pods were recreated when the cluster came back.
+the installation, the pods were recreated when the cluster came back.
 
 ## 2. The UI and a login
 
@@ -102,7 +102,7 @@ curl -sk https://127.0.0.1:8443/api/v1/session -H 'Content-Type: application/jso
   -d "{\"username\":\"admin\",\"password\":\"$ARGOPASS\"}"
 ```
 
-## 3. Connect Argo CD to GitHub — the Application
+## 3. Connect Argo CD to GitHub, the Application
 
 An `Application` is the link between a Git path and a namespace. Nothing is
 copied into the cluster by hand; this object is the only thing that says "the
@@ -129,7 +129,7 @@ Three deliberate choices:
 | Choice | Why |
 |---|---|
 | Branch `gitops`, not `main` | CI commits its own changes; `main` stays the human-authored history, and every automatic commit is isolated and easy to inspect or discard |
-| Directory `Jenkins/Lab23/manifests` | Argo CD applies a directory, so this is the whole desired state of the app — one Deployment, one Service |
+| Directory `Jenkins/Lab23/manifests` | Argo CD applies a directory, so this is the whole desired state of the app, one Deployment, one Service |
 | `prune` + `selfHeal` | Manual edits and orphaned objects are reverted; the lab proves the repository wins |
 
 The repository is public, so Argo CD needs no credentials to read it. The first
@@ -157,7 +157,7 @@ if (gitBranch) {
 ```
 
 With `gitBranch` set, the step rewrites `image:` in the manifest, commits and
-pushes — and never calls `kubectl`. Lab 22's pipeline is untouched: it simply
+pushes, and never calls `kubectl`. Lab 22's pipeline is untouched: it simply
 does not pass the parameter.
 
 The credential is a Jenkins `usernamePassword` entry fed from the `gh` CLI's
@@ -178,7 +178,7 @@ To https://github.com/EslamNabawy/iVolve-Tasks.git
 [deployOnK8s] pushed to gitops — Argo CD applies it, Jenkins does not
 ```
 
-The build pushed a commit, not a Deployment. Argo CD then moved on its own —
+The build pushed a commit, not a Deployment. Argo CD then moved on its own 
 the wait loop prints the revision it reports every few seconds:
 
 ```
@@ -223,7 +223,7 @@ GET http://127.0.0.1:8090/ -> HTTP 200
 
 ## 6. Argo CD wins: `selfHeal` in six seconds
 
-The fastest way to show that Git, not `kubectl`, owns the cluster — overwrite
+The fastest way to show that Git, not `kubectl`, owns the cluster, overwrite
 the image by hand:
 
 ```
@@ -234,7 +234,7 @@ reverted after ~6s: 172.18.0.1:5000/eslamnabawy/demoapp:20261112-014221
 
 ---
 
-## Things worth knowing
+## What I'd do differently
 
 1. **`--server-side` is not optional for the Argo CD install.** The CRD
    annotations exceed `kubectl apply`'s 262 KB client-side limit. The error names
@@ -247,7 +247,7 @@ reverted after ~6s: 172.18.0.1:5000/eslamnabawy/demoapp:20261112-014221
    plus `docker start`.
 3. **A tag derived from the commit deadlocks a GitOps loop.** One run rebuilt
    the same tag, so the manifest did not change, so there was no commit, so Argo
-   CD had nothing to sync — a green pipeline that proved nothing. The tag is now
+ CD had nothing to sync, a green pipeline that proved nothing. The tag is now
    `date +%Y%m%d-%H%M%S`, computed inside the build stage.
 4. **`read` in a `while` loop breaks `set -e`.** `read -r S H < <(kubectl …)`
    returns non-zero at EOF and ends the script right after the interesting part.
@@ -255,20 +255,20 @@ reverted after ~6s: 172.18.0.1:5000/eslamnabawy/demoapp:20261112-014221
    `.status.sync.revision` instead.
 5. **The pipeline never contacts the cluster.** It has no kubeconfig mounted in
    the GitOps branch of `deployOnK8s`; the push is the only side effect. That is
-   the security argument for GitOps: the token can be scoped to one repository,
+ the security argument for GitOps: the token can be scoped to one repository
    while a kubeconfig is a cluster key.
 6. **Argo CD polls; it does not watch GitHub.** The default reconcile interval
    is three minutes. `kubectl annotate application ivolve
-   argocd.argoproj.io/refresh=normal` forces a check — which is why the wait loop
+ argocd.argoproj.io/refresh=normal` forces a check, which is why the wait loop
    finishes in seconds. A GitHub webhook would be the production answer.
 7. **The Application is namespaced but cluster-wide in effect.** It lives in
    `argocd`, yet it creates and prunes objects in `lab23`; `syncOptions:
    CreateNamespace=true` is what lets it create that namespace.
 8. **CI commits land in the repository's history.** They go to `gitops`, not
-   `main`, so the authored history stays clean — but they are real commits
+ `main`, so the authored history stays clean, but they are real commits
    visible in `git log origin/gitops`, one per build.
 
-## Reproduce
+## To replay this
 
 ```bash
 cd ~/iVolve-Tasks/Jenkins/Lab23
@@ -278,7 +278,7 @@ cd ~/iVolve-Tasks/Jenkins/Lab23
 The script makes sure Argo CD is installed, creates the `gitops` branch, applies
 the Application, builds the controller image, runs the pipeline, waits for the
 sync, runs the `selfHeal` check, and stops. Argo CD and the Application stay
-installed — they are the result of the lab.
+installed. They are the result of the lab.
 
 ## Clean up
 
@@ -287,7 +287,7 @@ kubectl -n argocd delete application ivolve
 kubectl delete namespace argocd lab23
 ```
 
-## Commit
+## Record it in git
 
 ```bash
 git add Jenkins/Lab23 Jenkins/Lab22/shared-library/vars/deployOnK8s.groovy

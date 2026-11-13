@@ -1,4 +1,4 @@
-# Lab 9 — A three-node Kubernetes cluster with Calico
+# Lab 9: A three-node Kubernetes cluster with Calico
 
 **Track:** Container Orchestration · **Cluster:** kind v0.33.0 / Kubernetes v1.37.0 ·
 **CNI:** Calico v3.33.0 · **Context:** `kind-ivolve`
@@ -15,16 +15,16 @@ rather than typing `kubeadm init` by hand.
 
 That is a smaller deviation than it sounds. kind does not fake a cluster: it starts
 three containers and bootstraps each one with the same kubeadm flow the slide
-describes — `kubeadm init` on the control plane, `kubeadm join` on the workers, and
+describes, `kubeadm init` on the control plane, `kubeadm join` on the workers, and
 containerd as the runtime inside every node. What changes is *who* runs the commands
 (kind does) and that the "nodes" share one kernel instead of being separate machines.
-Everything the lab verifies — one control plane, two workers, Calico as the pod
-network, all nodes `Ready` — is real.
+Everything the lab verifies, one control plane, two workers, Calico as the pod
+network, all nodes `Ready`, is real.
 
 The default kind CNI is switched off in `kind-config.yaml`, so Calico is genuinely
 what makes pod networking work. Without it the nodes stay `NotReady`.
 
-## Requirements
+## What it asks for
 
 - [x] containerd 2.3.4 as the container runtime on all three nodes
 - [x] kubeadm-bootstrapped control plane plus two joined workers
@@ -34,11 +34,11 @@ what makes pod networking work. Without it the nodes stay `NotReady`.
 - [x] pod-to-pod traffic across two different worker nodes, both directions, 0% loss
 - [x] CoreDNS resolving `kubernetes.default.svc.cluster.local`
 
-## Results
+## What I got
 
 | Check | Result |
 |---|---|
-| Cluster | kind `ivolve` — 1 control-plane + 2 workers, v1.37.0 |
+| Cluster | kind `ivolve`, 1 control-plane + 2 workers, v1.37.0 |
 | Runtime | `containerd://2.3.4` on every node |
 | CNI | Calico `v3.33.0`, `calico-node` **3/3** Ready |
 | Pod CIDR | `192.168.0.0/16` (`default-ipv4-ippool`) |
@@ -48,7 +48,7 @@ what makes pod networking work. Without it the nodes stay `NotReady`.
 
 ## Steps
 
-### 1 — Declare the cluster
+### 1. Declare the cluster
 
 `kind-config.yaml` asks for three nodes and turns the stock CNI off:
 
@@ -68,7 +68,7 @@ nodes:
 `podSubnet` matters: Calico's default IP pool is `192.168.0.0/16`, and the two must
 agree or pods get addresses Calico does not route.
 
-### 2 — Create it
+### 2. Create it
 
 ```console
 $ kind create cluster --name ivolve --config Kubernetes/Lab9/kind-config.yaml --wait 180s
@@ -94,7 +94,7 @@ Set kubectl context to "kind-ivolve"
 That timeout is expected, not a failure: with no CNI installed yet, a node cannot
 report `Ready`. It is the first thing the Calico step fixes.
 
-### 3 — Prove the cluster is incomplete without a CNI
+### 3. Prove the cluster is incomplete without a CNI
 
 ```console
 $ kubectl --context kind-ivolve get nodes
@@ -104,7 +104,7 @@ ivolve-worker          NotReady   <none>          3m4s    v1.37.0
 ivolve-worker2         NotReady   <none>          3m4s    v1.37.0
 ```
 
-### 4 — Install Calico
+### 4. Install Calico
 
 ```console
 $ curl -fsSL https://raw.githubusercontent.com/projectcalico/calico/v3.33.0/manifests/calico.yaml -o /tmp/calico.yaml
@@ -117,9 +117,9 @@ deployment.apps/calico-kube-controllers created
 ```
 
 Calico runs as a DaemonSet, so all three nodes get their own `calico-node`
-(the images are pulled per node — that is why the first install is the slow part).
+(the images are pulled per node. That is why the first install is the slow part).
 
-### 5 — Every node Ready, Calico 3/3
+### 5. Every node Ready, Calico 3/3
 
 ```console
 $ kubectl --context kind-ivolve get nodes -o wide
@@ -136,7 +136,7 @@ $ kubectl --context kind-ivolve get ippools.crd.projectcalico.org -o jsonpath='{
 192.168.0.0/16
 ```
 
-### 6 — Prove pod networking actually crosses nodes
+### 6. Prove pod networking actually crosses nodes
 
 Two pods are pinned to different workers (`nettest.yaml` / `nettest2.yaml`), then each
 pings the other's overlay address:
@@ -166,7 +166,7 @@ round-trip min/avg/max = 0.122/0.515/1.273 ms
 `ttl=62` is the tell: the packet crossed one router (the node), i.e. it really went
 from one node's pod network to the other's. Same-node traffic would be `ttl=64`.
 
-### 7 — DNS
+### 7. DNS
 
 ```console
 $ kubectl --context kind-ivolve exec nettest-worker -- nslookup kubernetes.default.svc.cluster.local
@@ -181,18 +181,18 @@ The first install did not finish cleanly, and the reasons are worth keeping:
 1. **WSL ran out of host memory and restarted itself mid-install.** The Windows host
    was down to 0.5 GB free; after `wsl --shutdown` it came back with the cluster's
    containers restored by Docker. A short `Forbidden ... cannot list resource "nodes"`
-   right after the restart was RBAC catching up, not a broken cert — it cleared on
+ right after the restart was RBAC catching up, not a broken cert. It cleared on
    its own.
 2. **Three images were corrupted by the interrupted pull.** kubelet kept reporting
    `exec /usr/bin/calico: input/output error`, `coredns ... no users found` and
    `local-path-provisioner: exec format error`. Deleting the image inside the node
    (`crictl rmi <image>`) and letting the pod re-create fixed each one.
-3. **`kubectl wait` timeouts are not failures here.** With `disableDefaultCNI: true`,
+3. **`kubectl wait` timeouts are not failures here.** With `disableDefaultCNI: true`
    `NotReady` is the correct state until Calico is applied.
 
-## Things worth knowing
+## Worth remembering
 
-1. **kind nodes are real kubeadm nodes.** Each container runs its own containerd,
+1. **kind nodes are real kubeadm nodes.** Each container runs its own containerd
    kubelet and kubeadm-generated PKI; the control plane genuinely is
    `kube-apiserver`/`etcd`/`controller-manager`/`scheduler` pods.
 2. **The CNI is the switch between `NotReady` and `Ready`.** A node's `Ready`
@@ -208,7 +208,7 @@ The first install did not finish cleanly, and the reasons are worth keeping:
    `calico/node`; the first install is roughly three times the download of a
    single-node cluster.
 6. **Node containers share the host kernel.** "Three nodes" is three containerized
-   kubelets and three pod networks, not three kernels — that is the price of doing
+ kubelets and three pod networks, not three kernels. That is the price of doing
    this lab on one machine.
 
 ## Cleanup
@@ -221,7 +221,7 @@ kind delete cluster --name ivolve
 
 This deletes the `ivolve` cluster only; the unrelated `aiops` cluster is never touched.
 
-## Commit this lab
+## Commit
 
 ```bash
 cd ~/iVolve-Tasks
